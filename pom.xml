@@ -15,6 +15,20 @@
     </properties>
 
     <dependencies>
+        <!--FIREBASE DEPENDENCIES-->
+        <dependency>
+            <groupId>com.google.firebase</groupId>
+            <artifactId>firebase-admin</artifactId>
+            <version>9.2.0</version>
+        </dependency>
+
+        <!--SQLite DEPENDENCIES-->
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>3.45.1.0</version>
+        </dependency>
+
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
@@ -118,7 +132,7 @@
                         <id>default-cli</id>
                         <configuration>
                             <mainClass>
-                                com.asosiaciondeasis.animalesdeasis/com.asosiaciondeasis.animalesdeasis.HelloApplication
+                                com.asosiaciondeasis.animalesdeasis/com.asosiaciondeasis.animalesdeasis.Main
                             </mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>

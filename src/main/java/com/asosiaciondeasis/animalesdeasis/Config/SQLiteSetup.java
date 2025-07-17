@@ -3,8 +3,9 @@ package com.asosiaciondeasis.animalesdeasis.Config;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.Statement;
-
+import com.asosiaciondeasis.animalesdeasis.Dao.DataImporter;
 
 public class SQLiteSetup {
 
@@ -88,11 +89,23 @@ public class SQLiteSetup {
                     );
                     """;
 
-            // Execute all statements
+            // Execute all statements that creates the tables if they don't exists
             stmt.execute(createProvinces);
             stmt.execute(createPlaces);
             stmt.execute(createAnimals);
             stmt.execute(createVaccines);
+
+            /**
+             * Check if provinces table is empty, if not, we call the API to import the info of the GEO of CR
+             * */
+            ResultSet rs = stmt.executeQuery("SELECT COUNT(*) AS count FROM provinces");
+            if (rs.next() && rs.getInt("count") == 0) {
+                System.out.println("Provinces table empty, importing data from API...");
+                DataImporter.populateProvincesAndPlaces(conn); //Call the method we have on DAO
+                System.out.println("✅ Data imported successfully.");
+            } else {
+                System.out.println("Provinces table already populated.");
+            }
 
             stmt.close();
             conn.close();

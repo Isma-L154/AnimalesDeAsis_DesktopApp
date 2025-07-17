@@ -24,7 +24,7 @@ public class FirebaseConfig {
             }
 
             // Build Firebase options using the credentials from the JSON file
-            FirebaseOptions options = new FirebaseOptions.Builder()
+            FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                     .build();
 

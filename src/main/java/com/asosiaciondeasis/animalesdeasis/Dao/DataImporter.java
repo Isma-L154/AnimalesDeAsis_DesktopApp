@@ -1,4 +1,4 @@
-package com.asosiaciondeasis.animalesdeasis.Dao;
+package com.asosiaciondeasis.animalesdeasis.DAO;
 
 import org.json.JSONArray;
 import org.json.JSONObject;

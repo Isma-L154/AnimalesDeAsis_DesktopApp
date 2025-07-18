@@ -1,11 +1,9 @@
 package com.asosiaciondeasis.animalesdeasis.Config;
 
 import java.io.File;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
-import com.asosiaciondeasis.animalesdeasis.Dao.DataImporter;
+import java.sql.*;
+
+import com.asosiaciondeasis.animalesdeasis.DAO.DataImporter;
 
 public class SQLiteSetup {
 
@@ -65,6 +63,7 @@ public class SQLiteSetup {
                     CREATE TABLE IF NOT EXISTS animals (
                         record_number TEXT PRIMARY KEY, -- UUID
                         chip_number TEXT UNIQUE,
+                        barcode TEXT UNIQUE,
                         admission_date TEXT NOT NULL, -- Format: DD-MM-YYYY
                         collected_by TEXT,
                         place_id INTEGER NOT NULL,
@@ -75,6 +74,7 @@ public class SQLiteSetup {
                         name TEXT,
                         ailments TEXT,
                         neutering_date TEXT,
+                        adopted INTEGER NOT NULL DEFAULT 0, -- 0 = Not adopted, 1 = Adopted
                         FOREIGN KEY (place_id) REFERENCES places(id) ON DELETE SET NULL
                     );
                     """;
@@ -106,7 +106,6 @@ public class SQLiteSetup {
             } else {
                 System.out.println("Provinces table already populated.");
             }
-
             stmt.close();
             conn.close();
 
@@ -116,7 +115,5 @@ public class SQLiteSetup {
         e.printStackTrace();
         throw new RuntimeException("Error initializing the database.");
     }
-
-
     }
 }

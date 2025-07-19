@@ -10,6 +10,12 @@ import java.util.ArrayList;
 
 public class AnimalDAO implements IAnimalDAO {
 
+    //This value is for DI (Dependencie inyection), makes it easier to change the DB if needed
+    private final Connection conn;
+
+    public AnimalDAO(Connection conn) {
+        this.conn = conn;
+    }
 
     /**
      * Inserts a new Animal record into the database.
@@ -28,8 +34,7 @@ public class AnimalDAO implements IAnimalDAO {
                 approximate_age, sex, name, ailments, neutering_date, adopted
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
-    try(Connection conn = DatabaseConnection.getConnection();
-        PreparedStatement pstmt = conn.prepareStatement(sql)){
+    try(PreparedStatement pstmt = conn.prepareStatement(sql)){
 
         pstmt.setString(1, animal.getRecordNumber());
         pstmt.setString(2, animal.getChipNumber());
@@ -66,10 +71,9 @@ public class AnimalDAO implements IAnimalDAO {
     @Override
     public List<Animal> getAllAnimals() throws Exception {
         List<Animal> animals = new ArrayList<>();
-        String sql = "SELECT * FROM animals";
+        String sql = "SELECT * FROM animals WHERE active = 1;";
 
-        try(Connection conn = DatabaseConnection.getConnection();
-            PreparedStatement pstmt = conn.prepareStatement(sql);
+        try(PreparedStatement pstmt = conn.prepareStatement(sql);
             ResultSet rs = pstmt.executeQuery()){
 
             /**
@@ -79,7 +83,7 @@ public class AnimalDAO implements IAnimalDAO {
              * */
 
             while (rs.next()) {
-                Animal animal = new Animal(rs.getString("record_number"));
+                Animal animal = Animal.fromExistingRecord(rs.getString("record_number"));
 
                 animal.setChipNumber(rs.getString("chip_number"));
                 animal.setBarcode(rs.getString("barcode"));
@@ -121,13 +125,67 @@ public class AnimalDAO implements IAnimalDAO {
         return List.of();
     }
 
+
     @Override
     public void updateAnimal(Animal animal) throws Exception {
+        String updateSql = """
+        UPDATE animals SET
+            chip_number = ?, barcode = ?, admission_date = ?,
+            collected_by = ?, place_id = ?, reason_for_rescue = ?,
+            species = ?, approximate_age = ?, sex = ?, name = ?,
+            ailments = ?, neutering_date = ?, adopted = ?
+        WHERE record_number = ? AND active = 1
+    """;
+
+        try (PreparedStatement pstmt = conn.prepareStatement(updateSql)) {
+
+            pstmt.setString(1, animal.getChipNumber());
+            pstmt.setString(2, animal.getBarcode());
+            pstmt.setString(3, animal.getAdmissionDate());
+            pstmt.setString(4, animal.getCollectedBy());
+            pstmt.setInt(5, animal.getPlaceId());
+            pstmt.setString(6, animal.getReasonForRescue());
+            pstmt.setString(7, animal.getSpecies());
+            pstmt.setInt(8, animal.getApproximateAge());
+            pstmt.setString(9, animal.getSex());
+            pstmt.setString(10, animal.getName());
+            pstmt.setString(11, animal.getAilments());
+            pstmt.setString(12, animal.getNeuteringDate());
+            pstmt.setInt(13, animal.isAdopted() ? 1 : 0);
+            pstmt.setString(14, animal.getRecordNumber());
+
+            int rowsAffected = pstmt.executeUpdate();
+
+            if (rowsAffected == 0) {
+                throw new Exception("⚠️ No active animal found with recordNumber: " + animal.getRecordNumber());
+            }
+
+            System.out.println("Animal updated successfully.");
+        } catch (SQLException e) {
+            if (e.getMessage().contains("UNIQUE constraint failed")) {
+                throw new Exception("❌ chip_number or barcode must be unique", e);
+            }
+            throw new Exception("Error updating animal -> ", e);
+        }
 
     }
-
+    /**
+     * In this delete we are using a LOGIC delete
+     * */
     @Override
     public void deleteAnimal(String recordNumber) throws Exception {
+        String sql = "UPDATE animals SET active = 0 WHERE record_number = ?";
 
+        try(PreparedStatement pstmt = conn.prepareStatement(sql)){
+            pstmt.setString(1, recordNumber);
+            int affectedRows = pstmt.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new Exception("❌ No animal found with the given record number.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new Exception("Error performing logical delete", e);
+        }
     }
 }

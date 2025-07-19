@@ -75,6 +75,7 @@ public class SQLiteSetup {
                         ailments TEXT,
                         neutering_date TEXT,
                         adopted INTEGER NOT NULL DEFAULT 0, -- 0 = Not adopted, 1 = Adopted
+                        active INTEGER NOT NULL DEFAULT 1, -- 1 = Active, 0 = Deleted (soft delete)
                         FOREIGN KEY (place_id) REFERENCES places(id) ON DELETE SET NULL
                     );
                     """;

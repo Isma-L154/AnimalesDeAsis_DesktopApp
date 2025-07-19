@@ -23,14 +23,21 @@ public class Animal {
     private boolean adopted;
 
 
-    public Animal() {
-        this.recordNumber = UUID.randomUUID().toString(); //Here we generate a random ID on creation
-    }
 
-    // Constructor para crear Animal con recordNumber ya conocido (desde BD)
-    public Animal(String recordNumber) {
+    private Animal(String recordNumber) {
         this.recordNumber = recordNumber;
     }
+
+
+    public static Animal createNew() {
+        return new Animal(UUID.randomUUID().toString());
+    }
+
+
+    public static Animal fromExistingRecord(String recordNumber) {
+        return new Animal(recordNumber);
+    }
+
 
     /**
      * Getters and Setters

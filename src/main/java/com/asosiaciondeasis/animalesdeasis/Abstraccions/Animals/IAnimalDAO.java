@@ -4,6 +4,7 @@ import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import java.util.Optional;
 import java.util.List;
 
+//TODO Add a new function reactiveAnimal in case we need to get the info of the animal back
 public interface IAnimalDAO {
 
     void insertAnimal(Animal animal) throws Exception;

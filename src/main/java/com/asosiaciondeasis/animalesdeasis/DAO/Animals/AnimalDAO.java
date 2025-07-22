@@ -247,8 +247,25 @@ public class AnimalDAO implements IAnimalDAO {
         }
     }
 
-    //Private method to map the info of the animal, it is used in every method of the class, that his purpose is
-    // to search for a specific animal.
+    @Override
+    public void reactivateAnimal(String recordNumber) throws Exception {
+
+        String sql = "UPDATE animals SET active = 1 WHERE record_number = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, recordNumber);
+            int rows = pstmt.executeUpdate();
+            if (rows == 0) {
+                throw new Exception("No animal found to reactivate.");
+            }
+        } catch (SQLException e) {
+            throw new Exception("Error reactivating animal", e);
+        }
+    }
+
+    /**
+     *  Private method to map the info of the animal, it is used in every method of the class, that his purpose is
+     *  to search for a specific animal.
+     */
     private Animal mapResultSetToAnimal(ResultSet rs) throws SQLException {
         Animal animal = Animal.fromExistingRecord(rs.getString("record_number"));
         animal.setChipNumber(rs.getString("chip_number"));

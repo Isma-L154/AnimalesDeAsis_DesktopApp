@@ -3,6 +3,7 @@ package com.asosiaciondeasis.animalesdeasis.DAO.Animals;
 import com.asosiaciondeasis.animalesdeasis.Abstraccions.Animals.IAnimalDAO;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Config.DatabaseConnection;
+import javax.swing.plaf.synth.Region;
 
 import java.sql.*;
 import java.util.List;
@@ -83,23 +84,7 @@ public class AnimalDAO implements IAnimalDAO {
              * */
 
             while (rs.next()) {
-                Animal animal = Animal.fromExistingRecord(rs.getString("record_number"));
-
-                animal.setChipNumber(rs.getString("chip_number"));
-                animal.setBarcode(rs.getString("barcode"));
-                animal.setAdmissionDate(rs.getString("admission_date"));
-                animal.setCollectedBy(rs.getString("collected_by"));
-                animal.setPlaceId(rs.getInt("place_id"));
-                animal.setReasonForRescue(rs.getString("reason_for_rescue"));
-                animal.setSpecies(rs.getString("species"));
-                animal.setApproximateAge(rs.getInt("approximate_age"));
-                animal.setSex(rs.getString("sex"));
-                animal.setName(rs.getString("name"));
-                animal.setAilments(rs.getString("ailments"));
-                animal.setNeuteringDate(rs.getString("neutering_date"));
-                animal.setAdopted(rs.getInt("adopted") == 1);
-
-                animals.add(animal);
+                animals.add(mapResultSetToAnimal(rs));
             }
 
         } catch (SQLException e) {
@@ -111,18 +96,91 @@ public class AnimalDAO implements IAnimalDAO {
     }
 
     @Override
-    public Animal findByChipNumber(String chipNumber) {
-        return null;
+    public Animal findByChipNumber(String chipNumber) throws Exception {
+
+        String sql = "SELECT * FROM animals WHERE chip_number = ? AND active = 1";
+        try(PreparedStatement pstmt = conn.prepareStatement(sql)){
+            pstmt.setString(1, chipNumber);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToAnimal(rs);
+                }
+            }
+        } catch (SQLException e) {
+            throw new Exception("Error finding animal by chip number", e);
+        }
+        return null; //No animal found
     }
 
     @Override
-    public Animal findByBarcode(String barcode) {
-        return null;
+    public Animal findByBarcode(String barcode) throws Exception {
+
+        String sql = "SELECT * FROM animals WHERE barcode = ? AND active = 1";
+
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, barcode);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToAnimal(rs);
+                }
+            }
+        } catch (SQLException e) {
+            throw new Exception("Error finding animal by barcode", e);
+        }
+
+        return null; //No animal found
     }
 
+    /**
+     * The dates in this Method should be in YYY-MM-DD Format --> I do the conversion in the Util Package called DateUtil.
+     * This method already receives the date in the correct format, in the Service(BL) package
+     */
     @Override
-    public List<Animal> findByFilters(String species, String startDate, String endDate, Boolean adopted) {
-        return List.of();
+    public List<Animal> findByFilters(String species, String startDate, String endDate, Boolean adopted) throws Exception {
+        List<Animal> animals = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("SELECT * FROM animals WHERE active = 1");
+
+        // Build dynamic WHERE clauses
+        if (species != null && !species.isBlank()) {
+            sql.append(" AND species = ?");
+        }
+
+        if (startDate != null && endDate != null) {
+            sql.append(" AND admission_date BETWEEN ? AND ?");
+        }
+
+        if (adopted != null) {
+            sql.append(" AND adopted = ?");
+        }
+
+        try(PreparedStatement pstmt = conn.prepareStatement(sql.toString())){
+            int index = 1;
+
+            if (species != null && !species.isBlank()) {
+                pstmt.setString(index++, species);
+            }
+
+            if (startDate != null && endDate != null) {
+                pstmt.setString(index++, startDate);  // Already ISO format
+                pstmt.setString(index++, endDate);
+            }
+
+            if (adopted != null) {
+                pstmt.setInt(index++, adopted ? 1 : 0);
+            }
+
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                animals.add(mapResultSetToAnimal(rs));
+            }
+
+
+        } catch (SQLException e) {
+            throw new Exception("Error fetching animals by filters", e);
+        }
+
+        return animals;
     }
 
 
@@ -187,5 +245,25 @@ public class AnimalDAO implements IAnimalDAO {
             e.printStackTrace();
             throw new Exception("Error performing logical delete", e);
         }
+    }
+
+    //Private method to map the info of the animal, it is used in every method of the class, that his purpose is
+    // to search for a specific animal.
+    private Animal mapResultSetToAnimal(ResultSet rs) throws SQLException {
+        Animal animal = Animal.fromExistingRecord(rs.getString("record_number"));
+        animal.setChipNumber(rs.getString("chip_number"));
+        animal.setBarcode(rs.getString("barcode"));
+        animal.setAdmissionDate(rs.getString("admission_date"));
+        animal.setCollectedBy(rs.getString("collected_by"));
+        animal.setPlaceId(rs.getInt("place_id"));
+        animal.setReasonForRescue(rs.getString("reason_for_rescue"));
+        animal.setSpecies(rs.getString("species"));
+        animal.setApproximateAge(rs.getInt("approximate_age"));
+        animal.setSex(rs.getString("sex"));
+        animal.setName(rs.getString("name"));
+        animal.setAilments(rs.getString("ailments"));
+        animal.setNeuteringDate(rs.getString("neutering_date"));
+        animal.setAdopted(rs.getInt("adopted") == 1);
+        return animal;
     }
 }

@@ -15,9 +15,9 @@ public interface IAnimalDAO {
      * Finds an animal by its unique ID or Filters.
      * @return The Animal object if found, otherwise null.
      */
-    Animal findByChipNumber(String chipNumber);
-    Animal findByBarcode(String barcode);
-    List<Animal> findByFilters(String species, String startDate, String endDate, Boolean adopted);
+    Animal findByChipNumber(String chipNumber) throws Exception;
+    Animal findByBarcode(String barcode) throws Exception;
+    List<Animal> findByFilters(String species, String startDate, String endDate, Boolean adopted) throws Exception;
     //TODO Try to change this to a different class that works spec for filters
 
     void updateAnimal(Animal animal) throws Exception;

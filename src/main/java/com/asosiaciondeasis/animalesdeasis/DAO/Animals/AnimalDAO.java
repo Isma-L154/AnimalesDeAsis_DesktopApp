@@ -89,7 +89,7 @@ public class AnimalDAO implements IAnimalDAO {
 
         } catch (SQLException e) {
             e.printStackTrace();
-            throw new Exception("Error inserting animal", e);
+            throw new Exception("Error getting animal", e);
         }
 
         return animals;
@@ -262,6 +262,24 @@ public class AnimalDAO implements IAnimalDAO {
         }
     }
 
+    @Override
+    public List<Animal> getUnsyncedAnimals() throws Exception {
+        List<Animal> unsyncedAnimals = new ArrayList<>();
+        String sql = "SELECT * FROM animals WHERE synced = 0";
+        try(PreparedStatement pstmt = conn.prepareStatement(sql);
+            ResultSet rs = pstmt.executeQuery()){
+
+            while (rs.next()) {
+                unsyncedAnimals.add(mapResultSetToAnimal(rs));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new Exception("Error getting unsynced animals", e);
+        }
+        return unsyncedAnimals;
+    }
+
     /**
      *  Private method to map the info of the animal, it is used in every method of the class, that his purpose is
      *  to search for a specific animal.
@@ -281,6 +299,8 @@ public class AnimalDAO implements IAnimalDAO {
         animal.setAilments(rs.getString("ailments"));
         animal.setNeuteringDate(rs.getString("neutering_date"));
         animal.setAdopted(rs.getInt("adopted") == 1);
+        animal.setSynced(rs.getInt("synced") == 1);
+
         return animal;
     }
 }

@@ -12,4 +12,6 @@ public interface IVaccineDAO {
     void updateVaccine(Vaccine vaccine) throws Exception;
 
     void deleteVaccine(int id) throws Exception;
+
+    List<Vaccine> getUnsyncedVaccinesByAnimal(String animalRecordNumber) throws Exception;
 }

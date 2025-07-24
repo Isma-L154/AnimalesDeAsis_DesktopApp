@@ -49,12 +49,7 @@ public class VaccineDAO implements IVaccineDAO {
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                Vaccine vaccine = new Vaccine(
-                        rs.getInt("id"),
-                        rs.getString("animal_record_number"),
-                        rs.getString("vaccine_name"),
-                        rs.getString("vaccination_date")
-                );
+                Vaccine vaccine = mapResultSetToVaccine(rs);
                 vaccines.add(vaccine);
             }
 
@@ -119,6 +114,35 @@ public class VaccineDAO implements IVaccineDAO {
             e.printStackTrace();
             throw new Exception("Error deleting vaccine", e);
         }
+    }
+
+    @Override
+    public List<Vaccine> getUnsyncedVaccinesByAnimal(String animalRecordNumber) throws Exception {
+        List<Vaccine> vaccines = new ArrayList<>();
+        String sql = "SELECT * FROM vaccines WHERE animal_record_number = ? AND synced = 0";
+
+        try(PreparedStatement pstmt = conn.prepareStatement(sql)){
+
+            pstmt.setString(1, animalRecordNumber);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Vaccine vaccine = mapResultSetToVaccine(rs);
+                vaccines.add(vaccine);
+            }
+        }
+        return vaccines;
+    }
+
+    private Vaccine mapResultSetToVaccine(ResultSet rs) throws SQLException {
+        Vaccine vaccine = new Vaccine(
+                rs.getInt("id"),
+                rs.getString("animal_record_number"),
+                rs.getString("vaccine_name"),
+                rs.getString("vaccination_date")
+        );
+        vaccine.setSynced(rs.getInt("synced") == 1);
+        return vaccine;
     }
 }
 

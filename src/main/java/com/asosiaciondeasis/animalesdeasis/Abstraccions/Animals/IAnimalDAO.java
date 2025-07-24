@@ -22,4 +22,6 @@ public interface IAnimalDAO {
     void deleteAnimal(String recordNumber) throws Exception;
 
     void reactivateAnimal(String recordNumber) throws Exception;
+
+    List<Animal> getUnsyncedAnimals() throws Exception;
 }

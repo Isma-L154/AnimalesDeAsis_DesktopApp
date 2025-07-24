@@ -7,7 +7,7 @@ import java.util.UUID;
  */
 public class Animal {
 
-    private final String recordNumber; // UUID
+    private String recordNumber; // UUID
     private String chipNumber;
     private String barcode;
     private String admissionDate; // Format: DD-MM-YYYY
@@ -21,9 +21,9 @@ public class Animal {
     private String ailments;
     private String neuteringDate;  // Format: DD-MM-YYYY
     private boolean adopted;
+    private boolean synced;
 
-
-
+    public Animal(){}
     private Animal(String recordNumber) {
         this.recordNumber = recordNumber;
     }
@@ -32,7 +32,6 @@ public class Animal {
     public static Animal createNew() {
         return new Animal(UUID.randomUUID().toString());
     }
-
 
     public static Animal fromExistingRecord(String recordNumber) {
         return new Animal(recordNumber);
@@ -44,6 +43,13 @@ public class Animal {
      * */
     public String getRecordNumber() {
         return recordNumber;
+    }
+
+    public void setRecordNumber(String recordNumber) {
+        if (this.recordNumber != null) {
+            throw new IllegalStateException("recordNumber cannot be changed once set.");
+        }
+        this.recordNumber = recordNumber;
     }
 
     public String getChipNumber() {
@@ -149,4 +155,8 @@ public class Animal {
     public void setBarcode(String barcode) {
         this.barcode = barcode;
     }
+
+    public boolean isSynced() {return synced;}
+
+    public void setSynced(boolean synced) {this.synced = synced;}
 }

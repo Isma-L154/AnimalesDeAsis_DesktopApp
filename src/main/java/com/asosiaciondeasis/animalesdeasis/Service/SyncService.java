@@ -30,16 +30,11 @@ public class SyncService {
      * Constructor initializes DAOs with a DB connection obtained from DatabaseConnection.
      * Also initializes Firebase once.
      */
-    public SyncService() {
-        try{
+    public SyncService(Connection conn) {
 
-            Connection conn = DatabaseConnection.getConnection();
-            this.animalDAO = new AnimalDAO(conn);
-            this.vaccineDAO = new VaccineDAO(conn);
+        this.animalDAO = new AnimalDAO(conn);
+        this.vaccineDAO = new VaccineDAO(conn);
 
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to initialize SyncService",e);
-        }
         //Initialize Firebase only once in here
         FirebaseConfig.initialize();
     }
@@ -111,8 +106,11 @@ public class SyncService {
     private void PushChanges() throws Exception{
         Firestore db = FirestoreClient.getFirestore();
 
-        /** Get all local animals that are not synced */
+        /** Get all local animals that are NOT synced */
         List<Animal> unsyncedAnimals = animalDAO.getUnsyncedAnimals();
+        if (unsyncedAnimals.isEmpty()){
+            System.out.println("Nothing to sync");
+        }
         for(Animal animal : unsyncedAnimals){
             DocumentReference animalDoc = db.collection("animals").document(animal.getRecordNumber());
             ApiFuture<WriteResult> writeResult = animalDoc.set(animal);

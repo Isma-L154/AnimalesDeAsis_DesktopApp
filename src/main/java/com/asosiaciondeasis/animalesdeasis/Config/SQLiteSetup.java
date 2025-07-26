@@ -107,13 +107,14 @@ public class SQLiteSetup {
                 DataImporter.populateProvincesAndPlaces(conn); //Call the method we have on DAO
                 System.out.println("✅ Data imported successfully.");
             } else {
-                System.out.println("Provinces table already populated.");
+                System.out.println("✅ Provinces table already populated.");
             }
             stmt.close();
             conn.close();
 
             System.out.println("✅ Tables created or verified successfully.");
         }
+
     }catch(Exception e){
         e.printStackTrace();
         throw new RuntimeException("Error initializing the database.");

@@ -11,12 +11,8 @@ import com.asosiaciondeasis.animalesdeasis.Config.SQLiteSetup;
 
 public class Main {
     public static void main(String[] args) {
-
-        /**
-         * Initialize DataBase before UI
-         * */
-        SQLiteSetup.initializeDatabase();
-        System.out.println("✅ Aplicación iniciada correctamente.");
+        //Initialize the App before loading the UI.
+        AppInitializer.initializeApp();
     }
 }
 

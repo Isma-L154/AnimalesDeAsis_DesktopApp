@@ -2,7 +2,7 @@ package com.asosiaciondeasis.animalesdeasis.Util;
 
 import java.net.InetAddress;
 
-//Class tio check if there's any internet connectivity
+//Class to check if there's any internet connectivity
 public class NetworkUtils {
 
     /**
@@ -12,7 +12,7 @@ public class NetworkUtils {
     public static boolean isInternetAvailable() {
         try {
             InetAddress address = InetAddress.getByName("google.com");
-            return !address.equals("");
+            return true;
         } catch (Exception e) {
             return false;
         }

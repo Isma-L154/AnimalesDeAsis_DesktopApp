@@ -2,8 +2,6 @@ package com.asosiaciondeasis.animalesdeasis.DAO.Animals;
 
 import com.asosiaciondeasis.animalesdeasis.Abstraccions.Animals.IAnimalDAO;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
-import com.asosiaciondeasis.animalesdeasis.Config.DatabaseConnection;
-import javax.swing.plaf.synth.Region;
 
 import java.sql.*;
 import java.util.List;
@@ -11,7 +9,7 @@ import java.util.ArrayList;
 
 public class AnimalDAO implements IAnimalDAO {
 
-    //This value is for DI (Dependencie inyection), makes it easier to change the DB if needed
+    //This value is for DI (Dependency injection), makes it easier to change the DB if needed
     private final Connection conn;
 
     public AnimalDAO(Connection conn) {

@@ -35,7 +35,7 @@ public class AppInitializer {
             }
 
             schedulePeriodicSync();
-            System.out.println("App Initialized");
+            System.out.println("✅ App Initialized");
 
         } catch (Exception e) {
             throw new RuntimeException(e);

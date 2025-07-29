@@ -21,7 +21,7 @@ public class AnimalDAO implements IAnimalDAO {
      * The record_number (UUID) is set in the Animal Model (Constructor) before calling this method
      *
      * @param animal The Animal object containing all the data to insert.
-     * @throws SQLException if any database error occurs during insertion.
+     * @throws SQLException if any, database error occurs during insertion.
      */
 
     @Override
@@ -63,7 +63,7 @@ public class AnimalDAO implements IAnimalDAO {
     /**
      * Retrieves all animals from the database.
      *
-     * @return A list of Animal objects representing every record in the animals table.
+     * @return A list of Animal objects representing every record in the animal table.
      * @throws SQLException if there is any error during database interaction.
      */
 
@@ -226,7 +226,7 @@ public class AnimalDAO implements IAnimalDAO {
 
     }
     /**
-     * In this delete we are using a LOGIC delete
+     * In this method, we are using a LOGIC delete
      * */
     @Override
     public void deleteAnimal(String recordNumber) throws Exception {
@@ -279,7 +279,7 @@ public class AnimalDAO implements IAnimalDAO {
     }
 
     /**
-     *  Private method to map the info of the animal, it is used in every method of the class, that his purpose is
+     *  Private method to map the info of the animal, it is used in every method of the class that his purpose is
      *  to search for a specific animal.
      */
     private Animal mapResultSetToAnimal(ResultSet rs) throws SQLException {

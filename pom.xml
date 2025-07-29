@@ -78,6 +78,11 @@
             <version>17.0.6</version>
         </dependency>
         <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-media</artifactId>
+            <version>17.0.6</version>
+        </dependency>
+        <dependency>
             <groupId>org.controlsfx</groupId>
             <artifactId>controlsfx</artifactId>
             <version>11.2.1</version>
@@ -159,15 +164,17 @@
                         <!-- Default configuration for running with: mvn clean javafx:run -->
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>
-                                com.asosiaciondeasis.animalesdeasis/com.asosiaciondeasis.animalesdeasis.Main
-                            </mainClass>
+                            <mainClass>com.asosiaciondeasis.animalesdeasis.Main</mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>
                             <jlinkImageName>app</jlinkImageName>
                             <noManPages>true</noManPages>
                             <stripDebug>true</stripDebug>
                             <noHeaderFiles>true</noHeaderFiles>
+                            <options>
+                                <option>--add-modules</option>
+                                <option>javafx.controls,javafx.fxml,javafx.web,javafx.swing</option>
+                            </options>
                         </configuration>
                     </execution>
                 </executions>

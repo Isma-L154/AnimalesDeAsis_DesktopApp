@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.asosiaciondeasis.animalesdeasis.Controller.PortalController"
+            fx:id="mainPortal"
+            stylesheets="@/css/Portal.css">
+
+    <top>
+        <fx:include fx:id="headerInclude" source="Header.fxml"/>
+    </top>
+    <left>
+        <fx:include fx:id="sidebarInclude" source="Sidebar.fxml"/>
+    </left>
+    <center>
+        <StackPane fx:id="contentPane" styleClass="content-pane">
+            <Label text="Bienvenido al panel de administración"/>
+        </StackPane>
+    </center>
+
+</BorderPane>

@@ -1,22 +1,21 @@
 package com.asosiaciondeasis.animalesdeasis.Controller;
 
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.AnchorPane; // Cambiado a AnchorPane
+import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
 public class WelcomeController implements Initializable {
 
-    @FXML
-    private ImageView dogImageView;
-
+    private Stage stage;
     @FXML
     private AnchorPane mainContainer;
 
@@ -24,24 +23,26 @@ public class WelcomeController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
     }
 
-    @FXML
-    private void handleScreenClick() {
-        try {
-            // Cargar la siguiente vista
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/NextView.fxml"));
-            Parent root = loader.load();
-
-            Scene scene = new Scene(root);
-            Stage stage = (Stage) mainContainer.getScene().getWindow();
-            stage.setScene(scene);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.err.println("Error al cambiar de vista: " + e.getMessage());
-        }
+    // Receive the stage from the main application
+    public void setStage(Stage stage) {
+        this.stage = stage;
     }
 
-    // Método para recibir el Stage desde MainApplication
-    public void setStage(Stage stage) {
+    //TODO fix the maximize issue in this method
+    @FXML
+    public void handleContinue(ActionEvent event) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/PortalView.fxml"));
+            Scene scene = new Scene(loader.load());
+            stage.setScene(scene);
+            stage.setMinWidth(1036);
+            stage.setMinHeight(798);
+            javafx.application.Platform.runLater(() -> {
+                stage.setMaximized(true);
+                stage.centerOnScreen();
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

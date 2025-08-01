@@ -74,7 +74,7 @@ The goal of this project is to provide a **comprehensive offline-first solution*
 src/
 ├── dao/        # Data access layer (AnimalDAO, VaccineDAO, etc.)
 ├── model/      # POJOs (Animal, Vaccine, Place, etc.)
-├── services/BL   # Core logic (SyncService, CsvExporter)
+├── services/BL  # Core logic (SyncService, CsvExporter)
 ├── firebase/   # Firebase initialization
 ├── database/   # SQLite setup
 ├── ui/         # Swing UI panels and windows

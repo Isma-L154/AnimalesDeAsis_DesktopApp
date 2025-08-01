@@ -43,6 +43,8 @@
         <!--****************-->
 
         <!--BARCODES DEPENDENCIES-->
+
+        <!--ZXing-->
         <dependency>
             <groupId>com.google.zxing</groupId>
             <artifactId>core</artifactId>
@@ -54,6 +56,14 @@
             <artifactId>javase</artifactId>
             <version>3.5.0</version>
         </dependency>
+
+        <!-- Webcam Capture API -->
+        <dependency>
+            <groupId>com.github.sarxos</groupId>
+            <artifactId>webcam-capture</artifactId>
+            <version>0.3.12</version>
+        </dependency>
+
 
         <!--****************-->
 

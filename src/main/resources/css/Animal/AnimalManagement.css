@@ -1,0 +1,30 @@
+.animal-management-container {
+    -fx-padding: 30;
+}
+
+.section-title {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #593414;
+}
+
+.create-button {
+    -fx-background-color: #F2921D;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-padding: 8 16;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+}
+
+.create-button:hover {
+    -fx-background-color: #F28322;
+}
+
+.animal-table .table-row-cell {
+    -fx-cell-size: 40px;
+}
+
+.pagination {
+    -fx-padding: 20 0 0 0;
+}

@@ -5,7 +5,6 @@ import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
 
 import java.util.List;
-import java.util.UUID;
 
 public class AnimalService implements IAnimalService{
 

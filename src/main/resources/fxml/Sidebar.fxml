@@ -7,11 +7,12 @@
 <?import javafx.geometry.Insets?>
 <VBox fx:id="sidebar" xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.asosiaciondeasis.animalesdeasis.Controller.SidebarController"
       spacing="25" styleClass="sidebar">
     <padding>
         <Insets top="40" right="20" bottom="20" left="20"/>
     </padding>
-    <Label text="📊 Estadísticas" styleClass="sidebar-item"/>
-    <Label text="🐶 Animales" styleClass="sidebar-item"/>
+    <Label fx:id="statsLabel" text="📊 Estadísticas" styleClass="sidebar-item"/>
+    <Label fx:id="animalsLabel" text="🐶 Animales" styleClass="sidebar-item"/>
 </VBox>
 

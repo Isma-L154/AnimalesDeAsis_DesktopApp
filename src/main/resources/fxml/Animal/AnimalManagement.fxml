@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.asosiaciondeasis.animalesdeasis.Controller.Animal.AnimalManagementController"
+            stylesheets="@/css/Animal/AnimalManagement.css"
+            spacing="20" alignment="TOP_CENTER" styleClass="animal-management-container">
+
+            <HBox spacing="20" alignment="CENTER_LEFT" styleClass="toolbar">
+                 <Label text="Gestión de Animales" styleClass="section-title"/>
+                 <Button fx:id="CreateAnimal" text="➕ Agregar Animal" onAction="#handleCreateAnimal" styleClass="create-button"/>
+            </HBox>
+
+            <TableView fx:id="animalTable" prefHeight="500" styleClass="animal-table">
+                <columns>
+                    <TableColumn fx:id="idColumn" text="ID" prefWidth="60"/>
+                    <TableColumn fx:id="nameColumn" text="Nombre"/>
+                    <TableColumn fx:id="speciesColumn" text="Especie"/>
+                    <TableColumn fx:id="sexColumn" text="Sexo"/>
+                    <TableColumn fx:id="adoptedColumn" text="Adoptado"/>
+                    <TableColumn fx:id="actionsColumn" text="Acciones" prefWidth="180"/>
+                </columns>
+            </TableView>
+
+            <Pagination fx:id="pagination" pageCount="1" styleClass="pagination"/>
+</VBox>

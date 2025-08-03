@@ -21,7 +21,10 @@ public class Animal {
     private String ailments;
     private String neuteringDate;  // Format: DD-MM-YYYY
     private boolean adopted;
+    private boolean active = true;
     private boolean synced;
+    private String lastModified;
+
 
     public Animal(){}
     private Animal(String recordNumber) {
@@ -159,4 +162,12 @@ public class Animal {
     public boolean isSynced() {return synced;}
 
     public void setSynced(boolean synced) {this.synced = synced;}
+
+    public String getLastModified() {return lastModified;}
+
+    public void setLastModified(String lastModified) {this.lastModified = lastModified;}
+
+    public boolean isActive() {return active;}
+
+    public void setActive(boolean active) {this.active = active;}
 }

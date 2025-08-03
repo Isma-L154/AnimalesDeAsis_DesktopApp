@@ -1,0 +1,56 @@
+
+.main-container {
+    -fx-background-color: #ffffff;
+    -fx-min-width: 1036px;
+    -fx-min-height: 798px;
+    -fx-pref-width: 1036px;
+    -fx-pref-height: 798px;
+}
+.text-container {
+    -fx-alignment: CENTER;
+    -fx-spacing: 15px;
+    -fx-padding: 20px;
+}
+
+.title-label {
+    -fx-font-family: "Times New Roman", "Georgia", serif;
+    -fx-font-size: 80px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c2c2c;
+    -fx-alignment: center;
+}
+.dog-image {
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 5);
+    -fx-opacity: 1.0;
+    -fx-translate-y: 0;
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
+    -fx-effect: none;
+}
+
+.slogan-label {
+    -fx-font-family: "Arial", "Helvetica", sans-serif;
+        -fx-font-size: 22px;
+        -fx-font-weight: normal;
+        -fx-text-fill: #666666;
+        -fx-font-style: italic;
+        -fx-letter-spacing: 4px;
+}
+
+.continue-button {
+    -fx-font-size: 18px;
+        -fx-font-weight: bold;
+        -fx-padding: 12px 24px;
+        -fx-background-radius: 30px;
+        -fx-text-fill: white;
+        -fx-background-color: #F2921D;
+        -fx-cursor: hand;
+        -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 6, 0.3, 0, 2);
+        -fx-border-color: transparent;
+        -fx-transition: all 0.3s ease-in-out;
+}
+.continue-button:hover {
+    -fx-background-color: #F28322;
+        -fx-scale-x: 1.05;
+        -fx-scale-y: 1.05;
+}

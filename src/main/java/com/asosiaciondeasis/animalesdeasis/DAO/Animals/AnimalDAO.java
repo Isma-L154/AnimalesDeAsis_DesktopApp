@@ -21,11 +21,11 @@ public class AnimalDAO implements IAnimalDAO {
      * The record_number (UUID) is set in the Animal Model (Constructor) before calling this method
      *
      * @param animal The Animal object containing all the data to insert.
-     * @throws SQLException if any database error occurs during insertion.
+     * @throws SQLException if any, database error occurs during insertion.
      */
 
     @Override
-    public void insertAnimal(Animal animal) throws Exception {
+    public boolean insertAnimal(Animal animal) throws Exception {
         String sql = """
             INSERT INTO animals (
                 record_number, chip_number, barcode, admission_date,
@@ -52,10 +52,10 @@ public class AnimalDAO implements IAnimalDAO {
 
         pstmt.executeUpdate();
         System.out.println("✅ Animal inserted successfully.");
-
+        return true;
     } catch (SQLException e) {
         e.printStackTrace();
-        throw new Exception("Error inserting animal", e);
+        return false;
     }
 
     }
@@ -63,7 +63,7 @@ public class AnimalDAO implements IAnimalDAO {
     /**
      * Retrieves all animals from the database.
      *
-     * @return A list of Animal objects representing every record in the animals table.
+     * @return A list of Animal objects representing every record in the animal table.
      * @throws SQLException if there is any error during database interaction.
      */
 
@@ -91,6 +91,21 @@ public class AnimalDAO implements IAnimalDAO {
         }
 
         return animals;
+    }
+
+    @Override
+    public Animal findByRecordNumber(String recordNumber) throws Exception {
+        String sql = "SELECT * FROM animals WHERE record_number = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, recordNumber);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return mapResultSetToAnimal(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @Override
@@ -185,12 +200,11 @@ public class AnimalDAO implements IAnimalDAO {
     @Override
     public void updateAnimal(Animal animal) throws Exception {
         String updateSql = """
-        UPDATE animals SET
-            chip_number = ?, barcode = ?, admission_date = ?,
-            collected_by = ?, place_id = ?, reason_for_rescue = ?,
-            species = ?, approximate_age = ?, sex = ?, name = ?,
-            ailments = ?, neutering_date = ?, adopted = ?
-        WHERE record_number = ? AND active = 1
+        UPDATE animals
+        SET chip_number = ?, barcode = ?, admission_date = ?, collected_by = ?, place_id = ?, 
+            reason_for_rescue = ?, species = ?, approximate_age = ?, sex = ?, name = ?, ailments = ?, 
+            neutering_date = ?, adopted = ?, synced = ?, last_modified = strftime('%Y-%m-%dT%H:%M:%S', 'now')
+        WHERE record_number = ?
     """;
 
         try (PreparedStatement pstmt = conn.prepareStatement(updateSql)) {
@@ -208,7 +222,8 @@ public class AnimalDAO implements IAnimalDAO {
             pstmt.setString(11, animal.getAilments());
             pstmt.setString(12, animal.getNeuteringDate());
             pstmt.setInt(13, animal.isAdopted() ? 1 : 0);
-            pstmt.setString(14, animal.getRecordNumber());
+            pstmt.setInt(14, animal.isSynced() ? 1 : 0);
+            pstmt.setString(15, animal.getRecordNumber());
 
             int rowsAffected = pstmt.executeUpdate();
 
@@ -226,7 +241,7 @@ public class AnimalDAO implements IAnimalDAO {
 
     }
     /**
-     * In this delete we are using a LOGIC delete
+     * In this method, we are using a LOGIC delete
      * */
     @Override
     public void deleteAnimal(String recordNumber) throws Exception {
@@ -279,7 +294,7 @@ public class AnimalDAO implements IAnimalDAO {
     }
 
     /**
-     *  Private method to map the info of the animal, it is used in every method of the class, that his purpose is
+     *  Private method to map the info of the animal, it is used in every method of the class that his purpose is
      *  to search for a specific animal.
      */
     private Animal mapResultSetToAnimal(ResultSet rs) throws SQLException {
@@ -298,7 +313,7 @@ public class AnimalDAO implements IAnimalDAO {
         animal.setNeuteringDate(rs.getString("neutering_date"));
         animal.setAdopted(rs.getInt("adopted") == 1);
         animal.setSynced(rs.getInt("synced") == 1);
-
+        animal.setLastModified(rs.getString("last_modified"));
         return animal;
     }
 }

@@ -5,7 +5,6 @@ import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
 
 import java.util.List;
-import java.util.UUID;
 
 public class AnimalService implements IAnimalService{
 
@@ -16,14 +15,20 @@ public class AnimalService implements IAnimalService{
     }
 
     @Override
-    public void registerAnimal(Animal animal) throws Exception {
+    public boolean registerAnimal(Animal animal) throws Exception {
 
         animalDAO.insertAnimal(animal);
+        return true;
     }
 
     @Override
     public List<Animal> getActiveAnimals() throws Exception {
         return animalDAO.getAllAnimals();
+    }
+
+    @Override
+    public Animal findByRecordNumber(String recordNumber) throws Exception {
+        return animalDAO.findByRecordNumber(recordNumber);
     }
 
     @Override

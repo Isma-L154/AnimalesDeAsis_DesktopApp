@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.asosiaciondeasis.animalesdeasis.Controller.Animal.CreateAnimalController"
+      spacing="15" alignment="TOP_CENTER" styleClass="form-pane">
+
+        <padding>
+            <Insets top="25" right="35" bottom="25" left="35"/>
+        </padding>
+
+        <Label text="🐾 Registrar Nuevo Animal" styleClass="form-title"/>
+
+    <!-- Name and Species -->
+    <HBox spacing="20">
+        <VBox>
+            <Label text="Nombre"/>
+            <TextField fx:id="nameField" promptText="Nombre del animal"/>
+        </VBox>
+        <VBox>
+            <Label text="Especie"/>
+            <ComboBox fx:id="speciesComboBox"/>
+        </VBox>
+    </HBox>
+
+    <!-- Sex and age Approx -->
+    <HBox spacing="20">
+        <VBox>
+            <Label text="Sexo"/>
+            <ComboBox fx:id="sexComboBox"/>
+        </VBox>
+        <VBox>
+            <Label text="Edad Aproximada (años)"/>
+            <Spinner fx:id="ageSpinner" />
+        </VBox>
+    </HBox>
+
+    <!-- Place and Person -->
+    <HBox spacing="20">
+        <VBox>
+            <Label text="Lugar de Rescate"/>
+            <ComboBox fx:id="placeComboBox"/>
+        </VBox>
+        <VBox>
+            <Label text="Recogido por"/>
+            <TextField fx:id="collectedByField" promptText="Nombre de quien lo recogió"/>
+        </VBox>
+    </HBox>
+
+    <!-- Dates -->
+    <HBox spacing="20">
+        <VBox>
+            <Label text="Fecha de Ingreso"/>
+            <DatePicker fx:id="admissionDatePicker"/>
+        </VBox>
+        <VBox>
+            <Label text="Fecha de Castración"/>
+            <DatePicker fx:id="neuteringDatePicker"/>
+        </VBox>
+    </HBox>
+
+    <!-- Chip Status -->
+    <HBox spacing="20">
+        <VBox>
+            <Label text="Número de Chip"/>
+            <TextField fx:id="chipNumberField" promptText="Escanee o escriba el número de chip"/>
+        </VBox>
+        <VBox alignment="BOTTOM_CENTER">
+            <Button fx:id="scanBarcodeButton" text="📷 Escanear Código de Barras" onAction="#handleScanBarcode"/>
+        </VBox>
+    </HBox>
+
+    <!-- Reason and ailments -->
+    <VBox>
+        <Label text="Razón de Rescate"/>
+        <TextArea fx:id="rescueReasonArea" prefRowCount="2"/>
+        <Label text="Afecciones Médicas"/>
+        <TextArea fx:id="ailmentsArea" prefRowCount="2"/>
+    </VBox>
+
+    <!-- Save Button -->
+    <Button fx:id="saveButton" text="Guardar Animal" onAction="#handleSave" styleClass="save-button"/>
+
+
+</VBox>

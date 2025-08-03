@@ -13,7 +13,7 @@ import com.google.cloud.firestore.*;
 import com.google.firebase.cloud.FirestoreClient;
 
 import java.sql.Connection;
-import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -61,41 +61,45 @@ public class SyncService {
      * Fetches data from Firebase and stores it in the local SQLite database
      * only if it doesn't already exist locally.
      */
-    private void PullChanges() throws Exception{
+    private void PullChanges() throws Exception {
         Firestore db = FirestoreClient.getFirestore();
-        try{
-            /** Get the animals from the DB (FireBase) */
+        try {
             ApiFuture<QuerySnapshot> query = db.collection("animals").get();
             List<QueryDocumentSnapshot> documents = query.get().getDocuments();
 
-            for(QueryDocumentSnapshot doc : documents){
-                Animal animal = doc.toObject(Animal.class);
+            for (QueryDocumentSnapshot doc : documents) {
+                Animal firebaseAnimal = doc.toObject(Animal.class);
+                String recordNumber = firebaseAnimal.getRecordNumber();
 
-                /** Check if animal exists locally by recordNumber or chipNumber */
-                Animal localAnimal = animalDAO.findByChipNumber(animal.getChipNumber());
-                if (localAnimal ==  null){
-                    animal.setSynced(true);
-                    animalDAO.insertAnimal(animal);
+                Animal localAnimal = animalDAO.findByRecordNumber(recordNumber);
 
-                    /** Pull vaccines subcollection for this animal */
-                    CollectionReference vaccinesRef = doc.getReference().collection("vaccines");
-                    ApiFuture<QuerySnapshot> vaccineQuery = vaccinesRef.get();
-                    List<QueryDocumentSnapshot> vaccineDocs = vaccineQuery.get().getDocuments();
+                if (localAnimal == null) {
 
-                    for (QueryDocumentSnapshot vaccineDoc : vaccineDocs) {
-                        Vaccine vaccine = vaccineDoc.toObject(Vaccine.class);
-                        vaccine.setAnimalRecordNumber(animal.getRecordNumber());
-                        vaccine.setSynced(true);
-                        vaccineDAO.insertVaccine(vaccine);
+                    firebaseAnimal.setSynced(true);
+                    animalDAO.insertAnimal(firebaseAnimal);
+                    pullVaccines(doc, recordNumber);
+                    System.out.println("⬇ Animal inserted from Firebase: " + recordNumber);
+
+                } else {
+
+                    LocalDateTime firebaseModified = LocalDateTime.parse(firebaseAnimal.getLastModified());
+                    LocalDateTime localModified = LocalDateTime.parse(localAnimal.getLastModified());
+
+                    if (firebaseModified.isAfter(localModified)) {
+
+                        firebaseAnimal.setSynced(true);
+                        animalDAO.updateAnimal(firebaseAnimal);
+                        pullVaccines(doc, recordNumber);
+                        System.out.println("🔁 Animal updated from Firebase: " + recordNumber);
+                    } else {
+
+                        System.out.println("⏭️ Local version is newer, skipping: " + recordNumber);
                     }
-                    System.out.println("⬇ Animal synced from Firebase: " + animal.getRecordNumber());
                 }
-
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
     }
 
 
@@ -130,4 +134,24 @@ public class SyncService {
             System.out.println("Animal synced to Firebase: " + animal.getRecordNumber());
         }
     }
+
+    private void pullVaccines(QueryDocumentSnapshot doc, String recordNumber) throws Exception {
+        CollectionReference vaccinesRef = doc.getReference().collection("vaccines");
+        ApiFuture<QuerySnapshot> vaccineQuery = vaccinesRef.get();
+        List<QueryDocumentSnapshot> vaccineDocs = vaccineQuery.get().getDocuments();
+
+        for (QueryDocumentSnapshot vaccineDoc : vaccineDocs) {
+            Vaccine vaccine = vaccineDoc.toObject(Vaccine.class);
+            vaccine.setAnimalRecordNumber(recordNumber);
+
+            if (!vaccineDAO.existsVaccine(vaccine.getId())) {
+                vaccine.setSynced(true);
+                vaccineDAO.insertVaccine(vaccine);
+            } else {
+                // Similar lógica: comparar fechas si es necesario
+            }
+        }
+    }
+
+
 }

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+
+
+<?import javafx.scene.control.Button?>
+
+<HBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      alignment="CENTER_LEFT"
+      styleClass="header"
+      spacing="20">
+
+    <Button fx:id="toggleButton" text="☰"
+            styleClass="toggle-button"/>
+
+    <Region HBox.hgrow="ALWAYS"/>
+
+    <ImageView fx:id="logoImage"
+               fitHeight="150"
+               fitWidth="150"
+               pickOnBounds="true"
+               preserveRatio="true"
+               style="-fx-cursor: default;">
+        <image>
+            <Image url="@/images/AdeAsisLogo.png"/>
+        </image>
+    </ImageView>
+
+    <Region HBox.hgrow="ALWAYS"/>
+
+</HBox>
+

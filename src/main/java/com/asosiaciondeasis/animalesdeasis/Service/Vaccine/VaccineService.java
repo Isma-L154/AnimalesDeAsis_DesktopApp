@@ -31,4 +31,9 @@ public class VaccineService implements IVaccineService {
     public void deleteVaccine(int id) throws Exception {
         vaccineDAO.deleteVaccine(id);
     }
+
+    @Override
+    public boolean existsVaccine(int id) throws Exception {
+        return vaccineDAO.existsVaccine(id);
+    }
 }

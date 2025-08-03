@@ -1,36 +1,49 @@
 package com.asosiaciondeasis.animalesdeasis;
 
+import com.asosiaciondeasis.animalesdeasis.Controller.WelcomeController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
-import java.io.IOException;
-import com.asosiaciondeasis.animalesdeasis.Config.SQLiteSetup;
+import java.util.Objects;
 
+public class Main extends Application {
 
-public class Main {
-    public static void main(String[] args) {
-        //Initialize the App before loading the UI.
+    @Override
+    public void init() {
         AppInitializer.initializeApp();
     }
-}
 
-/**
-public class Main extends Application {
     @Override
-    public void start(Stage stage) throws IOException {
+    public void start(Stage stage) throws Exception {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/WelcomeView.fxml"));
+        Parent root = loader.load();
 
+        WelcomeController controller = loader.getController();
+        controller.setStage(stage);
 
-        FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("hello-view.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 320, 240);
-        stage.setTitle("Hello!");
+        Scene scene = new Scene(root);
+        stage.setTitle("Asociación de Asís");
         stage.setScene(scene);
+        stage.setMaximized(true);
+        stage.setResizable(true);
+
+        stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/images/AdeAsisLogo.png"))));
+
+        scene.setOnMousePressed(e -> {
+            if (stage.isMaximized()) {
+                e.consume();
+            }
+        });
+
+        stage.centerOnScreen();
         stage.show();
     }
 
     public static void main(String[] args) {
-        launch();
+        launch(args);
     }
 }
- */

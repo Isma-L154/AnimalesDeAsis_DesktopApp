@@ -5,10 +5,11 @@ import java.util.List;
 
 public interface IAnimalDAO {
 
-    void insertAnimal(Animal animal) throws Exception;
+    boolean insertAnimal(Animal animal) throws Exception;
 
     List<Animal> getAllAnimals() throws Exception;
 
+    Animal findByRecordNumber(String recordNumber) throws Exception;
     /**
      * Finds an animal by its unique ID or Filters.
      * @return The Animal object if found, otherwise null.

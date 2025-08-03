@@ -203,7 +203,7 @@ public class AnimalDAO implements IAnimalDAO {
         UPDATE animals
         SET chip_number = ?, barcode = ?, admission_date = ?, collected_by = ?, place_id = ?, 
             reason_for_rescue = ?, species = ?, approximate_age = ?, sex = ?, name = ?, ailments = ?, 
-            neutering_date = ?, adopted = ?, synced = ?, last_modified = datetime('now')
+            neutering_date = ?, adopted = ?, synced = ?, last_modified = strftime('%Y-%m-%dT%H:%M:%S', 'now')
         WHERE record_number = ?
     """;
 

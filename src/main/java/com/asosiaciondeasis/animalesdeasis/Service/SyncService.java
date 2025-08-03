@@ -13,7 +13,6 @@ import com.google.cloud.firestore.*;
 import com.google.firebase.cloud.FirestoreClient;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
 

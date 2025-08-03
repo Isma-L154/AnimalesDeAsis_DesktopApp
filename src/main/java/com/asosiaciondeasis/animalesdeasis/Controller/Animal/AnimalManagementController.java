@@ -1,4 +1,4 @@
-package com.asosiaciondeasis.animalesdeasis.Controller;
+package com.asosiaciondeasis.animalesdeasis.Controller.Animal;
 
 import com.asosiaciondeasis.animalesdeasis.Config.ServiceFactory;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;

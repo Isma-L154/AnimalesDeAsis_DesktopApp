@@ -1,8 +1,10 @@
 package com.asosiaciondeasis.animalesdeasis.Controller.Animal;
 
+import com.asosiaciondeasis.animalesdeasis.Abstraccions.IPortalAwareController;
 import com.asosiaciondeasis.animalesdeasis.Config.ServiceFactory;
+import com.asosiaciondeasis.animalesdeasis.Controller.PortalController;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
-import javafx.event.ActionEvent;
+
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -10,7 +12,7 @@ import javafx.scene.layout.HBox;
 
 import java.util.List;
 
-public class AnimalManagementController {
+public class AnimalManagementController implements IPortalAwareController {
 
     @FXML private TableView<Animal> animalTable;
     @FXML private TableColumn<Animal, Integer> idColumn;
@@ -20,11 +22,16 @@ public class AnimalManagementController {
     @FXML private TableColumn<Animal, String> adoptedColumn;
     @FXML private TableColumn<Animal, Void> actionsColumn;
     @FXML private Pagination pagination;
+    @FXML private Button CreateAnimal;
 
+    private PortalController portalController;
     private final int ROWS_PER_PAGE = 10;
     private List<Animal> allAnimals;
 
-
+    @Override
+    public void setPortalController(PortalController portalController) {
+        this.portalController = portalController;
+    }
     public void Initialize() throws Exception {
         try{
             // Initialize the animal table and pagination
@@ -73,8 +80,11 @@ public class AnimalManagementController {
         loadAnimals(0); // Load the first page of animals
     }
 
-    public void handleCreateAnimal(ActionEvent event) {
-
+    @FXML
+    public void handleCreateAnimal() {
+        if (portalController != null) {
+            portalController.loadContent("/fxml/Animal/CreateAnimal.fxml");
+        }
     }
 
     private void addActionButtons() {

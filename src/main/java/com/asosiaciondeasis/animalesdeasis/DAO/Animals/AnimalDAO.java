@@ -25,7 +25,7 @@ public class AnimalDAO implements IAnimalDAO {
      */
 
     @Override
-    public void insertAnimal(Animal animal) throws Exception {
+    public boolean insertAnimal(Animal animal) throws Exception {
         String sql = """
             INSERT INTO animals (
                 record_number, chip_number, barcode, admission_date,
@@ -52,10 +52,10 @@ public class AnimalDAO implements IAnimalDAO {
 
         pstmt.executeUpdate();
         System.out.println("✅ Animal inserted successfully.");
-
+        return true;
     } catch (SQLException e) {
         e.printStackTrace();
-        throw new Exception("Error inserting animal", e);
+        return false;
     }
 
     }

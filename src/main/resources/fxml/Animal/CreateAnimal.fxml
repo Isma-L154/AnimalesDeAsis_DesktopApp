@@ -36,7 +36,7 @@
         </VBox>
         <VBox>
             <Label text="Edad Aproximada (años)"/>
-            <TextField fx:id="ageField" promptText="Número entero"/>
+            <Spinner fx:id="ageSpinner" />
         </VBox>
     </HBox>
 

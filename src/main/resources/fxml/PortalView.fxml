@@ -4,6 +4,8 @@
 <?import javafx.scene.layout.*?>
 
 
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.asosiaciondeasis.animalesdeasis.Controller.PortalController"
@@ -18,7 +20,14 @@
     </left>
     <center>
         <StackPane fx:id="contentPane" styleClass="content-pane">
-            <Label text="Bienvenido al panel de administración"/>
+            <VBox alignment="CENTER" spacing="20">
+                <ImageView fx:id="logoImage" fitWidth="200" preserveRatio="true">
+                    <image>
+                        <Image url="@/images/AdeAsisLogo.png" />
+                    </image>
+                </ImageView>
+                <Label text="Bienvenido al panel de administración" />
+            </VBox>
         </StackPane>
     </center>
 

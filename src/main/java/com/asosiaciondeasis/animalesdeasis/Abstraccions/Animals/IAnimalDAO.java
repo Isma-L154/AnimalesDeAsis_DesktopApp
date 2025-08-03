@@ -5,7 +5,7 @@ import java.util.List;
 
 public interface IAnimalDAO {
 
-    void insertAnimal(Animal animal) throws Exception;
+    boolean insertAnimal(Animal animal) throws Exception;
 
     List<Animal> getAllAnimals() throws Exception;
 

@@ -4,7 +4,7 @@ import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import java.util.List;
 
 public interface IAnimalService {
-    void registerAnimal(Animal animal) throws Exception;
+    boolean registerAnimal(Animal animal) throws Exception;
     List<Animal> getActiveAnimals() throws Exception;
     Animal findByChipNumber(String chipNumber) throws Exception;
     Animal findByBarcode(String barcode) throws Exception;

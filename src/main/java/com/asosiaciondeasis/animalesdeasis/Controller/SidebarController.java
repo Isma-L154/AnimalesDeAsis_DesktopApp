@@ -1,9 +1,10 @@
 package com.asosiaciondeasis.animalesdeasis.Controller;
 
+import com.asosiaciondeasis.animalesdeasis.Abstraccions.IPortalAwareController;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 
-public class SidebarController {
+public class SidebarController implements IPortalAwareController {
 
     // This controller is responsible for the sidebar of the application.
     private PortalController portalController;
@@ -32,6 +33,7 @@ public class SidebarController {
         });
     }
 
+    @Override
     public void setPortalController(PortalController portalController) {
         this.portalController = portalController;
     }

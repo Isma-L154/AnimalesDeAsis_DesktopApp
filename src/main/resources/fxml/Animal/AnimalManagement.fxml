@@ -11,7 +11,7 @@
 
             <HBox spacing="20" alignment="CENTER_LEFT" styleClass="toolbar">
                  <Label text="Gestión de Animales" styleClass="section-title"/>
-                 <Button text="➕ Agregar Animal" onAction="#handleCreateAnimal" styleClass="create-button"/>
+                 <Button fx:id="CreateAnimal" text="➕ Agregar Animal" onAction="#handleCreateAnimal" styleClass="create-button"/>
             </HBox>
 
             <TableView fx:id="animalTable" prefHeight="500" styleClass="animal-table">

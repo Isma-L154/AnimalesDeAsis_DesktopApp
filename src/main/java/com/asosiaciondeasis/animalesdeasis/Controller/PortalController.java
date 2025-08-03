@@ -1,6 +1,7 @@
 package com.asosiaciondeasis.animalesdeasis.Controller;
 
 
+import com.asosiaciondeasis.animalesdeasis.Abstraccions.IPortalAwareController;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -75,10 +76,14 @@ public class PortalController {
      */
     public void loadContent(String fxmlPath) {
         try {
-
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             Parent content = loader.load();
-            // Ensure content fills the StackPane
+
+            Object controller = loader.getController();
+            if (controller instanceof IPortalAwareController) {
+                ((IPortalAwareController) controller).setPortalController(this);
+            }
+
             StackPane.setAlignment(content, javafx.geometry.Pos.CENTER);
             contentPane.getChildren().setAll(content);
 
@@ -87,7 +92,7 @@ public class PortalController {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Error");
             alert.setHeaderText("No se pudo cargar el contenido");
-            alert.setContentText("Erro al cargar: " + fxmlPath + "\n" + e.getMessage());
+            alert.setContentText("Error al cargar: " + fxmlPath + "\n" + e.getMessage());
             alert.showAndWait();
         }
     }

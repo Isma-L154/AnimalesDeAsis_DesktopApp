@@ -20,7 +20,7 @@ public class PlacesDAO implements IPlaceDAO {
     @Override
     public List<Place> getAllPlaces() {
         List<Place> places = new ArrayList<>();
-        String sql = "SELECT id, name FROM places ORDER BY name";
+        String sql = "SELECT id, name, province_id FROM places ORDER BY name";
 
         try (PreparedStatement stmt = conn.prepareStatement(sql);
                 ResultSet rs = stmt.executeQuery()) {
@@ -28,7 +28,8 @@ public class PlacesDAO implements IPlaceDAO {
             while (rs.next()) {
                 Place place = new Place(
                         rs.getInt("id"),
-                        rs.getString("name")
+                        rs.getString("name"),
+                        rs.getString("province_id")
                 );
                 places.add(place);
             }

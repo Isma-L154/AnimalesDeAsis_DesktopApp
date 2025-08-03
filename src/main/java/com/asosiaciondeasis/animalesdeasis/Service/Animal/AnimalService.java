@@ -15,9 +15,10 @@ public class AnimalService implements IAnimalService{
     }
 
     @Override
-    public void registerAnimal(Animal animal) throws Exception {
+    public boolean registerAnimal(Animal animal) throws Exception {
 
         animalDAO.insertAnimal(animal);
+        return true;
     }
 
     @Override

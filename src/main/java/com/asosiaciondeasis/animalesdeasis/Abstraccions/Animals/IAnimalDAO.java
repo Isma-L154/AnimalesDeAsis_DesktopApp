@@ -9,6 +9,7 @@ public interface IAnimalDAO {
 
     List<Animal> getAllAnimals() throws Exception;
 
+    Animal findByRecordNumber(String recordNumber) throws Exception;
     /**
      * Finds an animal by its unique ID or Filters.
      * @return The Animal object if found, otherwise null.

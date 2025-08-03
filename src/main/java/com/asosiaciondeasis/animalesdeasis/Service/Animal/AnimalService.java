@@ -27,6 +27,11 @@ public class AnimalService implements IAnimalService{
     }
 
     @Override
+    public Animal findByRecordNumber(String recordNumber) throws Exception {
+        return animalDAO.findByRecordNumber(recordNumber);
+    }
+
+    @Override
     public Animal findByChipNumber(String chipNumber) throws Exception {
         return animalDAO.findByChipNumber(chipNumber);
     }

@@ -7,6 +7,8 @@ public class Vaccine {
     private String vaccineName;
     private String vaccinationDate;
     private boolean synced;
+    private String lastModified;
+
 
     public Vaccine(){}
     /**
@@ -53,4 +55,8 @@ public class Vaccine {
     public boolean isSynced() {return synced;}
 
     public void setSynced(boolean synced) {this.synced = synced;}
+
+    public String getLastModified() {return lastModified;}
+
+    public void setLastModified(String lastModified) {this.lastModified = lastModified;}
 }

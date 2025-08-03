@@ -6,6 +6,7 @@ import java.util.List;
 public interface IAnimalService {
     boolean registerAnimal(Animal animal) throws Exception;
     List<Animal> getActiveAnimals() throws Exception;
+    Animal findByRecordNumber(String recordNumber) throws Exception;
     Animal findByChipNumber(String chipNumber) throws Exception;
     Animal findByBarcode(String barcode) throws Exception;
     List<Animal> findByFilters(String species, String startDate, String endDate, Boolean adopted) throws Exception;

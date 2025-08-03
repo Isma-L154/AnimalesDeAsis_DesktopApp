@@ -94,6 +94,21 @@ public class AnimalDAO implements IAnimalDAO {
     }
 
     @Override
+    public Animal findByRecordNumber(String recordNumber) throws Exception {
+        String sql = "SELECT * FROM animals WHERE record_number = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, recordNumber);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return mapResultSetToAnimal(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @Override
     public Animal findByChipNumber(String chipNumber) throws Exception {
 
         String sql = "SELECT * FROM animals WHERE chip_number = ? AND active = 1";
@@ -185,12 +200,11 @@ public class AnimalDAO implements IAnimalDAO {
     @Override
     public void updateAnimal(Animal animal) throws Exception {
         String updateSql = """
-        UPDATE animals SET
-            chip_number = ?, barcode = ?, admission_date = ?,
-            collected_by = ?, place_id = ?, reason_for_rescue = ?,
-            species = ?, approximate_age = ?, sex = ?, name = ?,
-            ailments = ?, neutering_date = ?, adopted = ?
-        WHERE record_number = ? AND active = 1
+        UPDATE animals
+        SET chip_number = ?, barcode = ?, admission_date = ?, collected_by = ?, place_id = ?, 
+            reason_for_rescue = ?, species = ?, approximate_age = ?, sex = ?, name = ?, ailments = ?, 
+            neutering_date = ?, adopted = ?, synced = ?, last_modified = datetime('now')
+        WHERE record_number = ?
     """;
 
         try (PreparedStatement pstmt = conn.prepareStatement(updateSql)) {
@@ -208,7 +222,8 @@ public class AnimalDAO implements IAnimalDAO {
             pstmt.setString(11, animal.getAilments());
             pstmt.setString(12, animal.getNeuteringDate());
             pstmt.setInt(13, animal.isAdopted() ? 1 : 0);
-            pstmt.setString(14, animal.getRecordNumber());
+            pstmt.setInt(14, animal.isSynced() ? 1 : 0);
+            pstmt.setString(15, animal.getRecordNumber());
 
             int rowsAffected = pstmt.executeUpdate();
 
@@ -298,7 +313,7 @@ public class AnimalDAO implements IAnimalDAO {
         animal.setNeuteringDate(rs.getString("neutering_date"));
         animal.setAdopted(rs.getInt("adopted") == 1);
         animal.setSynced(rs.getInt("synced") == 1);
-
+        animal.setLastModified(rs.getString("last_modified"));
         return animal;
     }
 }

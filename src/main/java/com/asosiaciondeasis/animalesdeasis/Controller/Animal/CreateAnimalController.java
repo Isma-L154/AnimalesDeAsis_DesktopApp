@@ -1,5 +1,7 @@
 package com.asosiaciondeasis.animalesdeasis.Controller.Animal;
 
+import com.asosiaciondeasis.animalesdeasis.Abstraccions.IPortalAwareController;
+import com.asosiaciondeasis.animalesdeasis.Controller.PortalController;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Model.Place;
 import com.asosiaciondeasis.animalesdeasis.Service.Animal.AnimalService;
@@ -9,24 +11,21 @@ import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
 import com.asosiaciondeasis.animalesdeasis.Util.BarcodeScannerUtil;
 
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.geometry.Pos;
-import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
 import javafx.util.StringConverter;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class CreateAnimalController {
+public class CreateAnimalController implements IPortalAwareController {
 
     @FXML private TextField nameField;
     @FXML private ComboBox<String> speciesComboBox;
@@ -37,18 +36,21 @@ public class CreateAnimalController {
     @FXML private DatePicker admissionDatePicker;
     @FXML private DatePicker neuteringDatePicker;
     @FXML private TextField chipNumberField;
-    @FXML private TextField barcodeField;
     @FXML private TextArea rescueReasonArea;
     @FXML private TextArea ailmentsArea;
-    @FXML private CheckBox adoptedCheckBox;
     @FXML private Button scanBarcodeButton;
     @FXML private Button saveButton;
     @FXML private StackPane rootPane;
 
+
     private final AnimalService animalService = ServiceFactory.getAnimalService();
     private final PlaceService placeService = ServiceFactory.getPlaceService();
     private final BarcodeScannerUtil scannerUtil = new BarcodeScannerUtil();
+
+    private CheckBox adoptedCheckBox;
+    private String scannedChipNumber = null;
     private List<Place> allPlaces;
+    private PortalController portalController;
 
     @FXML
     public void initialize() {
@@ -126,13 +128,19 @@ public class CreateAnimalController {
                 .orElse(null);
     }
 
-
-
     @FXML
     public void handleScanBarcode() {
         scannerUtil.startScanning(code -> {
-            barcodeField.setText(code);
-            chipNumberField.setText(code);
+            this.scannedChipNumber = code;
+
+            Platform.runLater(() -> {
+                chipNumberField.setText(code);
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Éxito");
+                alert.setHeaderText(null);
+                alert.setContentText("Código escaneado exitosamente.");
+                alert.showAndWait();
+            });
         });
     }
 
@@ -141,10 +149,17 @@ public class CreateAnimalController {
         if (!validateInputs()) return;
 
         Animal animal = Animal.createNew();
-        animal.setChipNumber(chipNumberField.getText().trim());
-        animal.setBarcode(barcodeField.getText().trim());
+        String chip = (scannedChipNumber != null && !scannedChipNumber.isBlank())
+                ? scannedChipNumber.trim()
+                : chipNumberField.getText().trim();
+
+        if (chip != null && !chip.isBlank()) {
+            animal.setChipNumber(chip);
+        }
+
         animal.setAdmissionDate(DateUtils.convertToIsoFormat(admissionDatePicker.getValue()));
         animal.setCollectedBy(collectedByField.getText().trim());
+
         Place selectedPlace = getSelectedPlace();
         if (selectedPlace != null) {
             animal.setPlaceId(selectedPlace.getId());
@@ -155,11 +170,13 @@ public class CreateAnimalController {
         animal.setSex(sexComboBox.getValue());
         animal.setName(nameField.getText().trim());
         animal.setAilments(ailmentsArea.getText().trim());
-        if (neuteringDatePicker.getValue() != null)
+
+        if (neuteringDatePicker.getValue() != null) {
             animal.setNeuteringDate(DateUtils.convertToIsoFormat(neuteringDatePicker.getValue()));
-        else
-            animal.setNeuteringDate(null);
-        animal.setAdopted(adoptedCheckBox.isSelected());
+        }else{
+            animal.setNeuteringDate(null);}
+
+        animal.setAdopted(false);
         animal.setSynced(false);
 
         boolean saved = animalService.registerAnimal(animal);
@@ -172,14 +189,10 @@ public class CreateAnimalController {
     }
 
     private void goToAnimalModule() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/AnimalModule.fxml"));
-            Parent content = loader.load();
-            StackPane.setAlignment(content, Pos.CENTER);
-            rootPane.getChildren().setAll(content);
-        } catch (IOException e) {
-            e.printStackTrace();
-            showError("No se pudo cargar el módulo de animales.");
+        if (portalController != null) {
+            portalController.loadContent("/fxml/Animal/AnimalManagement.fxml");
+        } else {
+            showError("No se pudo cambiar de módulo: portalController es null.");
         }
     }
 
@@ -189,11 +202,6 @@ public class CreateAnimalController {
         String name = nameField.getText().trim();
 
         Pattern noSpecialChars = Pattern.compile("^[a-zA-Z0-9\\s]+$");
-
-        if (chip.isEmpty() || collectedBy.isEmpty() || name.isEmpty()) {
-            showError("Todos los campos obligatorios deben estar completos.");
-            return false;
-        }
 
         if (!noSpecialChars.matcher(name).matches()) {
             showError("El nombre no debe contener caracteres especiales.");
@@ -223,4 +231,7 @@ public class CreateAnimalController {
         alert.setContentText(msg);
         alert.showAndWait();
     }
+
+    @Override
+    public void setPortalController(PortalController controller) {this.portalController = controller;}
 }

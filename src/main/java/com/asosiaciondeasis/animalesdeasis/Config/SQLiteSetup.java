@@ -77,6 +77,7 @@ public class SQLiteSetup {
                         adopted INTEGER NOT NULL DEFAULT 0, -- 0 = Not adopted, 1 = Adopted
                         active INTEGER NOT NULL DEFAULT 1, -- 1 = Active, 0 = Deleted (soft delete)
                         synced INTEGER NOT NULL DEFAULT 0, -- 0 = Not synced, 1 = Synced
+                        last_modified TEXT NOT NULL DEFAULT (datetime('now')), -- Last modified date
                         FOREIGN KEY (place_id) REFERENCES places(id) ON DELETE SET NULL
                     );
                     """;
@@ -88,6 +89,7 @@ public class SQLiteSetup {
                         vaccine_name TEXT NOT NULL,
                         vaccination_date TEXT,
                         synced INTEGER NOT NULL DEFAULT 0, -- 0 = Not synced, 1 = Synced
+                        last_modified TEXT NOT NULL DEFAULT (datetime('now')), -- Last modified date
                         FOREIGN KEY (animal_record_number) REFERENCES animals(record_number) ON DELETE CASCADE
                     );
                     """;
@@ -97,7 +99,6 @@ public class SQLiteSetup {
             stmt.execute(createPlaces);
             stmt.execute(createAnimals);
             stmt.execute(createVaccines);
-
             /**
              * Check if provinces table is empty, if not, we call the API to import the info of the GEO of CR
              * */

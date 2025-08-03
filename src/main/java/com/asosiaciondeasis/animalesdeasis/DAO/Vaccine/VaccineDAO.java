@@ -73,7 +73,7 @@ public class VaccineDAO implements IVaccineDAO {
     public void updateVaccine(Vaccine vaccine) throws Exception {
         String sql = """
         UPDATE vaccines
-        SET vaccine_name = ?, vaccination_date = ?
+        SET vaccine_name = ?, vaccination_date = ?, last_modified = datetime('now')
         WHERE id = ?
     """;
 
@@ -134,6 +134,19 @@ public class VaccineDAO implements IVaccineDAO {
         return vaccines;
     }
 
+    @Override
+    public boolean existsVaccine(int id) throws Exception {
+        String sql = "SELECT 1 FROM vaccines WHERE id = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+            ResultSet rs = pstmt.executeQuery();
+            return rs.next();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     private Vaccine mapResultSetToVaccine(ResultSet rs) throws SQLException {
         Vaccine vaccine = new Vaccine(
                 rs.getInt("id"),
@@ -142,6 +155,7 @@ public class VaccineDAO implements IVaccineDAO {
                 rs.getString("vaccination_date")
         );
         vaccine.setSynced(rs.getInt("synced") == 1);
+        vaccine.setLastModified(rs.getString("last_modified"));
         return vaccine;
     }
 }

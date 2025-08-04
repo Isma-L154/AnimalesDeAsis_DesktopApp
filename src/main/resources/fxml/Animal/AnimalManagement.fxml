@@ -16,12 +16,12 @@
 
             <TableView fx:id="animalTable" prefHeight="500" styleClass="animal-table">
                 <columns>
-                    <TableColumn fx:id="idColumn" text="ID" prefWidth="60"/>
                     <TableColumn fx:id="nameColumn" text="Nombre"/>
                     <TableColumn fx:id="speciesColumn" text="Especie"/>
-                    <TableColumn fx:id="sexColumn" text="Sexo"/>
-                    <TableColumn fx:id="adoptedColumn" text="Adoptado"/>
-                    <TableColumn fx:id="actionsColumn" text="Acciones" prefWidth="180"/>
+                    <TableColumn fx:id="idAdmissionDate" text="Fecha de Ingreso" prefWidth="150"/>
+                    <TableColumn fx:id="sexColumn" text="Sexo" prefWidth="150"/>
+                    <TableColumn fx:id="adoptedColumn" text="Adoptado" prefWidth="150"/>
+                    <TableColumn fx:id="actionsColumn" text="Acciones" prefWidth="350"/>
                 </columns>
             </TableView>
 

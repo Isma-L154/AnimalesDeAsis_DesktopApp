@@ -24,7 +24,34 @@
 .animal-table .table-row-cell {
     -fx-cell-size: 40px;
 }
+.animal-table .table-cell {
+    -fx-alignment: CENTER;
+}
 
 .pagination {
-    -fx-padding: 20 0 0 0;
+    -fx-padding: 40 0 0 0;
 }
+
+.edit-btn,
+.delete-btn,
+.detail-btn {
+    -fx-font-weight: bold;
+    -fx-background-radius: 5;
+    -fx-cursor: hand;
+    -fx-padding: 5 10;
+    -fx-text-fill: white;
+    -fx-margin-right: 15px;
+}
+
+.edit-btn {
+    -fx-background-color: #F2921D;
+}
+
+.delete-btn {
+    -fx-background-color: #D1495B;
+}
+
+.detail-btn {
+    -fx-background-color: #0077B6;
+}
+

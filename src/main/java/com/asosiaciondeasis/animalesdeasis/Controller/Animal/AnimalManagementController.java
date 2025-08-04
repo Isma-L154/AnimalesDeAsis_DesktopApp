@@ -5,17 +5,22 @@ import com.asosiaciondeasis.animalesdeasis.Config.ServiceFactory;
 import com.asosiaciondeasis.animalesdeasis.Controller.PortalController;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 
+import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class AnimalManagementController implements IPortalAwareController {
 
     @FXML private TableView<Animal> animalTable;
-    @FXML private TableColumn<Animal, Integer> idColumn;
+    @FXML private TableColumn<Animal, String> idAdmissionDate;
     @FXML private TableColumn<Animal, String> nameColumn;
     @FXML private TableColumn<Animal, String> speciesColumn;
     @FXML private TableColumn<Animal, String> sexColumn;
@@ -32,17 +37,15 @@ public class AnimalManagementController implements IPortalAwareController {
     public void setPortalController(PortalController portalController) {
         this.portalController = portalController;
     }
-    public void Initialize() throws Exception {
+
+    @FXML
+    public void initialize(){
         try{
             // Initialize the animal table and pagination
             allAnimals = ServiceFactory.getAnimalService().getActiveAnimals();
-
-            //Set up the table columns and pagination
-            setUpTables();
+            setUpTables(); //Set up the table columns and pagination
             addActionButtons();
-
-            // Load the first page of animals
-            setUpPagination();
+            setUpPagination(); // Load the first page of animals
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -51,11 +54,24 @@ public class AnimalManagementController implements IPortalAwareController {
 
     private void setUpTables() {
         // Initialize the table columns and pagination
-        idColumn.setCellValueFactory(new PropertyValueFactory<>("recordNumber"));
+
         nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
         speciesColumn.setCellValueFactory(new PropertyValueFactory<>("species"));
+
+        idAdmissionDate.setCellValueFactory(cellData -> {
+            String isoDate = cellData.getValue().getAdmissionDate(); //admissionDate is in ISO format (yyyy-MM-dd)
+            LocalDate parsedDate = LocalDate.parse(isoDate);
+            String formattedDate = parsedDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+            return new SimpleStringProperty(formattedDate);
+        });
+
         sexColumn.setCellValueFactory(new PropertyValueFactory<>("sex"));
         adoptedColumn.setCellValueFactory(new PropertyValueFactory<>("adopted"));
+        adoptedColumn.setCellValueFactory(cellData -> {
+            boolean isAdopted = cellData.getValue().isAdopted();
+            String status = isAdopted ? "✅ Adoptado" : "❌ No";
+            return new ReadOnlyStringWrapper(status);
+        });
     }
 
     private void loadAnimals(int pageIndex) {
@@ -89,22 +105,27 @@ public class AnimalManagementController implements IPortalAwareController {
 
     private void addActionButtons() {
         actionsColumn.setCellFactory(col -> new TableCell<>() {
-            private final Button editBtn = new Button("✏️");
-            private final Button deleteBtn = new Button("🗑️");
+            private final Button editBtn = new Button("Editar");
+            private final Button deleteBtn = new Button("Eliminar");
+            private final Button detailBtn = new Button("Detalles");
 
             {
                 editBtn.setTooltip(new Tooltip("Editar Animal"));
                 deleteBtn.setTooltip(new Tooltip("Desactivar Animal"));
+                detailBtn.setTooltip(new Tooltip("Ver Detalles"));
 
-
-                // Inline CSS styles
-                editBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-padding: 5 10; -fx-background-radius: 5; -fx-cursor: hand;");
-                deleteBtn.setStyle("-fx-background-color: #F44336; -fx-text-fill: white; -fx-padding: 5 10; -fx-background-radius: 5; -fx-cursor: hand;");
-
+                editBtn.getStyleClass().add("edit-btn");
+                deleteBtn.getStyleClass().add("delete-btn");
+                detailBtn.getStyleClass().add("detail-btn");
 
                 editBtn.setOnAction(event -> {
                     Animal animal = getTableView().getItems().get(getIndex());
-                    //TODO Open edit form for this animal
+                    //TODO Open edit form for this animal, do it the same way as in CreateAnimalController
+                });
+
+                detailBtn.setOnAction(event -> {
+                    Animal animal = getTableView().getItems().get(getIndex());
+                    //TODO Open detail view for this animal, do it the same way as in CreateAnimalController
                 });
 
                 deleteBtn.setOnAction(event -> {
@@ -126,14 +147,20 @@ public class AnimalManagementController implements IPortalAwareController {
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
+
                 if (empty) {
                     setGraphic(null);
                     editBtn.setDisable(true);
                     deleteBtn.setDisable(true);
+                    detailBtn.setDisable(true);
                 } else {
                     editBtn.setDisable(false);
                     deleteBtn.setDisable(false);
-                    setGraphic(new HBox(5, editBtn, deleteBtn));
+                    detailBtn.setDisable(false);
+
+                    HBox buttonBox = new HBox(5, detailBtn, editBtn, deleteBtn);
+                    buttonBox.setAlignment(Pos.CENTER);
+                    setGraphic(buttonBox);
                 }
             }
         });

@@ -15,6 +15,7 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
@@ -143,7 +144,6 @@ public class CreateAnimalController implements IPortalAwareController {
             });
         });
     }
-
     @FXML
     public void handleSave() throws Exception {
         if (!validateInputs()) return;
@@ -188,7 +188,7 @@ public class CreateAnimalController implements IPortalAwareController {
         }
     }
 
-    private void goToAnimalModule() {
+    public void goToAnimalModule() {
         if (portalController != null) {
             portalController.loadContent("/fxml/Animal/AnimalManagement.fxml");
         } else {
@@ -208,8 +208,33 @@ public class CreateAnimalController implements IPortalAwareController {
             return false;
         }
 
+        if (speciesComboBox.getValue() == null) {
+            showError("Debe seleccionar una especie.");
+            return false;
+        }
+
+        if (sexComboBox.getValue() == null) {
+            showError("Debe seleccionar el sexo.");
+            return false;
+        }
+
+        if (ageSpinner.getValue() == null || ageSpinner.getValue() <= 0) {
+            showError("Debe ingresar una edad válida.");
+            return false;
+        }
+
+        if (admissionDatePicker.getValue() == null) {
+            showError("Debe seleccionar la fecha de ingreso.");
+            return false;
+        }
+
         if (getSelectedPlace() == null) {
             showError("Debe seleccionar un lugar.");
+            return false;
+        }
+
+        if (collectedBy.isEmpty()) {
+            showError("Debe indicar quién recogió al animal.");
             return false;
         }
 
@@ -234,4 +259,5 @@ public class CreateAnimalController implements IPortalAwareController {
 
     @Override
     public void setPortalController(PortalController controller) {this.portalController = controller;}
+
 }

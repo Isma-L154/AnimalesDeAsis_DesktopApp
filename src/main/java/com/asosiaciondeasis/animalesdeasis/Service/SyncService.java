@@ -61,6 +61,7 @@ public class SyncService {
      * Fetches data from Firebase and stores it in the local SQLite database
      * only if it doesn't already exist locally.
      */
+    //TODO Try to put the sync(true) before pushing the local changes
     private void PullChanges() throws Exception {
         Firestore db = FirestoreClient.getFirestore();
         try {
@@ -148,7 +149,7 @@ public class SyncService {
                 vaccine.setSynced(true);
                 vaccineDAO.insertVaccine(vaccine);
             } else {
-                // Similar lógica: comparar fechas si es necesario
+                // TODO handle updates if needed
             }
         }
     }

@@ -10,7 +10,7 @@ public interface IAnimalService {
     Animal findByChipNumber(String chipNumber) throws Exception;
     Animal findByBarcode(String barcode) throws Exception;
     List<Animal> findByFilters(String species, String startDate, String endDate, Boolean adopted) throws Exception;
-    void updateAnimal(Animal animal) throws Exception;
+    boolean updateAnimal(Animal animal) throws Exception;
     void deleteAnimal(String recordNumber) throws Exception;
     void reactivateAnimal(String recordNumber) throws Exception;
 }

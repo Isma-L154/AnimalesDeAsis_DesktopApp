@@ -1,21 +1,18 @@
 package com.asosiaciondeasis.animalesdeasis.Controller.Animal;
 
 import com.asosiaciondeasis.animalesdeasis.Abstraccions.IPortalAwareController;
+import com.asosiaciondeasis.animalesdeasis.Config.ServiceFactory;
 import com.asosiaciondeasis.animalesdeasis.Controller.PortalController;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Model.Place;
 import com.asosiaciondeasis.animalesdeasis.Service.Animal.AnimalService;
 import com.asosiaciondeasis.animalesdeasis.Service.Place.PlaceService;
-import com.asosiaciondeasis.animalesdeasis.Config.ServiceFactory;
-import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
 import com.asosiaciondeasis.animalesdeasis.Util.BarcodeScannerUtil;
-
-
+import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
 import com.asosiaciondeasis.animalesdeasis.Util.NavigationHelper;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
@@ -24,9 +21,10 @@ import javafx.util.StringConverter;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
-public class CreateAnimalController implements IPortalAwareController {
+public class EditAnimalController implements IPortalAwareController {
 
     @FXML private TextField nameField;
     @FXML private ComboBox<String> speciesComboBox;
@@ -39,26 +37,25 @@ public class CreateAnimalController implements IPortalAwareController {
     @FXML private TextField chipNumberField;
     @FXML private TextArea rescueReasonArea;
     @FXML private TextArea ailmentsArea;
-    @FXML private Button scanBarcodeButton;
-    @FXML private Button saveButton;
+    @FXML private Button updateButton;
+    @FXML private Button scanChipButton;
     @FXML private StackPane rootPane;
-
 
     private final AnimalService animalService = ServiceFactory.getAnimalService();
     private final PlaceService placeService = ServiceFactory.getPlaceService();
     private final BarcodeScannerUtil scannerUtil = new BarcodeScannerUtil();
 
-    private CheckBox adoptedCheckBox;
     private String scannedChipNumber = null;
-    private List<Place> allPlaces;
+    private Animal currentAnimal;
     private PortalController portalController;
+    private List<Place> allPlaces;
 
     @FXML
     public void initialize() {
         configureFields();
+        configureDatePickers();
         loadPlaces();
         setupPlaceFiltering();
-        configureDatePickers();
     }
 
     private void configureFields() {
@@ -71,35 +68,19 @@ public class CreateAnimalController implements IPortalAwareController {
     private void configureDatePickers() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
-
-        admissionDatePicker.setConverter(new StringConverter<>() {
-            @Override
-            public String toString(LocalDate date) {
+        StringConverter<LocalDate> converter = new StringConverter<>() {
+            @Override public String toString(LocalDate date) {
                 return date != null ? date.format(formatter) : "";
             }
-
-            @Override
-            public LocalDate fromString(String string) {
+            @Override public LocalDate fromString(String string) {
                 return string.isEmpty() ? null : LocalDate.parse(string, formatter);
             }
-        });
+        };
 
-        neuteringDatePicker.setConverter(new StringConverter<>() {
-            @Override
-            public String toString(LocalDate date) {
-                return date != null ? date.format(formatter) : "";
-            }
-
-            @Override
-            public LocalDate fromString(String string) {
-                return string.isEmpty() ? null : LocalDate.parse(string, formatter);
-            }
-        });
-
+        admissionDatePicker.setConverter(converter);
+        neuteringDatePicker.setConverter(converter);
         admissionDatePicker.setPromptText("dd-MM-yyyy");
         neuteringDatePicker.setPromptText("dd-MM-yyyy");
-
-        admissionDatePicker.setValue(LocalDate.now());
     }
 
     private void loadPlaces() {
@@ -111,87 +92,95 @@ public class CreateAnimalController implements IPortalAwareController {
         for (Place place : allPlaces) {
             placeNames.add(place.getName());
         }
-
         placeComboBox.setItems(placeNames);
-        placeComboBox.setEditable(false);
     }
 
+    public void setAnimalData(Animal animal) {
+        this.currentAnimal = animal;
+
+        nameField.setText(animal.getName());
+        speciesComboBox.setValue(animal.getSpecies());
+        sexComboBox.setValue(animal.getSex());
+        ageSpinner.getValueFactory().setValue(animal.getApproximateAge());
+        collectedByField.setText(animal.getCollectedBy());
+
+        admissionDatePicker.setValue(DateUtils.parseIsoToLocalDate(animal.getAdmissionDate()));
+        neuteringDatePicker.setValue(DateUtils.parseIsoToLocalDate(animal.getNeuteringDate()));
+
+        if (animal.getChipNumber() != null && !animal.getChipNumber().isBlank()) {
+            chipNumberField.setText(animal.getChipNumber());
+        } else if (animal.getBarcode() != null && !animal.getBarcode().isBlank()) {
+            chipNumberField.setText(animal.getBarcode());
+        } else {
+            chipNumberField.setText("");
+        }
+        rescueReasonArea.setText(animal.getReasonForRescue());
+        ailmentsArea.setText(animal.getAilments());
+
+        //TODO Replace with a more robust way to handle places, also put an if to check if the place is null
+            Place place = allPlaces.stream()
+                    .filter(p -> Objects.equals(p.getId(), animal.getPlaceId()))
+                    .findFirst()
+                    .orElse(null);
+            if (place != null) placeComboBox.setValue(place.getName());
+    }
 
     @FXML
-    private Place getSelectedPlace() {
-        String selectedName = (String) placeComboBox.getValue();
-        if (selectedName == null) return null;
+    public void handleScanBarcode() {
+        scannerUtil.startScanning(code -> Platform.runLater(() -> chipNumberField.setText(code)));
+    }
 
-        List<Place> allPlaces = placeService.getAllPlaces();
+    @FXML
+    public void handleUpdate() throws Exception {
+        if (!validateInputs()) return;
+
+        currentAnimal.setName(nameField.getText().trim());
+        currentAnimal.setSpecies(speciesComboBox.getValue());
+        currentAnimal.setSex(sexComboBox.getValue());
+        currentAnimal.setApproximateAge(ageSpinner.getValue());
+        currentAnimal.setCollectedBy(collectedByField.getText().trim());
+        currentAnimal.setAdmissionDate(DateUtils.convertToIsoFormat(admissionDatePicker.getValue()));
+
+        if (neuteringDatePicker.getValue() != null) {
+            currentAnimal.setNeuteringDate(DateUtils.convertToIsoFormat(neuteringDatePicker.getValue()));
+        } else {
+            currentAnimal.setNeuteringDate(null);
+        }
+
+        String chip = (scannedChipNumber != null && !scannedChipNumber.isBlank())
+                ? scannedChipNumber.trim()
+                : chipNumberField.getText();
+
+        currentAnimal.setChipNumber(chip != null ? chip.trim() : null);
+        currentAnimal.setBarcode(null);
+        currentAnimal.setReasonForRescue(rescueReasonArea.getText().trim());
+        currentAnimal.setAilments(ailmentsArea.getText().trim());
+
+        Place selectedPlace = getSelectedPlace();
+        if (selectedPlace != null) {
+            currentAnimal.setPlaceId(selectedPlace.getId());
+        }
+
+        boolean updated = animalService.updateAnimal(currentAnimal);
+        if (updated) {
+            showInfo("Animal actualizado exitosamente.");
+            NavigationHelper.goToAnimalModule(portalController);
+        } else {
+            showError("Ocurrió un error al actualizar el animal.");
+        }
+    }
+
+    private Place getSelectedPlace() {
+        String selectedName = placeComboBox.getValue();
         return allPlaces.stream()
                 .filter(p -> p.getName().equals(selectedName))
                 .findFirst()
                 .orElse(null);
     }
 
-    @FXML
-    public void handleScanBarcode() {
-        scannerUtil.startScanning(code -> {
-            this.scannedChipNumber = code;
-
-            Platform.runLater(() -> {
-                chipNumberField.setText(code);
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Éxito");
-                alert.setHeaderText(null);
-                alert.setContentText("Código escaneado exitosamente.");
-                alert.showAndWait();
-            });
-        });
-    }
-    @FXML
-    public void handleSave() throws Exception {
-        if (!validateInputs()) return;
-
-        Animal animal = Animal.createNew();
-        String chip = (scannedChipNumber != null && !scannedChipNumber.isBlank())
-                ? scannedChipNumber.trim()
-                : chipNumberField.getText().trim();
-
-        if (chip != null && !chip.isBlank()) {
-            animal.setChipNumber(chip);
-        }
-
-        animal.setAdmissionDate(DateUtils.convertToIsoFormat(admissionDatePicker.getValue()));
-        animal.setCollectedBy(collectedByField.getText().trim());
-
-        Place selectedPlace = getSelectedPlace();
-        if (selectedPlace != null) {
-            animal.setPlaceId(selectedPlace.getId());
-        }
-        animal.setReasonForRescue(rescueReasonArea.getText().trim());
-        animal.setSpecies(speciesComboBox.getValue());
-        animal.setApproximateAge(ageSpinner.getValue());
-        animal.setSex(sexComboBox.getValue());
-        animal.setName(nameField.getText().trim());
-        animal.setAilments(ailmentsArea.getText().trim());
-
-        if (neuteringDatePicker.getValue() != null) {
-            animal.setNeuteringDate(DateUtils.convertToIsoFormat(neuteringDatePicker.getValue()));
-        }else{
-            animal.setNeuteringDate(null);}
-
-        animal.setAdopted(false);
-        animal.setSynced(false);
-
-        boolean saved = animalService.registerAnimal(animal);
-        if (saved) {
-            showInfo("Animal registrado exitosamente.");
-            NavigationHelper.goToAnimalModule(portalController);
-        } else {
-            showError("Ocurrió un error al guardar el animal.");
-        }
-    }
-
     private boolean validateInputs() {
-        String chip = chipNumberField.getText().trim();
-        String collectedBy = collectedByField.getText().trim();
         String name = nameField.getText().trim();
+        String collectedBy = collectedByField.getText().trim();
 
         Pattern noSpecialChars = Pattern.compile("^[a-zA-Z0-9\\s]+$");
 
@@ -250,6 +239,12 @@ public class CreateAnimalController implements IPortalAwareController {
     }
 
     @Override
-    public void setPortalController(PortalController controller) {this.portalController = controller;}
-    public void goToAnimalModule() { NavigationHelper.goToAnimalModule(portalController);}
+    public void setPortalController(PortalController controller) {
+        this.portalController = controller;
+    }
+
+    @FXML
+    public void goToAnimalModule() {
+        NavigationHelper.goToAnimalModule(portalController);
+    }
 }

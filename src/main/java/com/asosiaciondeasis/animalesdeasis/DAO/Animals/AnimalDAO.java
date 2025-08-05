@@ -198,7 +198,7 @@ public class AnimalDAO implements IAnimalDAO {
 
 
     @Override
-    public void updateAnimal(Animal animal) throws Exception {
+    public boolean updateAnimal(Animal animal) throws Exception {
         String updateSql = """
         UPDATE animals
         SET chip_number = ?, barcode = ?, admission_date = ?, collected_by = ?, place_id = ?, 
@@ -232,13 +232,13 @@ public class AnimalDAO implements IAnimalDAO {
             }
 
             System.out.println("Animal updated successfully.");
+            return true;
         } catch (SQLException e) {
             if (e.getMessage().contains("UNIQUE constraint failed")) {
                 throw new Exception("❌ chip_number or barcode must be unique", e);
             }
             throw new Exception("Error updating animal -> ", e);
         }
-
     }
     /**
      * In this method, we are using a LOGIC delete

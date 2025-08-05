@@ -123,10 +123,28 @@ public class AnimalManagementController implements IPortalAwareController {
 
                 /**
                  * In this action buttons, we are not using the loadContent method, because we need to pass the object
+                 * and the loadContent method does not allow us to pass parameters. So we make an exception to the
+                 * rule and use the FXMLLoader to load the controller and set the data.
                  * */
                 editBtn.setOnAction(event -> {
                     Animal animal = getTableView().getItems().get(getIndex());
-                    //TODO Open edit view for this animal, do it the same way as in CreateAnimalController
+                    if (portalController != null) {
+                        try {
+                            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Animal/EditAnimal.fxml"));
+                            Parent root = loader.load();
+                            EditAnimalController editController = loader.getController();
+                            editController.setPortalController(portalController);
+                            editController.setAnimalData(animal);
+                            portalController.setContent(root);
+
+                        } catch (Exception e) {
+                            Alert alert = new Alert(Alert.AlertType.ERROR);
+                            alert.setTitle("Error");
+                            alert.setHeaderText("No se pudo cargar el formulario de edición");
+                            alert.setContentText(e.getMessage());
+                            alert.showAndWait();
+                        }
+                    }
                 });
 
                 detailBtn.setOnAction(event -> {
@@ -139,6 +157,7 @@ public class AnimalManagementController implements IPortalAwareController {
                             detailController.setPortalController(portalController);
                             detailController.setAnimalDetails(animal, ServiceFactory.getPlaceService().getAllPlaces());
                             portalController.setContent(root);
+
                         } catch (Exception e) {
                             Alert alert = new Alert(Alert.AlertType.ERROR);
                             alert.setTitle("Error");

@@ -34,7 +34,12 @@ public class DetailAnimalController implements IPortalAwareController {
 
         nameLabel.setText(validate(animal.getName()));
         speciesLabel.setText(validate(animal.getSpecies()));
-        ageLabel.setText(String.valueOf(animal.getApproximateAge()));
+        int age = animal.getApproximateAge();
+        if (age == 1) {
+            ageLabel.setText(age + " año");
+        } else {
+            ageLabel.setText(age + " años");
+        }
         sexLabel.setText(validate(animal.getSex()));
         chipNumberLabel.setText(validate(animal.getChipNumber()));
         barcodeLabel.setText(validate(animal.getBarcode()));

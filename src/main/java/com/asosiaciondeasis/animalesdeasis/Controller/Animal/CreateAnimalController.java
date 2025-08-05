@@ -11,6 +11,7 @@ import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
 import com.asosiaciondeasis.animalesdeasis.Util.BarcodeScannerUtil;
 
 
+import com.asosiaciondeasis.animalesdeasis.Util.NavigationHelper;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -182,17 +183,9 @@ public class CreateAnimalController implements IPortalAwareController {
         boolean saved = animalService.registerAnimal(animal);
         if (saved) {
             showInfo("Animal registrado exitosamente.");
-            goToAnimalModule();
+            NavigationHelper.goToAnimalModule(portalController);
         } else {
             showError("Ocurrió un error al guardar el animal.");
-        }
-    }
-
-    public void goToAnimalModule() {
-        if (portalController != null) {
-            portalController.loadContent("/fxml/Animal/AnimalManagement.fxml");
-        } else {
-            showError("No se pudo cambiar de módulo: portalController es null.");
         }
     }
 
@@ -259,5 +252,5 @@ public class CreateAnimalController implements IPortalAwareController {
 
     @Override
     public void setPortalController(PortalController controller) {this.portalController = controller;}
-
+    public void goToAnimalModule() { NavigationHelper.goToAnimalModule(portalController);}
 }

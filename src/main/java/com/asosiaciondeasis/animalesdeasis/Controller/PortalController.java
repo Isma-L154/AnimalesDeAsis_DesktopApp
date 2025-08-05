@@ -97,4 +97,8 @@ public class PortalController {
         }
     }
 
+    public void setContent(Parent node) {
+        contentPane.getChildren().setAll(node);
+    }
+
 }

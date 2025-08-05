@@ -25,7 +25,7 @@
                 <Separator styleClass="title-separator"/>
             </VBox>
 
-            <!-- Información Personal -->
+            <!-- Personal Info -->
             <VBox spacing="24" styleClass="form-card">
                 <Label text="Información Personal" styleClass="section-title"/>
                 <GridPane hgap="24" vgap="20" styleClass="form-grid">
@@ -34,13 +34,13 @@
                         <ColumnConstraints percentWidth="50"/>
                     </columnConstraints>
 
-                    <!-- Nombre -->
+                    <!-- Nome -->
                     <VBox spacing="8" GridPane.columnIndex="0" GridPane.rowIndex="0">
                         <Label text="Nombre" styleClass="field-label"/>
                         <TextField fx:id="nameField" promptText="Ingrese el nombre del animal" styleClass="custom-field"/>
                     </VBox>
 
-                    <!-- Especie -->
+                    <!-- Species -->
                     <VBox spacing="8" GridPane.columnIndex="1" GridPane.rowIndex="0">
                         <HBox spacing="4" alignment="CENTER_LEFT">
                             <Label text="Especie" styleClass="field-label"/>
@@ -49,7 +49,7 @@
                         <ComboBox fx:id="speciesComboBox" maxWidth="Infinity" styleClass="custom-combo" promptText="Seleccione una especie"/>
                     </VBox>
 
-                    <!-- Sexo -->
+                    <!-- Sex -->
                     <VBox spacing="8" GridPane.columnIndex="0" GridPane.rowIndex="1">
                         <HBox spacing="4" alignment="CENTER_LEFT">
                             <Label text="Sexo" styleClass="field-label"/>
@@ -58,7 +58,7 @@
                         <ComboBox fx:id="sexComboBox" maxWidth="Infinity" styleClass="custom-combo" promptText="Seleccione el sexo"/>
                     </VBox>
 
-                    <!-- Edad -->
+                    <!-- Age -->
                     <VBox spacing="8" GridPane.columnIndex="1" GridPane.rowIndex="1">
                         <HBox spacing="4" alignment="CENTER_LEFT">
                             <Label text="Edad Aproximada (años)" styleClass="field-label"/>
@@ -69,7 +69,7 @@
                 </GridPane>
             </VBox>
 
-            <!-- Información de Rescate -->
+            <!-- Info -->
             <VBox spacing="24" styleClass="form-card">
                 <Label text="Información de Rescate" styleClass="section-title"/>
                 <GridPane hgap="24" vgap="20" styleClass="form-grid">
@@ -78,7 +78,7 @@
                         <ColumnConstraints percentWidth="50"/>
                     </columnConstraints>
 
-                    <!-- Lugar -->
+                    <!-- Place -->
                     <VBox spacing="8" GridPane.columnIndex="0" GridPane.rowIndex="0">
                         <HBox spacing="4" alignment="CENTER_LEFT">
                             <Label text="Lugar de Rescate" styleClass="field-label"/>
@@ -87,7 +87,7 @@
                         <ComboBox fx:id="placeComboBox" maxWidth="Infinity" styleClass="custom-combo" promptText="Seleccione el lugar"/>
                     </VBox>
 
-                    <!-- Recogido por -->
+                    <!-- Collected By -->
                     <VBox spacing="8" GridPane.columnIndex="1" GridPane.rowIndex="0">
                         <HBox spacing="4" alignment="CENTER_LEFT">
                             <Label text="Recogido por" styleClass="field-label"/>
@@ -96,7 +96,7 @@
                         <TextField fx:id="collectedByField" promptText="Nombre de quien lo recogió" styleClass="custom-field"/>
                     </VBox>
 
-                    <!-- Fecha de Ingreso -->
+                    <!-- Admission Date -->
                     <VBox spacing="8" GridPane.columnIndex="0" GridPane.rowIndex="1">
                         <HBox spacing="4" alignment="CENTER_LEFT">
                             <Label text="Fecha de Ingreso" styleClass="field-label"/>
@@ -105,7 +105,7 @@
                         <DatePicker fx:id="admissionDatePicker" maxWidth="Infinity" styleClass="custom-date"/>
                     </VBox>
 
-                    <!-- Castración -->
+                    <!-- Neutering -->
                     <VBox spacing="8" GridPane.columnIndex="1" GridPane.rowIndex="1">
                         <Label text="Fecha de Castración" styleClass="field-label"/>
                         <DatePicker fx:id="neuteringDatePicker" maxWidth="Infinity" styleClass="custom-date"/>
@@ -113,7 +113,7 @@
                 </GridPane>
             </VBox>
 
-            <!-- Identificación -->
+            <!-- Chip Number or Barcode -->
             <VBox spacing="24" styleClass="form-card">
                 <Label text="Identificación" styleClass="section-title"/>
                 <HBox spacing="16" alignment="CENTER_LEFT">
@@ -127,7 +127,7 @@
                 </HBox>
             </VBox>
 
-            <!-- Información Adicional -->
+            <!-- Additional Info -->
             <VBox spacing="24" styleClass="form-card">
                 <Label text="Información Adicional" styleClass="section-title"/>
                 <VBox spacing="20">
@@ -144,13 +144,13 @@
                 </VBox>
             </VBox>
 
-            <!-- Botones -->
+            <!-- Buttons -->
             <HBox spacing="16" alignment="CENTER" styleClass="button-container">
                 <Button text="Cancelar" styleClass="cancel-button" onAction="#goToAnimalModule"/>
                 <Button fx:id="saveButton" text="Guardar Animal" onAction="#handleSave" styleClass="save-button"/>
             </HBox>
 
-            <!-- Espacio al final para scroll -->
+
             <VBox minHeight="30"/>
         </VBox>
        </HBox>

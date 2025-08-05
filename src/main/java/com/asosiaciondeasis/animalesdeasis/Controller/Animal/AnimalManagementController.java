@@ -8,7 +8,9 @@ import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
@@ -118,14 +120,33 @@ public class AnimalManagementController implements IPortalAwareController {
                 deleteBtn.getStyleClass().add("delete-btn");
                 detailBtn.getStyleClass().add("detail-btn");
 
+
+                /**
+                 * In this action buttons, we are not using the loadContent method, because we need to pass the object
+                 * */
                 editBtn.setOnAction(event -> {
                     Animal animal = getTableView().getItems().get(getIndex());
-                    //TODO Open edit form for this animal, do it the same way as in CreateAnimalController
+                    //TODO Open edit view for this animal, do it the same way as in CreateAnimalController
                 });
 
                 detailBtn.setOnAction(event -> {
                     Animal animal = getTableView().getItems().get(getIndex());
-                    //TODO Open detail view for this animal, do it the same way as in CreateAnimalController
+                    if (portalController != null) {
+                        try {
+                            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Animal/DetailAnimal.fxml"));
+                            Parent root = loader.load();
+                            DetailAnimalController detailController = loader.getController();
+                            detailController.setPortalController(portalController);
+                            detailController.setAnimalDetails(animal, ServiceFactory.getPlaceService().getAllPlaces());
+                            portalController.setContent(root);
+                        } catch (Exception e) {
+                            Alert alert = new Alert(Alert.AlertType.ERROR);
+                            alert.setTitle("Error");
+                            alert.setHeaderText("No se pudo cargar los detalles del animal");
+                            alert.setContentText(e.getMessage());
+                            alert.showAndWait();
+                        }
+                    }
                 });
 
                 deleteBtn.setOnAction(event -> {

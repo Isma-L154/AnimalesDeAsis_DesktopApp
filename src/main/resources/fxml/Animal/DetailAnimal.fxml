@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<ScrollPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.asosiaciondeasis.animalesdeasis.Controller.Animal.DetailAnimalController"
+            fitToWidth="true"
+            styleClass="detail-scroll-pane"
+            stylesheets="@/css/Animal/DetailAnimal.css">
+
+    <HBox alignment="CENTER">
+        <VBox spacing="30" alignment="TOP_CENTER"
+              styleClass="detail-main-container"
+              maxWidth="800" prefWidth="700">
+
+            <!-- Header Section -->
+            <VBox alignment="CENTER" spacing="10" styleClass="detail-header">
+
+                <Label text="Detalles del Animal" styleClass="detail-title" />
+
+                <Separator prefWidth="200" styleClass="detail-separator" />
+            </VBox>
+
+            <!-- Main Content Card -->
+            <VBox styleClass="detail-content-card">
+
+                <GridPane styleClass="detail-grid" alignment="CENTER">
+                    <columnConstraints>
+                        <ColumnConstraints halignment="CENTER" prefWidth="200" minWidth="200"/>
+                        <ColumnConstraints halignment="CENTER" prefWidth="350"/>
+                    </columnConstraints>
+
+                    <!-- Animal Name -->
+                    <Label text="Nombre:" GridPane.rowIndex="0" GridPane.columnIndex="0" styleClass="detail-field-label" />
+                    <Label fx:id="nameLabel" GridPane.rowIndex="0" GridPane.columnIndex="1" styleClass="detail-field-value" />
+
+                    <!-- Species -->
+                    <Label text="Especie:" GridPane.rowIndex="1" GridPane.columnIndex="0" styleClass="detail-field-label" />
+                    <Label fx:id="speciesLabel" GridPane.rowIndex="1" GridPane.columnIndex="1" styleClass="detail-field-value" />
+
+                    <!-- Gender -->
+                    <Label text="Sexo:" GridPane.rowIndex="2" GridPane.columnIndex="0" styleClass="detail-field-label" />
+                    <Label fx:id="sexLabel" GridPane.rowIndex="2" GridPane.columnIndex="1" styleClass="detail-field-value" />
+
+                    <!-- Approximate Age -->
+                    <Label text="Edad Aproximada:" GridPane.rowIndex="3" GridPane.columnIndex="0" styleClass="detail-field-label" />
+                    <Label fx:id="ageLabel" GridPane.rowIndex="3" GridPane.columnIndex="1" styleClass="detail-field-value" />
+
+                    <!-- Admission Date -->
+                    <Label text="Fecha de Ingreso:" GridPane.rowIndex="4" GridPane.columnIndex="0" styleClass="detail-field-label" />
+                    <Label fx:id="admissionDateLabel" GridPane.rowIndex="4" GridPane.columnIndex="1" styleClass="detail-field-value" />
+
+                    <!-- Neutering Date -->
+                    <Label text="Fecha de Castración:" GridPane.rowIndex="5" GridPane.columnIndex="0" styleClass="detail-field-label" />
+                    <Label fx:id="neuteringDateLabel" GridPane.rowIndex="5" GridPane.columnIndex="1" styleClass="detail-field-value" />
+
+                    <!-- Chip Number -->
+                    <Label text="Número de Chip:" GridPane.rowIndex="6" GridPane.columnIndex="0" styleClass="detail-field-label" />
+                    <Label fx:id="chipNumberLabel" GridPane.rowIndex="6" GridPane.columnIndex="1" styleClass="detail-field-value" />
+
+                    <!-- Barcode -->
+                    <Label text="Código de Barras:" GridPane.rowIndex="7" GridPane.columnIndex="0" styleClass="detail-field-label" />
+                    <Label fx:id="barcodeLabel" GridPane.rowIndex="7" GridPane.columnIndex="1" styleClass="detail-field-value" />
+
+                    <!-- Collected By -->
+                    <Label text="Recogido por:" GridPane.rowIndex="8" GridPane.columnIndex="0" styleClass="detail-field-label" />
+                    <Label fx:id="collectedByLabel" GridPane.rowIndex="8" GridPane.columnIndex="1" styleClass="detail-field-value" />
+
+                    <!-- Rescue Location -->
+                    <Label text="Lugar de Rescate:" GridPane.rowIndex="9" GridPane.columnIndex="0" styleClass="detail-field-label" />
+                    <Label fx:id="placeProvinceLabel" GridPane.rowIndex="9" GridPane.columnIndex="1" styleClass="detail-field-value" />
+
+                    <!-- Rescue Reason -->
+                    <Label text="Razón de Rescate:" GridPane.rowIndex="10" GridPane.columnIndex="0" styleClass="detail-field-label-top" />
+                    <Label fx:id="rescueReasonLabel" wrapText="true" GridPane.rowIndex="10" GridPane.columnIndex="1"
+                           styleClass="detail-field-value-multiline, detail-multiline-field" />
+
+                    <!-- Medical Conditions -->
+                    <Label text="Afecciones Médicas:" GridPane.rowIndex="11" GridPane.columnIndex="0" styleClass="detail-field-label-top" />
+                    <Label fx:id="ailmentsLabel" wrapText="true" GridPane.rowIndex="11" GridPane.columnIndex="1"
+                           styleClass="detail-field-value-multiline, detail-multiline-field" />
+                </GridPane>
+            </VBox>
+
+            <!-- Button Section -->
+            <HBox spacing="20" alignment="CENTER" styleClass="detail-button-container">
+                <Button text="Cancelar" styleClass="detail-button-base, detail-back-button" onAction="#goToAnimalModule"/>
+                <Button text="Editar" styleClass="detail-button-base, detail-edit-button" />
+            </HBox>
+
+        </VBox>
+    </HBox>
+</ScrollPane>

@@ -1,20 +1,18 @@
 package com.asosiaciondeasis.animalesdeasis.Controller.Animal;
 
 import com.asosiaciondeasis.animalesdeasis.Abstraccions.IPortalAwareController;
+import com.asosiaciondeasis.animalesdeasis.Config.ServiceFactory;
 import com.asosiaciondeasis.animalesdeasis.Controller.PortalController;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Model.Place;
 import com.asosiaciondeasis.animalesdeasis.Service.Animal.AnimalService;
 import com.asosiaciondeasis.animalesdeasis.Service.Place.PlaceService;
-import com.asosiaciondeasis.animalesdeasis.Config.ServiceFactory;
-import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
 import com.asosiaciondeasis.animalesdeasis.Util.BarcodeScannerUtil;
+import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
-
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
@@ -27,6 +25,9 @@ import java.util.regex.Pattern;
 
 public class CreateAnimalController implements IPortalAwareController {
 
+    private final AnimalService animalService = ServiceFactory.getAnimalService();
+    private final PlaceService placeService = ServiceFactory.getPlaceService();
+    private final BarcodeScannerUtil scannerUtil = new BarcodeScannerUtil();
     @FXML private TextField nameField;
     @FXML private ComboBox<String> speciesComboBox;
     @FXML private ComboBox<String> sexComboBox;
@@ -41,11 +42,6 @@ public class CreateAnimalController implements IPortalAwareController {
     @FXML private Button scanBarcodeButton;
     @FXML private Button saveButton;
     @FXML private StackPane rootPane;
-
-
-    private final AnimalService animalService = ServiceFactory.getAnimalService();
-    private final PlaceService placeService = ServiceFactory.getPlaceService();
-    private final BarcodeScannerUtil scannerUtil = new BarcodeScannerUtil();
 
     private CheckBox adoptedCheckBox;
     private String scannedChipNumber = null;
@@ -118,7 +114,7 @@ public class CreateAnimalController implements IPortalAwareController {
 
     @FXML
     private Place getSelectedPlace() {
-        String selectedName = (String) placeComboBox.getValue();
+        String selectedName = placeComboBox.getValue();
         if (selectedName == null) return null;
 
         List<Place> allPlaces = placeService.getAllPlaces();
@@ -143,6 +139,7 @@ public class CreateAnimalController implements IPortalAwareController {
             });
         });
     }
+
     @FXML
     public void handleSave() throws Exception {
         if (!validateInputs()) return;
@@ -172,18 +169,19 @@ public class CreateAnimalController implements IPortalAwareController {
 
         if (neuteringDatePicker.getValue() != null) {
             animal.setNeuteringDate(DateUtils.convertToIsoFormat(neuteringDatePicker.getValue()));
-        }else{
-            animal.setNeuteringDate(null);}
+        } else {
+            animal.setNeuteringDate(null);
+        }
 
         animal.setAdopted(false);
         animal.setSynced(false);
 
         boolean saved = animalService.registerAnimal(animal);
         if (saved) {
-            showInfo("Animal registrado exitosamente.");
+            NavigationHelper.showInfoAlert("Exito", "Animal actualizado exitosamente.");
             NavigationHelper.goToAnimalModule(portalController);
         } else {
-            showError("Ocurrió un error al guardar el animal.");
+            NavigationHelper.showErrorAlert("Error", null, "Ocurrió un error al actualizar el animal.");
         }
     }
 
@@ -195,60 +193,49 @@ public class CreateAnimalController implements IPortalAwareController {
         Pattern noSpecialChars = Pattern.compile("^[a-zA-Z0-9\\s]+$");
 
         if (!noSpecialChars.matcher(name).matches()) {
-            showError("El nombre no debe contener caracteres especiales.");
+            NavigationHelper.showErrorAlert("Error", null, "El nombre no debe contener caracteres especiales.");
             return false;
         }
 
         if (speciesComboBox.getValue() == null) {
-            showError("Debe seleccionar una especie.");
+            NavigationHelper.showErrorAlert("Error", null, "Debe seleccionar una especie.");
             return false;
         }
 
         if (sexComboBox.getValue() == null) {
-            showError("Debe seleccionar el sexo.");
+            NavigationHelper.showErrorAlert("Error", null, "Debe seleccionar el sexo.");
             return false;
         }
 
         if (ageSpinner.getValue() == null || ageSpinner.getValue() <= 0) {
-            showError("Debe ingresar una edad válida.");
+            NavigationHelper.showErrorAlert("Error", null, "Debe ingresar una edad válida.");
             return false;
         }
 
         if (admissionDatePicker.getValue() == null) {
-            showError("Debe seleccionar la fecha de ingreso.");
+            NavigationHelper.showErrorAlert("Error", null, "Debe seleccionar la fecha de ingreso.");
             return false;
         }
 
         if (getSelectedPlace() == null) {
-            showError("Debe seleccionar un lugar.");
+            NavigationHelper.showErrorAlert("Error", null, "Debe seleccionar un lugar.");
             return false;
         }
 
         if (collectedBy.isEmpty()) {
-            showError("Debe indicar quién recogió al animal.");
+            NavigationHelper.showErrorAlert("Error", null, "Debe indicar quién recogió al animal.");
             return false;
         }
 
         return true;
     }
 
-    private void showError(String msg) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Error");
-        alert.setHeaderText(null);
-        alert.setContentText(msg);
-        alert.showAndWait();
-    }
-
-    private void showInfo(String msg) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Información");
-        alert.setHeaderText(null);
-        alert.setContentText(msg);
-        alert.showAndWait();
-    }
-
     @Override
-    public void setPortalController(PortalController controller) {this.portalController = controller;}
-    public void goToAnimalModule() { NavigationHelper.goToAnimalModule(portalController);}
+    public void setPortalController(PortalController controller) {
+        this.portalController = controller;
+    }
+
+    public void goToAnimalModule() {
+        NavigationHelper.goToAnimalModule(portalController);
+    }
 }

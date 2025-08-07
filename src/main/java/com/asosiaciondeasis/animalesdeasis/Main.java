@@ -12,6 +12,10 @@ import java.util.Objects;
 
 public class Main extends Application {
 
+    public static void main(String[] args) {
+        launch(args);
+    }
+
     @Override
     public void init() {
         AppInitializer.initializeApp();
@@ -41,9 +45,5 @@ public class Main extends Application {
 
         stage.centerOnScreen();
         stage.show();
-    }
-
-    public static void main(String[] args) {
-        launch(args);
     }
 }

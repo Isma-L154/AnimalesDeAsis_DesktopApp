@@ -5,6 +5,7 @@ import com.asosiaciondeasis.animalesdeasis.DAO.Statistics.StatisticsDAO;
 
 import javax.swing.*;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.time.Month;
 import java.util.Date;
 import java.util.Locale;
@@ -21,7 +22,7 @@ public class CsvStatisticsExporter {
         this.statisticsDAO = statisticsDAO;
     }
 
-    public void export(int year) throws Exception{
+    public void export(int year) throws Exception {
 
         /** The user can choose where to save the csv file */
         JFileChooser fileChooser = new JFileChooser();
@@ -37,7 +38,7 @@ public class CsvStatisticsExporter {
 
         File selectedFile = fileChooser.getSelectedFile();
 
-        try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(selectedFile), "UTF-8"))) {
+        try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(selectedFile), StandardCharsets.UTF_8))) {
             writer.println("Asociación de Asís - Reporte de Estadísticas del Año " + year);
             writer.println("Generado el: " + new Date());
             writer.println("=".repeat(50));

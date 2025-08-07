@@ -2,7 +2,11 @@ package com.asosiaciondeasis.animalesdeasis.DAO.Vaccine;
 
 import com.asosiaciondeasis.animalesdeasis.Abstraccions.Vaccines.IVaccineDAO;
 import com.asosiaciondeasis.animalesdeasis.Model.Vaccine;
-import java.sql.*;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,7 +43,7 @@ public class VaccineDAO implements IVaccineDAO {
         List<Vaccine> vaccines = new ArrayList<>();
         String sql = "SELECT id, animal_record_number, vaccine_name, vaccination_date FROM vaccines WHERE animal_record_number = ?";
 
-        try(PreparedStatement pstmt = conn.prepareStatement(sql)){
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             /**
              * Set the parameter for the prepared statement with the animal's record number
@@ -64,18 +68,18 @@ public class VaccineDAO implements IVaccineDAO {
     /**
      * We have the Update in case there's a mistake in the name or the date, allowing the user
      * to make corrections without having to delete and reinsert the record.
-
+     * <p>
      * However, we are deliberately omitting traceability (e.g., edit history or audit logs)
-     *  to keep the system lightweight and simple.
-     * */
+     * to keep the system lightweight and simple.
+     */
 
     @Override
     public void updateVaccine(Vaccine vaccine) throws Exception {
         String sql = """
-        UPDATE vaccines
-        SET vaccine_name = ?, vaccination_date = ?, last_modified = datetime('now')
-        WHERE id = ?
-    """;
+                    UPDATE vaccines
+                    SET vaccine_name = ?, vaccination_date = ?, last_modified = datetime('now')
+                    WHERE id = ?
+                """;
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, vaccine.getVaccineName());
@@ -96,7 +100,7 @@ public class VaccineDAO implements IVaccineDAO {
 
     /**
      * This DOES NOT work as a Logic Delete
-     * */
+     */
     @Override
     public void deleteVaccine(int id) throws Exception {
         String sql = "DELETE FROM vaccines WHERE id = ?";
@@ -121,7 +125,7 @@ public class VaccineDAO implements IVaccineDAO {
         List<Vaccine> vaccines = new ArrayList<>();
         String sql = "SELECT * FROM vaccines WHERE animal_record_number = ? AND synced = 0";
 
-        try(PreparedStatement pstmt = conn.prepareStatement(sql)){
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, animalRecordNumber);
             ResultSet rs = pstmt.executeQuery();

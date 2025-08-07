@@ -5,12 +5,12 @@ import javafx.scene.control.Alert;
 
 public class NavigationHelper {
 
-    public static void goToAnimalModule(PortalController portalController){
+    public static void goToAnimalModule(PortalController portalController) {
 
         if (portalController != null) {
             portalController.loadContent("/fxml/Animal/AnimalManagement.fxml");
         } else {
-            showErrorAlert("Error","No se pudo cambiar de módulo","El controlador del portal es nulo.");
+            showErrorAlert("Error", "No se pudo cambiar de módulo", "El controlador del portal es nulo.");
         }
     }
 

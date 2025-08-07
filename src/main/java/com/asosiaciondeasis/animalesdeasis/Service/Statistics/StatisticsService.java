@@ -3,6 +3,7 @@ package com.asosiaciondeasis.animalesdeasis.Service.Statistics;
 
 import com.asosiaciondeasis.animalesdeasis.Abstraccions.Statistics.IStatisticsDAO;
 import com.asosiaciondeasis.animalesdeasis.Abstraccions.Statistics.IStatisticsService;
+
 import java.util.Map;
 
 public class StatisticsService implements IStatisticsService {

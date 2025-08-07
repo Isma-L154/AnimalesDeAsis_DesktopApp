@@ -1,6 +1,7 @@
 package com.asosiaciondeasis.animalesdeasis.Abstraccions.Animals;
 
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
+
 import java.util.List;
 
 public interface IAnimalDAO {
@@ -10,12 +11,16 @@ public interface IAnimalDAO {
     List<Animal> getAllAnimals() throws Exception;
 
     Animal findByRecordNumber(String recordNumber) throws Exception;
+
     /**
      * Finds an animal by its unique ID or Filters.
+     *
      * @return The Animal object if found, otherwise null.
      */
     Animal findByChipNumber(String chipNumber) throws Exception;
+
     Animal findByBarcode(String barcode) throws Exception;
+
     List<Animal> findByFilters(String species, String startDate, String endDate, Boolean adopted) throws Exception;
 
     boolean updateAnimal(Animal animal) throws Exception;

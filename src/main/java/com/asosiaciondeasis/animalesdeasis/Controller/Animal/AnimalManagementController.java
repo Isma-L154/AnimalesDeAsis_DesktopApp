@@ -5,7 +5,6 @@ import com.asosiaciondeasis.animalesdeasis.Config.ServiceFactory;
 import com.asosiaciondeasis.animalesdeasis.Controller.PortalController;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
-
 import javafx.animation.FadeTransition;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleStringProperty;
@@ -24,6 +23,7 @@ import java.util.List;
 
 public class AnimalManagementController implements IPortalAwareController {
 
+    private final int ROWS_PER_PAGE = 20;
     // Table components
     @FXML private TableView<Animal> animalTable;
     @FXML private TableColumn<Animal, String> idAdmissionDate;
@@ -47,7 +47,6 @@ public class AnimalManagementController implements IPortalAwareController {
     @FXML private Label resultsCountLabel;
 
     private PortalController portalController;
-    private final int ROWS_PER_PAGE = 10;
     private List<Animal> allAnimals;
     private List<Animal> filteredAnimals;
     private boolean filtersVisible = false;
@@ -58,8 +57,8 @@ public class AnimalManagementController implements IPortalAwareController {
     }
 
     @FXML
-    public void initialize(){
-        try{
+    public void initialize() {
+        try {
             // Initialize the animal table and pagination
             allAnimals = ServiceFactory.getAnimalService().getActiveAnimals();
             filteredAnimals = allAnimals; // Initially, all animals are shown
@@ -216,6 +215,7 @@ public class AnimalManagementController implements IPortalAwareController {
         }
     }
 
+    //TODO Fix the action buttons in the table
     private void addActionButtons() {
         actionsColumn.setCellFactory(col -> new TableCell<>() {
             private final Button editBtn = new Button("Editar");
@@ -284,9 +284,11 @@ public class AnimalManagementController implements IPortalAwareController {
                                 if (hasActiveFilters()) {
                                     handleApplyFilters();
                                 } else {
-                                    filteredAnimals = allAnimals;
+                                    filteredAnimals.clear();
+                                    filteredAnimals.addAll(allAnimals);
                                     setUpPagination();
                                     updateResultsCount();
+                                    getTableView().refresh();
                                 }
 
                                 NavigationHelper.showInfoAlert("Éxito", "Animal eliminado correctamente.");
@@ -333,7 +335,7 @@ public class AnimalManagementController implements IPortalAwareController {
     /**
      * We are doing this to initialize the combo boxes with default values, because in the FXML file
      * the system does not allow setting default values for ComboBoxes.
-     * */
+     */
     private void initializeComboBoxes() {
 
         speciesFilter.getItems().clear();

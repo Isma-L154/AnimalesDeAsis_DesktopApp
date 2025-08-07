@@ -6,7 +6,6 @@ import com.asosiaciondeasis.animalesdeasis.Controller.PortalController;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Model.Place;
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
-
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 
@@ -61,10 +60,17 @@ public class DetailAnimalController implements IPortalAwareController {
             placeProvinceLabel.setText("Sin información");
         }
     }
+
     private String validate(String value) {
         return (value == null || value.isEmpty()) ? "Sin información" : value;
     }
+
     @Override
-    public void setPortalController(PortalController controller) {this.portalController = controller;}
-    public void goToAnimalModule() { NavigationHelper.goToAnimalModule(portalController);}
+    public void setPortalController(PortalController controller) {
+        this.portalController = controller;
+    }
+
+    public void goToAnimalModule() {
+        NavigationHelper.goToAnimalModule(portalController);
+    }
 }

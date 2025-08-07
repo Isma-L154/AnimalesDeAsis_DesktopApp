@@ -26,7 +26,9 @@ public class Animal {
     private String lastModified;
 
 
-    public Animal(){}
+    public Animal() {
+    }
+
     private Animal(String recordNumber) {
         this.recordNumber = recordNumber;
     }
@@ -43,7 +45,7 @@ public class Animal {
 
     /**
      * Getters and Setters
-     * */
+     */
     public String getRecordNumber() {
         return recordNumber;
     }
@@ -159,15 +161,27 @@ public class Animal {
         this.barcode = barcode;
     }
 
-    public boolean isSynced() {return synced;}
+    public boolean isSynced() {
+        return synced;
+    }
 
-    public void setSynced(boolean synced) {this.synced = synced;}
+    public void setSynced(boolean synced) {
+        this.synced = synced;
+    }
 
-    public String getLastModified() {return lastModified;}
+    public String getLastModified() {
+        return lastModified;
+    }
 
-    public void setLastModified(String lastModified) {this.lastModified = lastModified;}
+    public void setLastModified(String lastModified) {
+        this.lastModified = lastModified;
+    }
 
-    public boolean isActive() {return active;}
+    public boolean isActive() {
+        return active;
+    }
 
-    public void setActive(boolean active) {this.active = active;}
+    public void setActive(boolean active) {
+        this.active = active;
+    }
 }

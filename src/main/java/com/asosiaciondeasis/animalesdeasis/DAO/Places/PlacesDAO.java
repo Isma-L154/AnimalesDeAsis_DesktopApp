@@ -21,11 +21,11 @@ public class PlacesDAO implements IPlaceDAO {
     public List<Place> getAllPlaces() {
         List<Place> places = new ArrayList<>();
         String sql = """
-        SELECT p.id, p.name, p.province_id, pr.name AS province_name
-        FROM places p
-        JOIN provinces pr ON p.province_id = pr.id
-        ORDER BY p.name
-        """;
+                SELECT p.id, p.name, p.province_id, pr.name AS province_name
+                FROM places p
+                JOIN provinces pr ON p.province_id = pr.id
+                ORDER BY p.name
+                """;
 
         try (PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {

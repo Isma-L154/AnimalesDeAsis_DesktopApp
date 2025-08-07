@@ -7,6 +7,7 @@ public class NetworkUtils {
 
     /**
      * Checks if the machine has internet access by trying to resolve a common domain (Google)
+     *
      * @return true if internet is available, false otherwise.
      */
     public static boolean isInternetAvailable() {

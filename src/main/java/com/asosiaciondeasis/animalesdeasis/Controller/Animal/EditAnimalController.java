@@ -26,6 +26,10 @@ import java.util.regex.Pattern;
 
 public class EditAnimalController implements IPortalAwareController {
 
+    private final AnimalService animalService = ServiceFactory.getAnimalService();
+    private final PlaceService placeService = ServiceFactory.getPlaceService();
+    private final BarcodeScannerUtil scannerUtil = new BarcodeScannerUtil();
+
     @FXML private TextField nameField;
     @FXML private ComboBox<String> speciesComboBox;
     @FXML private ComboBox<String> sexComboBox;
@@ -37,15 +41,12 @@ public class EditAnimalController implements IPortalAwareController {
     @FXML private TextField chipNumberField;
     @FXML private TextArea rescueReasonArea;
     @FXML private TextArea ailmentsArea;
+    @FXML private CheckBox adoptedCheckBox;
     @FXML private Button updateButton;
     @FXML private Button scanChipButton;
     @FXML private StackPane rootPane;
 
-    private final AnimalService animalService = ServiceFactory.getAnimalService();
-    private final PlaceService placeService = ServiceFactory.getPlaceService();
-    private final BarcodeScannerUtil scannerUtil = new BarcodeScannerUtil();
-
-    private String scannedChipNumber = null;
+    private final String scannedChipNumber = null;
     private Animal currentAnimal;
     private PortalController portalController;
     private List<Place> allPlaces;
@@ -69,10 +70,13 @@ public class EditAnimalController implements IPortalAwareController {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
         StringConverter<LocalDate> converter = new StringConverter<>() {
-            @Override public String toString(LocalDate date) {
+            @Override
+            public String toString(LocalDate date) {
                 return date != null ? date.format(formatter) : "";
             }
-            @Override public LocalDate fromString(String string) {
+
+            @Override
+            public LocalDate fromString(String string) {
                 return string.isEmpty() ? null : LocalDate.parse(string, formatter);
             }
         };
@@ -103,7 +107,7 @@ public class EditAnimalController implements IPortalAwareController {
         sexComboBox.setValue(animal.getSex());
         ageSpinner.getValueFactory().setValue(animal.getApproximateAge());
         collectedByField.setText(animal.getCollectedBy());
-
+        adoptedCheckBox.setSelected(animal.isAdopted());
         admissionDatePicker.setValue(DateUtils.parseIsoToLocalDate(animal.getAdmissionDate()));
         neuteringDatePicker.setValue(DateUtils.parseIsoToLocalDate(animal.getNeuteringDate()));
 
@@ -118,11 +122,11 @@ public class EditAnimalController implements IPortalAwareController {
         ailmentsArea.setText(animal.getAilments());
 
         //TODO Replace with a more robust way to handle places, also put an if to check if the place is null
-            Place place = allPlaces.stream()
-                    .filter(p -> Objects.equals(p.getId(), animal.getPlaceId()))
-                    .findFirst()
-                    .orElse(null);
-            if (place != null) placeComboBox.setValue(place.getName());
+        Place place = allPlaces.stream()
+                .filter(p -> Objects.equals(p.getId(), animal.getPlaceId()))
+                .findFirst()
+                .orElse(null);
+        if (place != null) placeComboBox.setValue(place.getName());
     }
 
     @FXML
@@ -140,7 +144,7 @@ public class EditAnimalController implements IPortalAwareController {
         currentAnimal.setApproximateAge(ageSpinner.getValue());
         currentAnimal.setCollectedBy(collectedByField.getText().trim());
         currentAnimal.setAdmissionDate(DateUtils.convertToIsoFormat(admissionDatePicker.getValue()));
-
+        currentAnimal.setAdopted(adoptedCheckBox.isSelected());
         if (neuteringDatePicker.getValue() != null) {
             currentAnimal.setNeuteringDate(DateUtils.convertToIsoFormat(neuteringDatePicker.getValue()));
         } else {
@@ -163,10 +167,10 @@ public class EditAnimalController implements IPortalAwareController {
         currentAnimal.setSynced(false);
         boolean updated = animalService.updateAnimal(currentAnimal);
         if (updated) {
-            showInfo("Animal actualizado exitosamente.");
+            NavigationHelper.showInfoAlert("Exito", "Animal actualizado exitosamente.");
             NavigationHelper.goToAnimalModule(portalController);
         } else {
-            showError("Ocurrió un error al actualizar el animal.");
+            NavigationHelper.showErrorAlert("Error", null, "Ocurrió un error al actualizar el animal.");
         }
     }
 
@@ -185,57 +189,40 @@ public class EditAnimalController implements IPortalAwareController {
         Pattern noSpecialChars = Pattern.compile("^[a-zA-Z0-9\\s]+$");
 
         if (!noSpecialChars.matcher(name).matches()) {
-            showError("El nombre no debe contener caracteres especiales.");
+            NavigationHelper.showErrorAlert("Error", null, "El nombre no debe contener caracteres especiales.");
             return false;
         }
 
         if (speciesComboBox.getValue() == null) {
-            showError("Debe seleccionar una especie.");
+            NavigationHelper.showErrorAlert("Error", null, "Debe seleccionar una especie.");
             return false;
         }
 
         if (sexComboBox.getValue() == null) {
-            showError("Debe seleccionar el sexo.");
+            NavigationHelper.showErrorAlert("Error", null, "Debe seleccionar el sexo.");
             return false;
         }
 
         if (ageSpinner.getValue() == null || ageSpinner.getValue() <= 0) {
-            showError("Debe ingresar una edad válida.");
+            NavigationHelper.showErrorAlert("Error", null, "Debe ingresar una edad válida.");
             return false;
         }
 
         if (admissionDatePicker.getValue() == null) {
-            showError("Debe seleccionar la fecha de ingreso.");
+            NavigationHelper.showErrorAlert("Error", null, "Debe seleccionar la fecha de ingreso.");
             return false;
         }
 
         if (getSelectedPlace() == null) {
-            showError("Debe seleccionar un lugar.");
+            NavigationHelper.showErrorAlert("Error", null, "Debe seleccionar un lugar.");
             return false;
         }
 
         if (collectedBy.isEmpty()) {
-            showError("Debe indicar quién recogió al animal.");
+            NavigationHelper.showErrorAlert("Error", null, "Debe indicar quién recogió al animal.");
             return false;
         }
-
         return true;
-    }
-
-    private void showError(String msg) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Error");
-        alert.setHeaderText(null);
-        alert.setContentText(msg);
-        alert.showAndWait();
-    }
-
-    private void showInfo(String msg) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Información");
-        alert.setHeaderText(null);
-        alert.setContentText(msg);
-        alert.showAndWait();
     }
 
     @Override

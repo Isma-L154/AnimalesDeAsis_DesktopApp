@@ -99,12 +99,13 @@
 .apply-filters-btn {
     -fx-background-color: linear-gradient(to bottom, #27ae60, #229954);
     -fx-text-fill: white;
-    -fx-font-size: 12px;
+    -fx-font-size: 13px;
     -fx-font-weight: bold;
-    -fx-padding: 8 15;
+    -fx-padding: 10 18;
     -fx-background-radius: 20;
     -fx-cursor: hand;
-    -fx-pref-width: 70;
+    -fx-pref-width: 85;
+    -fx-min-width: 85;
 }
 
 .apply-filters-btn:hover {
@@ -114,12 +115,13 @@
 .clear-filters-btn {
     -fx-background-color: linear-gradient(to bottom, #e74c3c, #c0392b);
     -fx-text-fill: white;
-    -fx-font-size: 12px;
+    -fx-font-size: 13px;
     -fx-font-weight: bold;
-    -fx-padding: 8 15;
+    -fx-padding: 10 18;
     -fx-background-radius: 20;
     -fx-cursor: hand;
-    -fx-pref-width: 70;
+    -fx-pref-width: 85;
+    -fx-min-width: 85;
 }
 
 .clear-filters-btn:hover {

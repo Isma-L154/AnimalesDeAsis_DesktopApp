@@ -2,7 +2,10 @@ package com.asosiaciondeasis.animalesdeasis.DAO.Statistics;
 
 import com.asosiaciondeasis.animalesdeasis.Abstraccions.Statistics.IStatisticsDAO;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -20,11 +23,11 @@ public class StatisticsDAO implements IStatisticsDAO {
     public Map<String, Integer> getMonthlyAdmissions(int year) throws Exception {
         Map<String, Integer> result = new LinkedHashMap<>();
         String sql = """
-        SELECT strftime('%m', admission_date) AS month, COUNT(*) AS count
-        FROM animals
-        WHERE active = 1 AND strftime('%Y', admission_date) = ?
-        GROUP BY month ORDER BY month
-    """;
+                    SELECT strftime('%m', admission_date) AS month, COUNT(*) AS count
+                    FROM animals
+                    WHERE active = 1 AND strftime('%Y', admission_date) = ?
+                    GROUP BY month ORDER BY month
+                """;
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, String.valueOf(year));
             ResultSet rs = pstmt.executeQuery();
@@ -44,10 +47,10 @@ public class StatisticsDAO implements IStatisticsDAO {
     public int getTotalAdmissions(int year) throws Exception {
 
         String sql = """
-        SELECT COUNT(*) AS total
-        FROM animals
-        WHERE active = 1 AND strftime('%Y', admission_date) = ?
-    """;
+                    SELECT COUNT(*) AS total
+                    FROM animals
+                    WHERE active = 1 AND strftime('%Y', admission_date) = ?
+                """;
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, String.valueOf(year));

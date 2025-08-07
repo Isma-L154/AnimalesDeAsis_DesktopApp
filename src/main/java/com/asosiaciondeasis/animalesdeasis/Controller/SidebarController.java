@@ -6,13 +6,13 @@ import javafx.scene.control.Label;
 
 public class SidebarController implements IPortalAwareController {
 
+    @FXML public Label statsLabel;
+    @FXML public Label animalsLabel;
     // This controller is responsible for the sidebar of the application.
     private PortalController portalController;
 
-    @FXML public Label statsLabel;
-    @FXML public Label animalsLabel;
-
-    public SidebarController() {}
+    public SidebarController() {
+    }
 
     /**
      * When the user clicks on the statsLabel, it will load the StatisticsManagement.fxml file

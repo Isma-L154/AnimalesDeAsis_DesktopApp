@@ -2,8 +2,8 @@ package com.asosiaciondeasis.animalesdeasis.Util;
 
 import com.github.sarxos.webcam.Webcam;
 import com.google.zxing.*;
-import com.google.zxing.common.HybridBinarizer;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
+import com.google.zxing.common.HybridBinarizer;
 import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Scene;
@@ -15,6 +15,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+import java.awt.*;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.util.concurrent.ExecutorService;
@@ -33,15 +34,10 @@ public class BarcodeScannerUtil {
     private Webcam webcam;
     private ExecutorService executor;
 
-    public interface ScanCallback {
-        void onCodeScanned(String code);
-    }
-
-
     /**
      * Starts the barcode scanning process using the default webcam.
      * The scanned code is returned through the provided callback.
-
+     * <p>
      * This method manages UI, webcam access and scanning in a separate thread.
      * Resources are properly released and errors are handled.
      *
@@ -60,9 +56,9 @@ public class BarcodeScannerUtil {
         executor.submit(() -> scanLoop(callback, imageView, stage));
     }
 
-
     /**
      * Initializes the webcam device.
+     *
      * @return true if successful, false otherwise.
      */
     private boolean initializeWebcam() {
@@ -113,9 +109,9 @@ public class BarcodeScannerUtil {
      * If a barcode is detected, it calls the callback and stops scanning.
      * If no barcode is detected, it continues scanning until stopped.
      *
-     * @param callback Callback to handle the scanned code.
+     * @param callback  Callback to handle the scanned code.
      * @param imageView ImageView to display the webcam feed.
-     * @param stage Stage to show the scanner UI.
+     * @param stage     Stage to show the scanner UI.
      */
     private void scanLoop(ScanCallback callback, ImageView imageView, Stage stage) {
         try {
@@ -196,5 +192,9 @@ public class BarcodeScannerUtil {
             alert.setContentText(message);
             alert.showAndWait();
         });
+    }
+
+    public interface ScanCallback {
+        void onCodeScanned(String code);
     }
 }

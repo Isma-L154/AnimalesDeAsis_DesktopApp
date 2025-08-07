@@ -1,30 +1,321 @@
+/* Contenedor principal */
 .animal-management-container {
     -fx-padding: 30;
+    -fx-background-color: linear-gradient(to bottom, #f8f9ff, #ffffff);
 }
 
 .section-title {
-    -fx-font-size: 24px;
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: linear-gradient(to right, #593414, #F2921D);
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 2, 0, 0, 1);
+}
+
+/* Botón principal mejorado */
+.create-button {
+    -fx-background-color: linear-gradient(to bottom, #F2921D, #E67E22);
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-padding: 12 20;
+    -fx-background-radius: 25;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(242, 146, 29, 0.4), 6, 0, 0, 2);
+    -fx-border-radius: 25;
+    -fx-transition: all 0.2s ease;
+}
+
+.create-button:hover {
+    -fx-background-color: linear-gradient(to bottom, #E67E22, #D68910);
+    -fx-effect: dropshadow(three-pass-box, rgba(242, 146, 29, 0.6), 8, 0, 0, 3);
+    -fx-scale-y: 1.05;
+    -fx-scale-x: 1.05;
+}
+
+/* Contenedor de filtros */
+.filter-container {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 15;
+    -fx-padding: 20;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 2);
+    -fx-border-color: #e8e8e8;
+    -fx-border-radius: 15;
+    -fx-border-width: 1;
+}
+
+.filter-label {
+    -fx-font-size: 16px;
     -fx-font-weight: bold;
     -fx-text-fill: #593414;
 }
 
-.create-button {
-    -fx-background-color: #F2921D;
+.toggle-filters-btn {
+    -fx-background-color: #ecf0f1;
+    -fx-text-fill: #34495e;
+    -fx-font-size: 12px;
+    -fx-padding: 6 12;
+    -fx-background-radius: 15;
+    -fx-cursor: hand;
+    -fx-border-color: #bdc3c7;
+    -fx-border-radius: 15;
+    -fx-border-width: 1;
+}
+
+.toggle-filters-btn:hover {
+    -fx-background-color: #d5dbdb;
+}
+
+.filters-box {
+    -fx-background-color: #f8f9fa;
+    -fx-background-radius: 10;
+    -fx-padding: 15;
+    -fx-border-color: #e9ecef;
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+}
+
+.filter-input-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #495057;
+}
+
+.filter-combo, .filter-date {
+    -fx-pref-width: 140;
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-border-color: #ced4da;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-padding: 5 10;
+}
+
+.filter-combo:focused, .filter-date:focused {
+    -fx-border-color: #F2921D;
+    -fx-effect: dropshadow(three-pass-box, rgba(242, 146, 29, 0.3), 4, 0, 0, 0);
+}
+
+/* Botones de filtro */
+.apply-filters-btn {
+    -fx-background-color: linear-gradient(to bottom, #27ae60, #229954);
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 10 18;
+    -fx-background-radius: 20;
+    -fx-cursor: hand;
+    -fx-pref-width: 85;
+    -fx-min-width: 85;
+}
+
+.apply-filters-btn:hover {
+    -fx-background-color: linear-gradient(to bottom, #229954, #1e8449);
+}
+
+.clear-filters-btn {
+    -fx-background-color: linear-gradient(to bottom, #e74c3c, #c0392b);
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 10 18;
+    -fx-background-radius: 20;
+    -fx-cursor: hand;
+    -fx-pref-width: 85;
+    -fx-min-width: 85;
+}
+
+.clear-filters-btn:hover {
+    -fx-background-color: linear-gradient(to bottom, #c0392b, #a93226);
+}
+
+/* Contenedor de búsqueda */
+.search-container {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 15;
+    -fx-padding: 15;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 8, 0, 0, 1);
+    -fx-border-color: #e8e8e8;
+    -fx-border-radius: 15;
+    -fx-border-width: 1;
+}
+
+.search-label {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #593414;
+}
+
+.search-field {
+    -fx-pref-width: 150;
+    -fx-background-color: white;
+    -fx-background-radius: 20;
+    -fx-border-color: #ced4da;
+    -fx-border-radius: 20;
+    -fx-border-width: 1;
+    -fx-padding: 8 15;
+}
+
+.search-field:focused {
+    -fx-border-color: #3498db;
+    -fx-effect: dropshadow(three-pass-box, rgba(52, 152, 219, 0.3), 4, 0, 0, 0);
+}
+
+.search-btn {
+    -fx-background-color: linear-gradient(to bottom, #3498db, #2980b9);
     -fx-text-fill: white;
     -fx-font-size: 14px;
-    -fx-padding: 8 16;
-    -fx-background-radius: 10;
+    -fx-padding: 8 12;
+    -fx-background-radius: 50;
+    -fx-cursor: hand;
+    -fx-pref-width: 35;
+    -fx-pref-height: 35;
+}
+
+.search-btn:hover {
+    -fx-background-color: linear-gradient(to bottom, #2980b9, #21618c);
+    -fx-scale-x: 1.1;
+    -fx-scale-y: 1.1;
+}
+
+.show-all-btn {
+    -fx-background-color: linear-gradient(to bottom, #9b59b6, #8e44ad);
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 8 15;
+    -fx-background-radius: 20;
     -fx-cursor: hand;
 }
 
-.create-button:hover {
-    -fx-background-color: #F28322;
+.show-all-btn:hover {
+    -fx-background-color: linear-gradient(to bottom, #8e44ad, #7d3c98);
+}
+
+/* Contador de resultados */
+.results-count {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #7f8c8d;
+    -fx-padding: 0 0 0 10;
+}
+
+/* Tabla mejorada con encabezados más legibles */
+.animal-table {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 15;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 15, 0, 0, 5);
+    -fx-border-color: #e8e8e8;
+    -fx-border-radius: 15;
+    -fx-border-width: 1;
+}
+
+.animal-table .column-header {
+    -fx-background-color: linear-gradient(to bottom, #593414, #4a2a11);
+    -fx-text-fill: #FFFFFF; /* Texto blanco para mejor contraste */
+    -fx-font-weight: bold;
+    -fx-font-size: 14px; /* Aumentamos un poco el tamaño */
+    -fx-padding: 12 8;
+    -fx-alignment: CENTER;
+    -fx-effect: dropshadow(three-pass-box, rgba(255,255,255,0.1), 1, 0, 0, 1); /* Sutil sombra blanca */
+}
+
+.animal-table .column-header .label {
+    -fx-text-fill: #FFFFFF; /* Asegurar que el label también sea blanco */
+    -fx-font-weight: bold;
+}
+
+.animal-table .column-header:first {
+    -fx-background-radius: 15 0 0 0;
+}
+
+.animal-table .column-header:last {
+    -fx-background-radius: 0 15 0 0;
 }
 
 .animal-table .table-row-cell {
-    -fx-cell-size: 40px;
+    -fx-cell-size: 45px;
+    -fx-border-color: transparent transparent #f1f2f6 transparent;
+    -fx-border-width: 0 0 1 0;
 }
 
+.animal-table .table-row-cell:hover {
+    -fx-background-color: #f8f9ff;
+    -fx-cursor: hand;
+}
+
+.animal-table .table-row-cell:selected {
+    -fx-background-color: linear-gradient(to right, #fef7e6, #fff3e0);
+    -fx-text-fill: #593414;
+}
+
+.animal-table .table-cell {
+    -fx-alignment: CENTER;
+    -fx-font-size: 13px;
+    -fx-text-fill: #2c3e50;
+    -fx-padding: 8;
+}
+
+.animal-table .table-row-cell:even {
+    -fx-background-color: #fafbfc;
+}
+
+/* Botones de acción mejorados */
+.edit-btn,
+.delete-btn,
+.detail-btn {
+    -fx-font-weight: bold;
+    -fx-background-radius: 15;
+    -fx-cursor: hand;
+    -fx-padding: 6 12;
+    -fx-text-fill: white;
+    -fx-font-size: 11px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 3, 0, 0, 1);
+    -fx-transition: all 0.2s ease;
+}
+
+.edit-btn {
+    -fx-background-color: linear-gradient(to bottom, #F2921D, #E67E22);
+}
+
+.edit-btn:hover {
+    -fx-background-color: linear-gradient(to bottom, #E67E22, #D68910);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+.delete-btn {
+    -fx-background-color: linear-gradient(to bottom, #D1495B, #B03A2E);
+}
+
+.delete-btn:hover {
+    -fx-background-color: linear-gradient(to bottom, #B03A2E, #922B21);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+.detail-btn {
+    -fx-background-color: linear-gradient(to bottom, #0077B6, #005577);
+}
+
+.detail-btn:hover {
+    -fx-background-color: linear-gradient(to bottom, #005577, #003d55);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+/* Paginación */
 .pagination {
     -fx-padding: 20 0 0 0;
+}
+
+.pagination .pagination-control .number-button {
+    -fx-background-color: #ecf0f1;
+    -fx-text-fill: #34495e;
+    -fx-background-radius: 20;
+    -fx-cursor: hand;
+}
+
+.pagination .pagination-control .number-button:selected {
+    -fx-background-color: linear-gradient(to bottom, #F2921D, #E67E22);
+    -fx-text-fill: white;
 }

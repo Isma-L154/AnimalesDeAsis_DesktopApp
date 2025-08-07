@@ -1,12 +1,13 @@
 package com.asosiaciondeasis.animalesdeasis.Service.Animal;
 
-import com.asosiaciondeasis.animalesdeasis.Abstraccions.Animals.*;
+import com.asosiaciondeasis.animalesdeasis.Abstraccions.Animals.IAnimalDAO;
+import com.asosiaciondeasis.animalesdeasis.Abstraccions.Animals.IAnimalService;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
 
 import java.util.List;
 
-public class AnimalService implements IAnimalService{
+public class AnimalService implements IAnimalService {
 
     private final IAnimalDAO animalDAO;
 
@@ -53,9 +54,9 @@ public class AnimalService implements IAnimalService{
     }
 
     @Override
-    public void updateAnimal(Animal animal) throws Exception {
-
+    public boolean updateAnimal(Animal animal) throws Exception {
         animalDAO.updateAnimal(animal);
+        return true;
     }
 
     @Override

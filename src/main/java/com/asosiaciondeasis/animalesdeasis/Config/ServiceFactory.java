@@ -14,7 +14,7 @@ import java.sql.SQLException;
 
 public class ServiceFactory {
 
-    private static Connection conn;
+    private static final Connection conn;
 
     static {
         try {
@@ -36,5 +36,7 @@ public class ServiceFactory {
         return new StatisticsService(new StatisticsDAO(conn));
     }
 
-    public static PlaceService getPlaceService() {return new PlaceService(new PlacesDAO(conn));}
+    public static PlaceService getPlaceService() {
+        return new PlaceService(new PlacesDAO(conn));
+    }
 }

@@ -1,7 +1,9 @@
 package com.asosiaciondeasis.animalesdeasis.Service.Vaccine;
 
-import com.asosiaciondeasis.animalesdeasis.Abstraccions.Vaccines.*;
+import com.asosiaciondeasis.animalesdeasis.Abstraccions.Vaccines.IVaccineDAO;
+import com.asosiaciondeasis.animalesdeasis.Abstraccions.Vaccines.IVaccineService;
 import com.asosiaciondeasis.animalesdeasis.Model.Vaccine;
+
 import java.util.List;
 
 public class VaccineService implements IVaccineService {

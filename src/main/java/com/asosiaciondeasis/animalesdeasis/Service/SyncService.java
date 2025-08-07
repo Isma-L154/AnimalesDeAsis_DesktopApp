@@ -1,13 +1,11 @@
 package com.asosiaciondeasis.animalesdeasis.Service;
 
-import com.asosiaciondeasis.animalesdeasis.Config.DatabaseConnection;
+import com.asosiaciondeasis.animalesdeasis.Config.FirebaseConfig;
 import com.asosiaciondeasis.animalesdeasis.DAO.Animals.AnimalDAO;
 import com.asosiaciondeasis.animalesdeasis.DAO.Vaccine.VaccineDAO;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Model.Vaccine;
 import com.asosiaciondeasis.animalesdeasis.Util.NetworkUtils;
-import com.asosiaciondeasis.animalesdeasis.Config.FirebaseConfig;
-
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.google.firebase.cloud.FirestoreClient;
@@ -44,15 +42,15 @@ public class SyncService {
      * First checks for internet, then pulls remote changes (If there's any of course) and pushes local changes.
      */
 
-    public void sync(){
-        if (!NetworkUtils.isInternetAvailable()){
+    public void sync() {
+        if (!NetworkUtils.isInternetAvailable()) {
             System.out.println("No internet connection");
             return;
         }
-        try{
+        try {
             PullChanges();
             PushChanges();
-        }catch(Exception e){
+        } catch (Exception e) {
             System.out.println("Sync process failed -> " + e.getMessage());
         }
     }
@@ -61,6 +59,7 @@ public class SyncService {
      * Fetches data from Firebase and stores it in the local SQLite database
      * only if it doesn't already exist locally.
      */
+    //TODO Try to put the sync(true) before pushing the local changes
     private void PullChanges() throws Exception {
         Firestore db = FirestoreClient.getFirestore();
         try {
@@ -107,15 +106,15 @@ public class SyncService {
      * Uploads local records (animals and vaccines) to Firebase if they are marked as unsynced (synced = 0).
      * After a successful upload, sets the synced flag to 1 in SQLite.
      */
-    private void PushChanges() throws Exception{
+    private void PushChanges() throws Exception {
         Firestore db = FirestoreClient.getFirestore();
 
         /** Get all local animals that are NOT synced */
         List<Animal> unsyncedAnimals = animalDAO.getUnsyncedAnimals();
-        if (unsyncedAnimals.isEmpty()){
+        if (unsyncedAnimals.isEmpty()) {
             System.out.println("Nothing to sync");
         }
-        for(Animal animal : unsyncedAnimals){
+        for (Animal animal : unsyncedAnimals) {
             DocumentReference animalDoc = db.collection("animals").document(animal.getRecordNumber());
             ApiFuture<WriteResult> writeResult = animalDoc.set(animal);
             writeResult.get(); // Wait for upload to finish
@@ -148,7 +147,7 @@ public class SyncService {
                 vaccine.setSynced(true);
                 vaccineDAO.insertVaccine(vaccine);
             } else {
-                // Similar lógica: comparar fechas si es necesario
+                // TODO handle updates if needed
             }
         }
     }

@@ -1,0 +1,120 @@
+/* AnimalDetail.css */
+
+/* Root container styles */
+.detail-scroll-pane {
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: transparent;
+}
+
+.detail-main-container {
+    -fx-padding: 40;
+    -fx-background-color: #f8f9fa;
+}
+
+/* Header section styles */
+.detail-header {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 12;
+    -fx-padding: 30;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);
+}
+
+.detail-title {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c3e50;
+}
+
+.detail-separator {
+    -fx-background-color: #3498db;
+    -fx-pref-height: 3;
+    -fx-background-radius: 2;
+}
+
+/* Content card styles */
+.detail-content-card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 12;
+    -fx-padding: 35;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);
+}
+
+.detail-grid {
+    -fx-hgap: 25;
+    -fx-vgap: 20;
+    -fx-alignment: center;
+}
+
+/* Label styles */
+.detail-field-label {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #34495e;
+    -fx-alignment: center-right;
+}
+
+.detail-field-label-top {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #34495e;
+    -fx-alignment: top-center;
+}
+
+.detail-field-value {
+    -fx-font-size: 14px;
+    -fx-text-fill: #2c3e50;
+    -fx-background-color: #ecf0f1;
+    -fx-padding: 8 12;
+    -fx-background-radius: 6;
+    -fx-alignment: center;
+}
+
+.detail-field-value-multiline {
+    -fx-font-size: 14px;
+    -fx-text-fill: #2c3e50;
+    -fx-background-color: #ecf0f1;
+    -fx-padding: 12;
+    -fx-background-radius: 6;
+    -fx-alignment: center;
+}
+
+/* Button styles */
+.detail-button-container {
+    -fx-padding: 20 0 0 0;
+}
+
+.detail-button-base {
+    -fx-pref-width: 120;
+    -fx-pref-height: 40;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-cursor: hand;
+}
+
+.detail-back-button {
+    -fx-background-color: #95a5a6;
+    -fx-text-fill: white;
+}
+
+.detail-back-button:hover {
+    -fx-background-color: #7f8c8d;
+    -fx-opacity: 0.9;
+}
+
+.detail-edit-button {
+    -fx-background-color: #3498db;
+    -fx-text-fill: white;
+}
+
+.detail-edit-button:hover {
+    -fx-background-color: #2980b9;
+    -fx-opacity: 0.9;
+}
+
+/* Responsive adjustments */
+.detail-multiline-field {
+    -fx-pref-width: 300;
+    -fx-max-width: 300;
+}

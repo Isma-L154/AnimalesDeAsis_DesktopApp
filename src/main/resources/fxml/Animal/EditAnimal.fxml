@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<StackPane xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="com.asosiaciondeasis.animalesdeasis.Controller.Animal.EditAnimalController"
+           stylesheets="@/css/Animal/EditForm.css"
+           styleClass="form-root">
+
+    <ScrollPane styleClass="main-scroll" fitToWidth="true" vbarPolicy="AS_NEEDED" hbarPolicy="NEVER">
+        <HBox alignment="CENTER">
+            <VBox spacing="32" alignment="TOP_CENTER" maxWidth="800" styleClass="form-container">
+                <padding>
+                    <Insets top="40" bottom="40" left="32" right="32"/>
+                </padding>
+
+                <!-- Header -->
+                <VBox alignment="CENTER" spacing="12" styleClass="header-section">
+                    <Label text="✏️" styleClass="icon-label"/>
+                    <Label text="Editar Información del Animal" styleClass="form-title"/>
+                    <Label text="Modifique los datos necesarios del animal registrado en el sistema" styleClass="form-subtitle"/>
+                    <Separator styleClass="title-separator"/>
+                </VBox>
+
+                <!-- Personal Info -->
+                <VBox spacing="24" styleClass="form-card">
+                    <Label text="Información Personal" styleClass="section-title"/>
+                    <GridPane hgap="24" vgap="20" styleClass="form-grid">
+                        <columnConstraints>
+                            <ColumnConstraints percentWidth="50"/>
+                            <ColumnConstraints percentWidth="50"/>
+                        </columnConstraints>
+
+                        <!-- Name -->
+                        <VBox spacing="8" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                            <Label text="Nombre" styleClass="field-label"/>
+                            <TextField fx:id="nameField" promptText="Ingrese el nombre del animal" styleClass="custom-field"/>
+                        </VBox>
+
+                        <!-- Species -->
+                        <VBox spacing="8" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                            <HBox spacing="4" alignment="CENTER_LEFT">
+                                <Label text="Especie" styleClass="field-label"/>
+                                <Label text="*" styleClass="required-asterisk"/>
+                            </HBox>
+                            <ComboBox fx:id="speciesComboBox" maxWidth="Infinity" styleClass="custom-combo" promptText="Seleccione una especie"/>
+                        </VBox>
+
+                        <!-- Sex -->
+                        <VBox spacing="8" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                            <HBox spacing="4" alignment="CENTER_LEFT">
+                                <Label text="Sexo" styleClass="field-label"/>
+                                <Label text="*" styleClass="required-asterisk"/>
+                            </HBox>
+                            <ComboBox fx:id="sexComboBox" maxWidth="Infinity" styleClass="custom-combo" promptText="Seleccione el sexo"/>
+                        </VBox>
+
+                        <!-- Age -->
+                        <VBox spacing="8" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                            <HBox spacing="4" alignment="CENTER_LEFT">
+                                <Label text="Edad Aproximada (años)" styleClass="field-label"/>
+                                <Label text="*" styleClass="required-asterisk"/>
+                            </HBox>
+                            <Spinner fx:id="ageSpinner" maxWidth="Infinity" styleClass="custom-spinner"/>
+                        </VBox>
+                        <VBox spacing="8" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="2">
+                            <CheckBox fx:id="adoptedCheckBox" text="Adoptado:" styleClass="custom-checkbox"/>
+                        </VBox>
+                    </GridPane>
+                </VBox>
+
+                <!-- Rescue Info -->
+                <VBox spacing="24" styleClass="form-card">
+                    <Label text="Información de Rescate" styleClass="section-title"/>
+                    <GridPane hgap="24" vgap="20" styleClass="form-grid">
+                        <columnConstraints>
+                            <ColumnConstraints percentWidth="50"/>
+                            <ColumnConstraints percentWidth="50"/>
+                        </columnConstraints>
+
+                        <!-- Place -->
+                        <VBox spacing="8" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                            <HBox spacing="4" alignment="CENTER_LEFT">
+                                <Label text="Lugar de Rescate" styleClass="field-label"/>
+                                <Label text="*" styleClass="required-asterisk"/>
+                            </HBox>
+                            <ComboBox fx:id="placeComboBox" maxWidth="Infinity" styleClass="custom-combo" promptText="Seleccione el lugar"/>
+                        </VBox>
+
+                        <!-- Collected By -->
+                        <VBox spacing="8" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                            <HBox spacing="4" alignment="CENTER_LEFT">
+                                <Label text="Recogido por" styleClass="field-label"/>
+                                <Label text="*" styleClass="required-asterisk"/>
+                            </HBox>
+                            <TextField fx:id="collectedByField" promptText="Nombre de quien lo recogió" styleClass="custom-field"/>
+                        </VBox>
+
+                        <!-- Admission Date -->
+                        <VBox spacing="8" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                            <HBox spacing="4" alignment="CENTER_LEFT">
+                                <Label text="Fecha de Ingreso" styleClass="field-label"/>
+                                <Label text="*" styleClass="required-asterisk"/>
+                            </HBox>
+                            <DatePicker fx:id="admissionDatePicker" maxWidth="Infinity" styleClass="custom-date"/>
+                        </VBox>
+
+                        <!-- Neutering Date -->
+                        <VBox spacing="8" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                            <Label text="Fecha de Castración" styleClass="field-label"/>
+                            <DatePicker fx:id="neuteringDatePicker" maxWidth="Infinity" styleClass="custom-date"/>
+                        </VBox>
+                    </GridPane>
+                </VBox>
+
+                <!-- Identification -->
+                <VBox spacing="24" styleClass="form-card">
+                    <Label text="Identificación" styleClass="section-title"/>
+
+                    <!-- Campo único combinado para Chip/Barcode -->
+                    <VBox spacing="24" styleClass="identification-section">
+                        <HBox spacing="16" styleClass="field-with-button" alignment="BOTTOM_LEFT">
+                            <VBox spacing="8" styleClass="field-container" HBox.hgrow="ALWAYS">
+                                <Label text="Número de Chip / Código de Barras" styleClass="field-label"/>
+                                <TextField fx:id="chipNumberField" promptText="Escanee o escriba el número" styleClass="custom-field"/>
+                            </VBox>
+                            <VBox styleClass="button-container-inline" alignment="BOTTOM_CENTER">
+                                <Button fx:id="scanChipButton" text="📷 Escanear" onAction="#handleScanBarcode" styleClass="scan-button"/>
+                            </VBox>
+                        </HBox>
+                    </VBox>
+                </VBox>
+
+                <!-- Additional Info -->
+                <VBox spacing="24" styleClass="form-card">
+                    <Label text="Información Adicional" styleClass="section-title"/>
+                    <VBox spacing="20">
+                        <VBox spacing="8">
+                            <Label text="Razón de Rescate" styleClass="field-label"/>
+                            <TextArea fx:id="rescueReasonArea" prefRowCount="3" styleClass="custom-textarea"
+                                      promptText="Describa las circunstancias del rescate del animal..."/>
+                        </VBox>
+                        <VBox spacing="8">
+                            <Label text="Afecciones Médicas" styleClass="field-label"/>
+                            <TextArea fx:id="ailmentsArea" prefRowCount="3" styleClass="custom-textarea"
+                                      promptText="Describa cualquier condición médica o problema de salud conocido..."/>
+                        </VBox>
+                    </VBox>
+                </VBox>
+
+                <!-- Buttons -->
+                <HBox spacing="16" alignment="CENTER" styleClass="button-container">
+                    <Button text="Cancelar" styleClass="cancel-button" onAction="#goToAnimalModule"/>
+                    <Button fx:id="updateButton" text="Actualizar Animal" onAction="#handleUpdate" styleClass="update-button"/>
+                </HBox>
+
+                <VBox minHeight="30"/>
+            </VBox>
+        </HBox>
+    </ScrollPane>
+</StackPane>

@@ -2,10 +2,10 @@ package com.asosiaciondeasis.animalesdeasis.Controller;
 
 
 import com.asosiaciondeasis.animalesdeasis.Abstraccions.IPortalAwareController;
+import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -47,11 +47,8 @@ public class PortalController {
             sidebarInclude.setPrefWidth(220);
             sidebarInclude.setVisible(true);
         } catch (IOException e) {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Error");
-            alert.setHeaderText("No se pudo cargar la barra lateral");
-            alert.setContentText("Error al cargar la barra lateral: " + e.getMessage());
-            alert.showAndWait();
+            NavigationHelper.showErrorAlert("Error", "No se pudo cargar la barra lateral",
+                    "Error al cargar el archivo FXML de la barra lateral: " + e.getMessage());
         }
     }
 
@@ -89,12 +86,13 @@ public class PortalController {
 
         } catch (IOException e) {
             e.printStackTrace();
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Error");
-            alert.setHeaderText("No se pudo cargar el contenido");
-            alert.setContentText("Error al cargar: " + fxmlPath + "\n" + e.getMessage());
-            alert.showAndWait();
+            NavigationHelper.showErrorAlert("Error", "No se pudo cargar el contenido",
+                    "Error al cargar el archivo FXML: " + fxmlPath + "\n" + e.getMessage());
         }
+    }
+
+    public void setContent(Parent node) {
+        contentPane.getChildren().setAll(node);
     }
 
 }

@@ -5,11 +5,13 @@ public class Place {
     private int id;
     private String name;
     private String provinceId;
+    private String provinceName;
 
-    public Place(int id, String name, String provinceId) {
+    public Place(int id, String name, String provinceId, String provinceName) {
         this.id = id;
         this.name = name;
         this.provinceId = provinceId;
+        this.provinceName = provinceName;
     }
 
     public int getId() {
@@ -34,6 +36,14 @@ public class Place {
 
     public void setProvinceId(String provinceId) {
         this.provinceId = provinceId;
+    }
+
+    public String getProvinceName() {
+        return provinceName;
+    }
+
+    public void setProvinceName(String provinceName) {
+        this.provinceName = provinceName;
     }
 
     @Override

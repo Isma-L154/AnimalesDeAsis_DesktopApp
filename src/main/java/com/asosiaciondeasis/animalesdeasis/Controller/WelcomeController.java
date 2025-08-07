@@ -5,7 +5,6 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 
@@ -16,8 +15,7 @@ import java.util.ResourceBundle;
 public class WelcomeController implements Initializable {
 
     private Stage stage;
-    @FXML
-    private AnchorPane mainContainer;
+    @FXML private AnchorPane mainContainer;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {

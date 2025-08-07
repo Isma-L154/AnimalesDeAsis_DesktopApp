@@ -8,7 +8,9 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
-import java.sql.*;
+import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 
 
 public class DataImporter {
@@ -19,14 +21,14 @@ public class DataImporter {
     /**
      * Fetches provinces and their corresponding cantons from the API,
      * and populates the 'provinces' and 'places' tables in the local SQLite database.
-     *
+     * <p>
      * This method is intended to be run only once during initial setup, because the whole desktop app
      * is intended to be used offline.
      */
 
     public static void populateProvincesAndPlaces(Connection conn) {
 
-        try{
+        try {
             /**
              *  Fetch all provinces from the API
              * URL -> https://api-geo-cr.vercel.app/provincias?limit=100&page=1
@@ -95,7 +97,7 @@ public class DataImporter {
          * line by line, with the correct encoding (UTF-8).
          * */
         BufferedReader in = new BufferedReader(
-                new InputStreamReader(con.getInputStream(), "UTF-8"));
+                new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8));
 
         /**
          * Read the response content line by line

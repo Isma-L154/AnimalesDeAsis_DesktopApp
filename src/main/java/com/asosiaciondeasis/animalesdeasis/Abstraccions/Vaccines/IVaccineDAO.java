@@ -1,6 +1,7 @@
 package com.asosiaciondeasis.animalesdeasis.Abstraccions.Vaccines;
 
 import com.asosiaciondeasis.animalesdeasis.Model.Vaccine;
+
 import java.util.List;
 
 public interface IVaccineDAO {

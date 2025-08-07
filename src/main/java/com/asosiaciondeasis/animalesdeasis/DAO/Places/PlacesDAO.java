@@ -20,16 +20,22 @@ public class PlacesDAO implements IPlaceDAO {
     @Override
     public List<Place> getAllPlaces() {
         List<Place> places = new ArrayList<>();
-        String sql = "SELECT id, name, province_id FROM places ORDER BY name";
+        String sql = """
+                SELECT p.id, p.name, p.province_id, pr.name AS province_name
+                FROM places p
+                JOIN provinces pr ON p.province_id = pr.id
+                ORDER BY p.name
+                """;
 
         try (PreparedStatement stmt = conn.prepareStatement(sql);
-                ResultSet rs = stmt.executeQuery()) {
+             ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
                 Place place = new Place(
                         rs.getInt("id"),
                         rs.getString("name"),
-                        rs.getString("province_id")
+                        rs.getString("province_id"),
+                        rs.getString("province_name")  // Nuevo campo
                 );
                 places.add(place);
             }

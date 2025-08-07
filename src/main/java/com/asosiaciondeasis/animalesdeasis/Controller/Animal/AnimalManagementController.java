@@ -4,7 +4,9 @@ import com.asosiaciondeasis.animalesdeasis.Abstraccions.IPortalAwareController;
 import com.asosiaciondeasis.animalesdeasis.Config.ServiceFactory;
 import com.asosiaciondeasis.animalesdeasis.Controller.PortalController;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
+import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
 
+import javafx.animation.FadeTransition;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
@@ -14,6 +16,7 @@ import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
+import javafx.util.Duration;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -21,6 +24,7 @@ import java.util.List;
 
 public class AnimalManagementController implements IPortalAwareController {
 
+    // Table components
     @FXML private TableView<Animal> animalTable;
     @FXML private TableColumn<Animal, String> idAdmissionDate;
     @FXML private TableColumn<Animal, String> nameColumn;
@@ -31,9 +35,22 @@ public class AnimalManagementController implements IPortalAwareController {
     @FXML private Pagination pagination;
     @FXML private Button CreateAnimal;
 
+    // Filter components
+    @FXML private Button toggleFiltersBtn;
+    @FXML private HBox filtersBox;
+    @FXML private ComboBox<String> speciesFilter;
+    @FXML private DatePicker startDateFilter;
+    @FXML private DatePicker endDateFilter;
+    @FXML private ComboBox<String> adoptionFilter;
+    @FXML private Button applyFiltersBtn;
+    @FXML private Button clearFiltersBtn;
+    @FXML private Label resultsCountLabel;
+
     private PortalController portalController;
     private final int ROWS_PER_PAGE = 10;
     private List<Animal> allAnimals;
+    private List<Animal> filteredAnimals;
+    private boolean filtersVisible = false;
 
     @Override
     public void setPortalController(PortalController portalController) {
@@ -45,9 +62,12 @@ public class AnimalManagementController implements IPortalAwareController {
         try{
             // Initialize the animal table and pagination
             allAnimals = ServiceFactory.getAnimalService().getActiveAnimals();
+            filteredAnimals = allAnimals; // Initially, all animals are shown
+            initializeComboBoxes();
             setUpTables(); //Set up the table columns and pagination
             addActionButtons();
             setUpPagination(); // Load the first page of animals
+            updateResultsCount();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -68,6 +88,7 @@ public class AnimalManagementController implements IPortalAwareController {
         });
 
         sexColumn.setCellValueFactory(new PropertyValueFactory<>("sex"));
+
         adoptedColumn.setCellValueFactory(new PropertyValueFactory<>("adopted"));
         adoptedColumn.setCellValueFactory(cellData -> {
             boolean isAdopted = cellData.getValue().isAdopted();
@@ -77,12 +98,18 @@ public class AnimalManagementController implements IPortalAwareController {
     }
 
     private void loadAnimals(int pageIndex) {
-        // Load animals for the current page
+        // Load animals for the specified page index
         int fromIndex = pageIndex * ROWS_PER_PAGE;
-        int toIndex = Math.min(fromIndex + ROWS_PER_PAGE, allAnimals.size());
-        List<Animal> pageAnimals = allAnimals.subList(fromIndex, toIndex);
-        animalTable.getItems().setAll(pageAnimals);
+        int toIndex = Math.min(fromIndex + ROWS_PER_PAGE, filteredAnimals.size());
+
+        if (fromIndex < filteredAnimals.size()) {
+            List<Animal> pageAnimals = filteredAnimals.subList(fromIndex, toIndex);
+            animalTable.getItems().setAll(pageAnimals);
+        } else {
+            animalTable.getItems().clear();
+        }
     }
+
     private void setUpPagination() {
         int totalAnimals = allAnimals.size();
         int totalPages = (int) Math.ceil((double) totalAnimals / ROWS_PER_PAGE);
@@ -96,6 +123,90 @@ public class AnimalManagementController implements IPortalAwareController {
         });
 
         loadAnimals(0); // Load the first page of animals
+    }
+
+    /**
+     * Filter section
+     */
+    private void updateResultsCount() {
+        resultsCountLabel.setText("Total: " + filteredAnimals.size() + " animales");
+    }
+
+    @FXML
+    public void handleToggleFilters() {
+        filtersVisible = !filtersVisible;
+
+        FadeTransition fadeTransition = new FadeTransition(Duration.millis(300), filtersBox);
+
+        if (filtersVisible) {
+            filtersBox.setVisible(true);
+            filtersBox.setManaged(true);
+            fadeTransition.setFromValue(0.0);
+            fadeTransition.setToValue(1.0);
+            toggleFiltersBtn.setText("Ocultar Filtros");
+        } else {
+            fadeTransition.setFromValue(1.0);
+            fadeTransition.setToValue(0.0);
+            fadeTransition.setOnFinished(e -> {
+                filtersBox.setVisible(false);
+                filtersBox.setManaged(false);
+            });
+            toggleFiltersBtn.setText("Mostrar Filtros");
+        }
+
+        fadeTransition.play();
+    }
+
+    @FXML
+    public void handleApplyFilters() {
+        try {
+            String species = getFilterValue(speciesFilter.getValue());
+            LocalDate startDate = startDateFilter.getValue();
+            LocalDate endDate = endDateFilter.getValue();
+
+            String startDateStr = startDate != null ? startDate.toString() : null;
+            String endDateStr = endDate != null ? endDate.toString() : null;
+
+            Boolean adopted = getAdoptionStatus(adoptionFilter.getValue());
+
+            // Validación de fechas
+            if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+                NavigationHelper.showErrorAlert("Error de fechas",
+                        "La fecha de inicio no puede ser posterior a la fecha de fin",
+                        "Por favor, selecciona un rango de fechas válido.");
+                return;
+            }
+
+            filteredAnimals = ServiceFactory.getAnimalService().findByFilters(species, startDateStr, endDateStr, adopted);
+            setUpPagination();
+            updateResultsCount();
+
+            String message = filteredAnimals.isEmpty() ?
+                    "No se encontraron animales con los filtros seleccionados." :
+                    "Se encontraron " + filteredAnimals.size() + " animales.";
+
+            NavigationHelper.showInfoAlert("Filtros aplicados", message);
+
+        } catch (Exception e) {
+            NavigationHelper.showErrorAlert("Error aplicando filtros",
+                    "No se pudieron aplicar los filtros", e.getMessage());
+        }
+    }
+
+    @FXML
+    public void handleClearFilters() {
+
+        speciesFilter.setValue("");
+        startDateFilter.setValue(null);
+        endDateFilter.setValue(null);
+        adoptionFilter.setValue("");
+
+
+        filteredAnimals = allAnimals;
+        setUpPagination();
+        updateResultsCount();
+
+        NavigationHelper.showInfoAlert("Filtros limpiados", "Se han eliminado todos los filtros. Mostrando todos los animales.");
     }
 
     @FXML
@@ -112,20 +223,14 @@ public class AnimalManagementController implements IPortalAwareController {
             private final Button detailBtn = new Button("Detalles");
 
             {
-                editBtn.setTooltip(new Tooltip("Editar Animal"));
-                deleteBtn.setTooltip(new Tooltip("Desactivar Animal"));
-                detailBtn.setTooltip(new Tooltip("Ver Detalles"));
+                editBtn.setTooltip(new Tooltip("Editar"));
+                deleteBtn.setTooltip(new Tooltip("Desactivar"));
+                detailBtn.setTooltip(new Tooltip("Detalles"));
 
                 editBtn.getStyleClass().add("edit-btn");
                 deleteBtn.getStyleClass().add("delete-btn");
                 detailBtn.getStyleClass().add("detail-btn");
 
-
-                /**
-                 * In this action buttons, we are not using the loadContent method, because we need to pass the object
-                 * and the loadContent method does not allow us to pass parameters. So we make an exception to the
-                 * rule and use the FXMLLoader to load the controller and set the data.
-                 * */
                 editBtn.setOnAction(event -> {
                     Animal animal = getTableView().getItems().get(getIndex());
                     if (portalController != null) {
@@ -138,11 +243,7 @@ public class AnimalManagementController implements IPortalAwareController {
                             portalController.setContent(root);
 
                         } catch (Exception e) {
-                            Alert alert = new Alert(Alert.AlertType.ERROR);
-                            alert.setTitle("Error");
-                            alert.setHeaderText("No se pudo cargar el formulario de edición");
-                            alert.setContentText(e.getMessage());
-                            alert.showAndWait();
+                            NavigationHelper.showErrorAlert("Error", "No se pudo cargar el formulario de edición", e.getMessage());
                         }
                     }
                 });
@@ -159,28 +260,42 @@ public class AnimalManagementController implements IPortalAwareController {
                             portalController.setContent(root);
 
                         } catch (Exception e) {
-                            Alert alert = new Alert(Alert.AlertType.ERROR);
-                            alert.setTitle("Error");
-                            alert.setHeaderText("No se pudo cargar los detalles del animal");
-                            alert.setContentText(e.getMessage());
-                            alert.showAndWait();
+                            NavigationHelper.showErrorAlert("Error", "No se pudo cargar los detalles del animal", e.getMessage());
                         }
                     }
                 });
 
                 deleteBtn.setOnAction(event -> {
                     Animal animal = getTableView().getItems().get(getIndex());
-                    try {
-                        ServiceFactory.getAnimalService().deleteAnimal(animal.getRecordNumber());
-                        allAnimals = ServiceFactory.getAnimalService().getActiveAnimals();
-                        setUpPagination();
-                    } catch (Exception e) {
-                        Alert alert = new Alert(Alert.AlertType.ERROR);
-                        alert.setTitle("Error");
-                        alert.setHeaderText("No se pudo eliminar el animal");
-                        alert.setContentText(e.getMessage());
-                        alert.showAndWait();
-                    }
+
+                    // Confirmar eliminación
+                    Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+                    confirmAlert.setTitle("Confirmar eliminación");
+                    confirmAlert.setHeaderText("¿Estás seguro de que deseas eliminar este animal?");
+                    confirmAlert.setContentText("Animal: " + animal.getName() + " - " + animal.getSpecies());
+
+                    confirmAlert.showAndWait().ifPresent(response -> {
+                        if (response == ButtonType.OK) {
+                            try {
+                                ServiceFactory.getAnimalService().deleteAnimal(animal.getRecordNumber());
+
+                                allAnimals = ServiceFactory.getAnimalService().getActiveAnimals();
+
+                                if (hasActiveFilters()) {
+                                    handleApplyFilters();
+                                } else {
+                                    filteredAnimals = allAnimals;
+                                    setUpPagination();
+                                    updateResultsCount();
+                                }
+
+                                NavigationHelper.showInfoAlert("Éxito", "Animal eliminado correctamente.");
+
+                            } catch (Exception e) {
+                                NavigationHelper.showErrorAlert("Error", "No se pudo eliminar el animal", e.getMessage());
+                            }
+                        }
+                    });
                 });
             }
 
@@ -190,14 +305,7 @@ public class AnimalManagementController implements IPortalAwareController {
 
                 if (empty) {
                     setGraphic(null);
-                    editBtn.setDisable(true);
-                    deleteBtn.setDisable(true);
-                    detailBtn.setDisable(true);
                 } else {
-                    editBtn.setDisable(false);
-                    deleteBtn.setDisable(false);
-                    detailBtn.setDisable(false);
-
                     HBox buttonBox = new HBox(5, detailBtn, editBtn, deleteBtn);
                     buttonBox.setAlignment(Pos.CENTER);
                     setGraphic(buttonBox);
@@ -206,5 +314,35 @@ public class AnimalManagementController implements IPortalAwareController {
         });
     }
 
+    private String getFilterValue(String value) {
+        return (value != null && !value.trim().isEmpty()) ? value : null;
+    }
 
+    private Boolean getAdoptionStatus(String value) {
+        if (value == null || value.trim().isEmpty()) return null;
+        return "Adoptado".equals(value);
+    }
+
+    private boolean hasActiveFilters() {
+        return (speciesFilter.getValue() != null && !speciesFilter.getValue().isEmpty()) ||
+                startDateFilter.getValue() != null ||
+                endDateFilter.getValue() != null ||
+                (adoptionFilter.getValue() != null && !adoptionFilter.getValue().isEmpty());
+    }
+
+    /**
+     * We are doing this to initialize the combo boxes with default values, because in the FXML file
+     * the system does not allow setting default values for ComboBoxes.
+     * */
+    private void initializeComboBoxes() {
+
+        speciesFilter.getItems().clear();
+        speciesFilter.getItems().addAll("Todas", "Perro", "Gato");
+        speciesFilter.setValue("Todas");
+
+
+        adoptionFilter.getItems().clear();
+        adoptionFilter.getItems().addAll("Todos", "Adoptado", "No Adoptado");
+        adoptionFilter.setValue("Todos");
+    }
 }

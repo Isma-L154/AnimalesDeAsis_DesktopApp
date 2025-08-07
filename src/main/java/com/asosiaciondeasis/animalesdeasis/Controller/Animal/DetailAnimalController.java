@@ -5,7 +5,8 @@ import com.asosiaciondeasis.animalesdeasis.Abstraccions.IPortalAwareController;
 import com.asosiaciondeasis.animalesdeasis.Controller.PortalController;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Model.Place;
-import com.asosiaciondeasis.animalesdeasis.Util.NavigationHelper;
+import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
+
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 

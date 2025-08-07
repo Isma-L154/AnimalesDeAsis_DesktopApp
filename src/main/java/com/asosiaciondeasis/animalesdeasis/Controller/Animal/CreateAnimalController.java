@@ -9,9 +9,8 @@ import com.asosiaciondeasis.animalesdeasis.Service.Place.PlaceService;
 import com.asosiaciondeasis.animalesdeasis.Config.ServiceFactory;
 import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
 import com.asosiaciondeasis.animalesdeasis.Util.BarcodeScannerUtil;
+import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
 
-
-import com.asosiaciondeasis.animalesdeasis.Util.NavigationHelper;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;

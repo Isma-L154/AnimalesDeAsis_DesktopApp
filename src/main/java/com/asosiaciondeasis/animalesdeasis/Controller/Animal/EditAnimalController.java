@@ -9,7 +9,7 @@ import com.asosiaciondeasis.animalesdeasis.Service.Animal.AnimalService;
 import com.asosiaciondeasis.animalesdeasis.Service.Place.PlaceService;
 import com.asosiaciondeasis.animalesdeasis.Util.BarcodeScannerUtil;
 import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
-import com.asosiaciondeasis.animalesdeasis.Util.NavigationHelper;
+import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -160,7 +160,7 @@ public class EditAnimalController implements IPortalAwareController {
         if (selectedPlace != null) {
             currentAnimal.setPlaceId(selectedPlace.getId());
         }
-
+        currentAnimal.setSynced(false);
         boolean updated = animalService.updateAnimal(currentAnimal);
         if (updated) {
             showInfo("Animal actualizado exitosamente.");

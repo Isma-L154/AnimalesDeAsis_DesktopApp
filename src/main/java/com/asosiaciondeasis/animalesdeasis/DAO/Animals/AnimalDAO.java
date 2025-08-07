@@ -93,6 +93,7 @@ public class AnimalDAO implements IAnimalDAO {
         return animals;
     }
 
+
     @Override
     public Animal findByRecordNumber(String recordNumber) throws Exception {
         String sql = "SELECT * FROM animals WHERE record_number = ?";

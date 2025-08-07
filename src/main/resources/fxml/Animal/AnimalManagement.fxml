@@ -4,16 +4,57 @@
 <?import javafx.scene.layout.*?>
 
 <VBox xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="com.asosiaciondeasis.animalesdeasis.Controller.Animal.AnimalManagementController"
-            stylesheets="@/css/Animal/AnimalManagement.css"
-            spacing="20" alignment="TOP_CENTER" styleClass="animal-management-container">
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.asosiaciondeasis.animalesdeasis.Controller.Animal.AnimalManagementController"
+      stylesheets="@/css/Animal/AnimalManagement.css"
+      spacing="20" alignment="TOP_CENTER" styleClass="animal-management-container">
 
             <HBox spacing="20" alignment="CENTER_LEFT" styleClass="toolbar">
                  <Label text="Gestión de Animales" styleClass="section-title"/>
                  <Button fx:id="CreateAnimal" text="➕ Agregar Animal" onAction="#handleCreateAnimal" styleClass="create-button"/>
             </HBox>
 
+    <!-- Sección de Filtros -->
+    <VBox spacing="15" styleClass="filter-container">
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Label text="🔍 Filtros:" styleClass="filter-label"/>
+            <Button fx:id="toggleFiltersBtn" text="Mostrar Filtros" onAction="#handleToggleFilters" styleClass="toggle-filters-btn"/>
+        </HBox>
+
+        <HBox fx:id="filtersBox" spacing="15" alignment="CENTER_LEFT" styleClass="filters-box" visible="false" managed="false">
+            <!-- Filtro por Especie -->
+            <VBox spacing="5">
+                <Label text="Especie:" styleClass="filter-input-label"/>
+                <ComboBox fx:id="speciesFilter" promptText="Todas las especies" styleClass="filter-combo"/>
+            </VBox>
+
+            <!-- Filtro por Fechas -->
+            <VBox spacing="5">
+                <Label text="Desde:" styleClass="filter-input-label"/>
+                <DatePicker fx:id="startDateFilter" promptText="Fecha inicio" styleClass="filter-date"/>
+            </VBox>
+
+            <VBox spacing="5">
+                <Label text="Hasta:" styleClass="filter-input-label"/>
+                <DatePicker fx:id="endDateFilter" promptText="Fecha fin" styleClass="filter-date"/>
+            </VBox>
+
+            <!-- Filtro por Estado de Adopción -->
+            <VBox spacing="5">
+                <Label text="Estado:" styleClass="filter-input-label"/>
+                <ComboBox fx:id="adoptionFilter" promptText="Todos los estados" styleClass="filter-combo"/>
+            </VBox>
+
+            <!-- Botones de Filtro -->
+            <VBox spacing="5" alignment="CENTER">
+                <Button fx:id="applyFiltersBtn" text="Aplicar" onAction="#handleApplyFilters" styleClass="apply-filters-btn"/>
+                <Button fx:id="clearFiltersBtn" text="Limpiar" onAction="#handleClearFilters" styleClass="clear-filters-btn"/>
+            </VBox>
+        </HBox>
+    </VBox>
+
+
+    <Label fx:id="resultsCountLabel" text="Total: 0 animales" styleClass="results-count"/>
             <TableView fx:id="animalTable" prefHeight="500" styleClass="animal-table">
                 <columns>
                     <TableColumn fx:id="nameColumn" text="Nombre"/>

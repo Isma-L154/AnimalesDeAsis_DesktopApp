@@ -77,14 +77,15 @@ public class VaccineDAO implements IVaccineDAO {
     public void updateVaccine(Vaccine vaccine) throws Exception {
         String sql = """
                     UPDATE vaccines
-                    SET vaccine_name = ?, vaccination_date = ?, last_modified = datetime('now')
+                    SET vaccine_name = ?, vaccination_date = ?, synced = ?, last_modified = strftime('%Y-%m-%dT%H:%M:%S', 'now')
                     WHERE id = ?
                 """;
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, vaccine.getVaccineName());
             pstmt.setString(2, vaccine.getVaccinationDate());
-            pstmt.setInt(3, vaccine.getId());
+            pstmt.setInt(3, vaccine.isSynced() ? 1 : 0);
+            pstmt.setInt(4, vaccine.getId());
 
             int rowsAffected = pstmt.executeUpdate();
             if (rowsAffected == 0) {

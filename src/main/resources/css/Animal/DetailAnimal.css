@@ -31,6 +31,22 @@
     -fx-background-radius: 2;
 }
 
+
+.vaccine-access-button {
+    -fx-background-color: #e8f5e8;
+    -fx-background-radius: 50%;
+    -fx-border-color: #27ae60;
+    -fx-border-radius: 50%;
+    -fx-border-width: 2;
+    -fx-font-size: 18px;
+    -fx-min-width: 40px;
+    -fx-min-height: 40px;
+    -fx-max-width: 40px;
+    -fx-max-height: 40px;
+    -fx-cursor: hand;
+    -fx-text-fill: #27ae60;
+}
+
 /* Content card styles */
 .detail-content-card {
     -fx-background-color: #ffffff;

@@ -3,10 +3,13 @@ package com.asosiaciondeasis.animalesdeasis.Controller.Animal;
 
 import com.asosiaciondeasis.animalesdeasis.Abstraccions.IPortalAwareController;
 import com.asosiaciondeasis.animalesdeasis.Controller.PortalController;
+import com.asosiaciondeasis.animalesdeasis.Controller.Vaccine.VaccineManagementController;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Model.Place;
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.control.Label;
 
 import java.util.List;
@@ -27,9 +30,11 @@ public class DetailAnimalController implements IPortalAwareController {
     @FXML private Label ailmentsLabel;
 
     private List<Place> allPlaces;
+    private Animal currentAnimal;
     private PortalController portalController;
 
     public void setAnimalDetails(Animal animal, List<Place> allPlaces) {
+        this.currentAnimal = animal;
         this.allPlaces = allPlaces;
 
         nameLabel.setText(validate(animal.getName()));
@@ -61,6 +66,45 @@ public class DetailAnimalController implements IPortalAwareController {
         }
     }
 
+    @FXML
+    public void goToEditModule() {
+        if (portalController != null && currentAnimal != null) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Animal/EditAnimal.fxml"));
+                Parent root = loader.load();
+
+                EditAnimalController editController = loader.getController();
+                editController.setPortalController(portalController);
+                editController.setAnimalData(currentAnimal);
+
+                portalController.setContent(root);
+            } catch (Exception e) {
+                NavigationHelper.showErrorAlert("Error", "No se pudo cargar el formulario de edición", e.getMessage());
+            }
+        } else {
+            NavigationHelper.showErrorAlert("Error", null, "No se pudo obtener el animal para editar.");
+        }
+    }
+
+    @FXML
+    public void goToVaccineManagement() {
+        if (portalController != null && currentAnimal != null) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Vaccine/VaccineManagement.fxml"));
+                Parent root = loader.load();
+
+                VaccineManagementController vaccineController = loader.getController();
+                vaccineController.setPortalController(portalController);
+                vaccineController.setCurrentAnimal(currentAnimal);
+
+                portalController.setContent(root);
+            } catch (Exception e) {
+                NavigationHelper.showErrorAlert("Error", "No se pudo cargar el módulo de vacunas", e.getMessage());
+            }
+        } else {
+            NavigationHelper.showErrorAlert("Error", null, "No se pudo obtener el animal para gestionar las vacunas.");
+        }
+    }
     private String validate(String value) {
         return (value == null || value.isEmpty()) ? "Sin información" : value;
     }
@@ -69,8 +113,8 @@ public class DetailAnimalController implements IPortalAwareController {
     public void setPortalController(PortalController controller) {
         this.portalController = controller;
     }
-
     public void goToAnimalModule() {
         NavigationHelper.goToAnimalModule(portalController);
     }
+
 }

@@ -1,0 +1,203 @@
+/* Main Container Styles */
+.vaccine-scroll-pane {
+    -fx-background-color: #f5f5f5;
+    -fx-padding: 20;
+}
+
+.vaccine-main-container {
+    -fx-background-color: transparent;
+    -fx-padding: 20;
+}
+
+/* Header Styles */
+.vaccine-header {
+    -fx-background-color: white;
+    -fx-background-radius: 15;
+    -fx-padding: 25;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 2);
+}
+
+.vaccine-title {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c3e50;
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+}
+
+.animal-info-subtitle {
+    -fx-font-size: 16px;
+    -fx-text-fill: #7f8c8d;
+    -fx-font-style: italic;
+}
+
+.vaccine-separator {
+    -fx-background-color: #3498db;
+    -fx-pref-height: 3;
+    -fx-background-radius: 2;
+}
+
+/* Action Buttons */
+.vaccine-action-container {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-padding: 20;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 2);
+}
+
+.vaccine-button-base {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-padding: 12 20;
+    -fx-min-width: 130px;
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+}
+
+.vaccine-create-button {
+    -fx-background-color: #27ae60;
+    -fx-text-fill: white;
+    -fx-border-color: #229954;
+    -fx-border-width: 1;
+}
+
+.vaccine-create-button:hover {
+    -fx-background-color: #229954;
+    -fx-effect: dropshadow(three-pass-box, rgba(39,174,96,0.4), 8, 0, 0, 2);
+}
+
+.vaccine-edit-button {
+    -fx-background-color: #f39c12;
+    -fx-text-fill: white;
+    -fx-border-color: #e67e22;
+    -fx-border-width: 1;
+}
+
+.vaccine-edit-button:hover {
+    -fx-background-color: #e67e22;
+    -fx-effect: dropshadow(three-pass-box, rgba(243,156,18,0.4), 8, 0, 0, 2);
+}
+
+.vaccine-delete-button {
+    -fx-background-color: #e74c3c;
+    -fx-text-fill: white;
+    -fx-border-color: #c0392b;
+    -fx-border-width: 1;
+}
+
+.vaccine-delete-button:hover {
+    -fx-background-color: #c0392b;
+    -fx-effect: dropshadow(three-pass-box, rgba(231,76,60,0.4), 8, 0, 0, 2);
+}
+
+/* Table Styles */
+.vaccine-table-card {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-padding: 20;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 10, 0, 0, 2);
+    -fx-spacing: 15;
+}
+
+.table-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c3e50;
+    -fx-padding: 0 0 10 0;
+}
+
+.vaccine-table {
+    -fx-background-color: transparent;
+    -fx-border-color: #ecf0f1;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+
+.vaccine-table .column-header {
+    -fx-background-color: #34495e;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-padding: 12 8;
+    -fx-border-color: #2c3e50;
+    -fx-border-width: 0 1 0 0;
+}
+
+.vaccine-table .column-header:last-child {
+    -fx-border-width: 0;
+}
+
+.vaccine-table .table-row-cell {
+    -fx-background-color: white;
+    -fx-border-color: #ecf0f1;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 10;
+}
+
+.vaccine-table .table-row-cell:hover {
+    -fx-background-color: #f8f9fa;
+}
+
+.vaccine-table .table-row-cell:selected {
+    -fx-background-color: #e3f2fd;
+    -fx-border-color: #2196f3;
+    -fx-border-width: 1;
+}
+
+.vaccine-table .table-cell {
+    -fx-font-size: 14px;
+    -fx-text-fill: #2c3e50;
+    -fx-padding: 10;
+}
+
+/* Summary Cards */
+.vaccine-summary-container {
+    -fx-background-color: transparent;
+    -fx-padding: 10;
+}
+
+.summary-card {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-padding: 20;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 2);
+    -fx-min-width: 180px;
+}
+
+.summary-card:hover {
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 12, 0, 0, 3);
+}
+
+.summary-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #7f8c8d;
+}
+
+.summary-value {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #3498db;
+}
+
+/* Navigation Buttons */
+.vaccine-nav-container {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-padding: 15;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.06), 6, 0, 0, 1);
+}
+
+.vaccine-back-button {
+    -fx-background-color: #95a5a6;
+    -fx-text-fill: white;
+    -fx-border-color: #7f8c8d;
+    -fx-border-width: 1;
+}
+
+.vaccine-back-button:hover {
+    -fx-background-color: #7f8c8d;
+    -fx-effect: dropshadow(three-pass-box, rgba(149,165,166,0.4), 8, 0, 0, 2);
+}

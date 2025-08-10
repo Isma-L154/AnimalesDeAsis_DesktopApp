@@ -97,15 +97,14 @@ public class SQLiteSetup {
                         );
                         """;
 
-
-                // Execute all statements that creates the tables if they don't exist
+                // Execute all statements that create the tables if they don't exist
                 stmt.execute(createProvinces);
                 stmt.execute(createPlaces);
                 stmt.execute(createAnimals);
                 stmt.execute(createVaccines);
 
                 /**
-                 * Check if provinces table is empty, if not, we call the API to import the info of the GEO of CR
+                 * Check if the province table is empty, if not, we call the API to import the info of the GEO of CR
                  * */
                 ResultSet rs = stmt.executeQuery("SELECT COUNT(*) AS count FROM provinces");
                 if (rs.next() && rs.getInt("count") == 0) {

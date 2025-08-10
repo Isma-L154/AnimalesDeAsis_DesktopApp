@@ -121,20 +121,21 @@ public class VaccineDAO implements IVaccineDAO {
     }
 
     @Override
-    public List<Vaccine> getUnsyncedVaccinesByAnimal(String animalRecordNumber) throws Exception {
+    public List<Vaccine> getAllUnsyncedVaccines() throws Exception {
         List<Vaccine> vaccines = new ArrayList<>();
-        String sql = "SELECT * FROM vaccines WHERE animal_record_number = ? AND synced = 0";
+        String sql = "SELECT * FROM vaccines WHERE synced = 0";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setString(1, animalRecordNumber);
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                Vaccine vaccine = mapResultSetToVaccine(rs);
-                vaccines.add(vaccine);
+                vaccines.add(mapResultSetToVaccine(rs));
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new Exception("Error retrieving all unsynced vaccines", e);
         }
+
         return vaccines;
     }
 

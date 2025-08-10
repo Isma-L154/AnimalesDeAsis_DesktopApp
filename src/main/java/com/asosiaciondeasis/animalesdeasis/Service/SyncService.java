@@ -111,26 +111,31 @@ public class SyncService {
 
         /** Get all local animals that are NOT synced */
         List<Animal> unsyncedAnimals = animalDAO.getUnsyncedAnimals();
-        if (unsyncedAnimals.isEmpty()) {
-            System.out.println("Nothing to sync");
-        }
+
         for (Animal animal : unsyncedAnimals) {
             DocumentReference animalDoc = db.collection("animals").document(animal.getRecordNumber());
             ApiFuture<WriteResult> writeResult = animalDoc.set(animal);
             writeResult.get(); // Wait for upload to finish
 
-            /** Upload related vaccines for this animal */
-            List<Vaccine> unsyncedVaccines = vaccineDAO.getUnsyncedVaccinesByAnimal(animal.getRecordNumber());
-            for (Vaccine vaccine : unsyncedVaccines) {
-                DocumentReference vaccineDoc = animalDoc.collection("vaccines").document(String.valueOf(vaccine.getId()));
-                ApiFuture<WriteResult> vaccineWrite = vaccineDoc.set(vaccine);
-                vaccineWrite.get(); // Wait for upload
-                vaccine.setSynced(true);
-                vaccineDAO.updateVaccine(vaccine);
-            }
             animal.setSynced(true);
             animalDAO.updateAnimal(animal);
             System.out.println("Animal synced to Firebase: " + animal.getRecordNumber());
+        }
+
+        /** Sync ALL unsynced vaccines (from new animals and existing animals) */
+        List<Vaccine> allUnsyncedVaccines = vaccineDAO.getAllUnsyncedVaccines();
+        for (Vaccine vaccine : allUnsyncedVaccines) {
+            DocumentReference animalDoc = db.collection("animals").document(vaccine.getAnimalRecordNumber());
+            DocumentReference vaccineDoc = animalDoc.collection("vaccines").document(String.valueOf(vaccine.getId()));
+            ApiFuture<WriteResult> vaccineWrite = vaccineDoc.set(vaccine);
+            vaccineWrite.get(); // Wait for upload
+            vaccine.setSynced(true);
+            vaccineDAO.updateVaccine(vaccine);
+            System.out.println("⬆ Vaccine synced to Firebase: " + vaccine.getVaccineName() + " for animal: " + vaccine.getAnimalRecordNumber());
+        }
+
+        if (unsyncedAnimals.isEmpty() && allUnsyncedVaccines.isEmpty()) {
+            System.out.println("Nothing to sync");
         }
     }
 

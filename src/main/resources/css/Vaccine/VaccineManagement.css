@@ -91,6 +91,108 @@
     -fx-effect: dropshadow(three-pass-box, rgba(231,76,60,0.4), 8, 0, 0, 2);
 }
 
+/* --- Vaccine Table: Compact style, less spacing --- */
+.vaccine-table {
+    -fx-background-color: transparent;
+    -fx-border-color: #ecf0f1;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-table-cell-border-color: transparent;
+    -fx-pref-width: 610px;
+    -fx-max-width: 610px;
+}
+
+.vaccine-table .column-header {
+    -fx-background-color: #593414;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-padding: 12 8;
+    -fx-border-color: #4b2e0e;
+    -fx-border-width: 0 1 0 0;
+    -fx-alignment: CENTER;
+}
+
+.vaccine-table .column-header .label {
+    -fx-text-fill: white;
+    -fx-alignment: CENTER;
+    -fx-font-weight: bold;
+}
+
+.vaccine-table .column-header:last-child {
+    -fx-border-width: 0;
+}
+
+.vaccine-table .table-row-cell {
+    -fx-background-color: white;
+    -fx-border-color: #ecf0f1;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 0;
+    -fx-cell-size: 40px;
+}
+
+.vaccine-table .table-row-cell:hover {
+    -fx-background-color: #f8f9fa;
+}
+
+.vaccine-table .table-row-cell:selected {
+    -fx-background-color: #e3f2fd;
+    -fx-border-color: #2196f3;
+    -fx-border-width: 1;
+    -fx-text-fill: #2c3e50;
+}
+
+.vaccine-table .table-cell {
+    -fx-font-size: 13px;
+    -fx-text-fill: black !important;
+    -fx-padding: 8;
+    -fx-alignment: CENTER;
+    -fx-text-alignment: center;
+}
+
+.vaccine-table .table-row-cell:even {
+    -fx-background-color: #fafbfc;
+}
+
+/* Action Buttons - AnimalManagement style, compact */
+.action-btn {
+    -fx-font-weight: bold;
+    -fx-background-radius: 15;
+    -fx-cursor: hand;
+    -fx-padding: 6 12;
+    -fx-text-fill: white;
+    -fx-font-size: 11px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 3, 0, 0, 1);
+    -fx-transition: all 0.2s ease;
+    -fx-min-width: 65px;
+    -fx-pref-width: 65px;
+    -fx-min-height: 28px;
+    -fx-pref-height: 28px;
+}
+
+.edit-btn {
+    -fx-background-color: linear-gradient(to bottom, #F2921D, #E67E22);
+}
+
+.edit-btn:hover {
+    -fx-background-color: linear-gradient(to bottom, #E67E22, #D68910);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+.delete-btn {
+    -fx-background-color: linear-gradient(to bottom, #D1495B, #B03A2E);
+    -fx-min-width: 75px;
+    -fx-pref-width: 75px;
+}
+
+.delete-btn:hover {
+    -fx-background-color: linear-gradient(to bottom, #B03A2E, #922B21);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
 /* Table Styles */
 .vaccine-table-card {
     -fx-background-color: white;
@@ -108,55 +210,6 @@
     -fx-font-size: 18px;
     -fx-font-weight: bold;
     -fx-text-fill: #2c3e50;
-}
-
-.vaccine-table {
-    -fx-background-color: transparent;
-    -fx-border-color: #ecf0f1;
-    -fx-border-width: 1;
-    -fx-border-radius: 8;
-    -fx-background-radius: 8;
-}
-
-.vaccine-table .column-header {
-    -fx-background-color: #593414;
-    -fx-text-fill: white;
-    -fx-font-weight: bold;
-    -fx-font-size: 14px;
-    -fx-padding: 12 8;
-    -fx-border-color: #4b2e0e;
-    -fx-border-width: 0 1 0 0;
-}
-
-.vaccine-table .column-header .label {
-    -fx-text-fill: white;
-}
-
-.vaccine-table .column-header:last-child {
-    -fx-border-width: 0;
-}
-
-.vaccine-table .table-row-cell {
-    -fx-background-color: white;
-    -fx-border-color: #ecf0f1;
-    -fx-border-width: 0 0 1 0;
-    -fx-padding: 10;
-}
-
-.vaccine-table .table-row-cell:hover {
-    -fx-background-color: #f8f9fa;
-}
-
-.vaccine-table .table-row-cell:selected {
-    -fx-background-color: #e3f2fd;
-    -fx-border-color: #2196f3;
-    -fx-border-width: 1;
-}
-
-.vaccine-table .table-cell {
-    -fx-font-size: 14px;
-    -fx-text-fill: #2c3e50;
-    -fx-padding: 10;
 }
 
 /* Summary Cards */

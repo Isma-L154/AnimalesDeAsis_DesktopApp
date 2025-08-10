@@ -27,7 +27,8 @@
 
             <!-- Action Buttons Section -->
             <HBox spacing="15" alignment="CENTER" styleClass="vaccine-action-container">
-                <Button text="Nueva Vacuna +" styleClass="vaccine-button-base, vaccine-create-button"/>
+                <Button text="Agregar Vacuna +" styleClass="vaccine-button-base, vaccine-create-button"
+                        onAction="#onCreateNewVaccine"/>
             </HBox>
 
             <!-- Table Section -->
@@ -36,11 +37,11 @@
 
                 <TableView fx:id="vaccineTable" styleClass="vaccine-table">
                     <columns>
-                        <TableColumn fx:id="vaccineNameColumn" text="Nombre de la Vacuna" prefWidth="320"
+                        <TableColumn fx:id="vaccineNameColumn" text="Nombre de la Vacuna" prefWidth="250"
                                      styleClass="vaccine-table-column"/>
-                        <TableColumn fx:id="vaccinationDateColumn" text="Fecha de Vacunación" prefWidth="180"
+                        <TableColumn fx:id="vaccinationDateColumn" text="Fecha de Vacunación" prefWidth="200"
                                      styleClass="vaccine-table-column"/>
-                        <TableColumn fx:id="actionsColumn" text="Acciones" prefWidth="100"
+                        <TableColumn fx:id="actionsColumn" text="Acciones" prefWidth="160"
                                      styleClass="vaccine-table-column"/>
                     </columns>
                 </TableView>

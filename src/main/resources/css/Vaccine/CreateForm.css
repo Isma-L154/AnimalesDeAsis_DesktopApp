@@ -1,0 +1,116 @@
+/* Main Container */
+.vaccine-create-container {
+    -fx-background-color: #ffffff;
+    -fx-padding: 30;
+    -fx-background-radius: 10;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 5);
+    -fx-pref-width: 350;
+    -fx-pref-height: 300;
+}
+
+/* Header Styles */
+.vaccine-create-header {
+    -fx-padding: 0 0 10 0;
+}
+
+.vaccine-create-title {
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c3e50;
+}
+
+.vaccine-create-subtitle {
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-size: 14px;
+    -fx-text-fill: #7f8c8d;
+    -fx-font-style: italic;
+}
+
+.vaccine-create-separator {
+    -fx-background-color: #bdc3c7;
+    -fx-pref-height: 1;
+}
+
+/* Form Styles */
+.vaccine-create-form {
+    -fx-padding: 10 0 10 0;
+}
+
+.vaccine-create-label {
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #34495e;
+}
+
+.vaccine-create-textfield {
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-size: 13px;
+    -fx-padding: 8 12 8 12;
+    -fx-background-color: #ffffff;
+    -fx-border-color: #bdc3c7;
+    -fx-border-radius: 5;
+    -fx-background-radius: 5;
+    -fx-border-width: 1;
+}
+
+.vaccine-create-textfield:focused {
+    -fx-border-color: #3498db;
+    -fx-effect: dropshadow(gaussian, rgba(52, 152, 219, 0.3), 5, 0, 0, 0);
+}
+
+.vaccine-create-datepicker {
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-size: 13px;
+    -fx-background-color: #ffffff;
+    -fx-border-color: #bdc3c7;
+    -fx-border-radius: 5;
+    -fx-background-radius: 5;
+    -fx-border-width: 1;
+}
+
+.vaccine-create-datepicker:focused {
+    -fx-border-color: #3498db;
+    -fx-effect: dropshadow(gaussian, rgba(52, 152, 219, 0.3), 5, 0, 0, 0);
+}
+
+/* Button Styles */
+.vaccine-create-buttons {
+    -fx-padding: 10 0 0 0;
+}
+
+.vaccine-create-button-base {
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 8 16 8 16;
+    -fx-border-radius: 5;
+    -fx-background-radius: 5;
+    -fx-cursor: hand;
+    -fx-min-height: 35;
+}
+
+.vaccine-create-save-button {
+    -fx-background-color: #27ae60;
+    -fx-text-fill: white;
+    -fx-border-color: #27ae60;
+    -fx-border-width: 1;
+}
+
+.vaccine-create-save-button:hover {
+    -fx-background-color: #2ecc71;
+    -fx-border-color: #2ecc71;
+}
+
+.vaccine-create-cancel-button {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #e74c3c;
+    -fx-border-color: #e74c3c;
+    -fx-border-width: 1;
+}
+
+.vaccine-create-cancel-button:hover {
+    -fx-background-color: #e74c3c;
+    -fx-text-fill: white;
+}

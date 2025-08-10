@@ -191,7 +191,6 @@
     -fx-background-color: linear-gradient(to bottom, #8e44ad, #7d3c98);
 }
 
-/* Contador de resultados */
 .results-count {
     -fx-font-size: 14px;
     -fx-font-weight: bold;
@@ -199,7 +198,6 @@
     -fx-padding: 0 0 0 10;
 }
 
-/* Tabla mejorada con encabezados más legibles */
 .animal-table {
     -fx-background-color: #ffffff;
     -fx-background-radius: 15;
@@ -211,16 +209,16 @@
 
 .animal-table .column-header {
     -fx-background-color: linear-gradient(to bottom, #593414, #4a2a11);
-    -fx-text-fill: #FFFFFF; /* Texto blanco para mejor contraste */
+    -fx-text-fill: #FFFFFF;
     -fx-font-weight: bold;
-    -fx-font-size: 14px; /* Aumentamos un poco el tamaño */
+    -fx-font-size: 14px;
     -fx-padding: 12 8;
     -fx-alignment: CENTER;
-    -fx-effect: dropshadow(three-pass-box, rgba(255,255,255,0.1), 1, 0, 0, 1); /* Sutil sombra blanca */
+    -fx-effect: dropshadow(three-pass-box, rgba(255,255,255,0.1), 1, 0, 0, 1);
 }
 
 .animal-table .column-header .label {
-    -fx-text-fill: #FFFFFF; /* Asegurar que el label también sea blanco */
+    -fx-text-fill: #FFFFFF;
     -fx-font-weight: bold;
 }
 

@@ -100,11 +100,14 @@
     -fx-spacing: 15;
 }
 
+.table-header-section {
+    -fx-padding: 0 0 10 0;
+}
+
 .table-title {
     -fx-font-size: 18px;
     -fx-font-weight: bold;
     -fx-text-fill: #2c3e50;
-    -fx-padding: 0 0 10 0;
 }
 
 .vaccine-table {
@@ -116,13 +119,17 @@
 }
 
 .vaccine-table .column-header {
-    -fx-background-color: #34495e;
+    -fx-background-color: #593414;
     -fx-text-fill: white;
     -fx-font-weight: bold;
     -fx-font-size: 14px;
     -fx-padding: 12 8;
-    -fx-border-color: #2c3e50;
+    -fx-border-color: #4b2e0e;
     -fx-border-width: 0 1 0 0;
+}
+
+.vaccine-table .column-header .label {
+    -fx-text-fill: white;
 }
 
 .vaccine-table .column-header:last-child {
@@ -182,22 +189,23 @@
     -fx-text-fill: #3498db;
 }
 
-/* Navigation Buttons */
-.vaccine-nav-container {
-    -fx-background-color: white;
-    -fx-background-radius: 10;
-    -fx-padding: 15;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.06), 6, 0, 0, 1);
-}
-
-.vaccine-back-button {
+/* Navigation Button - Simple style without container */
+.vaccine-back-button-simple {
     -fx-background-color: #95a5a6;
     -fx-text-fill: white;
     -fx-border-color: #7f8c8d;
     -fx-border-width: 1;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-padding: 12 20;
+    -fx-min-width: 150px;
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
 }
 
-.vaccine-back-button:hover {
+.vaccine-back-button-simple:hover {
     -fx-background-color: #7f8c8d;
     -fx-effect: dropshadow(three-pass-box, rgba(149,165,166,0.4), 8, 0, 0, 2);
 }

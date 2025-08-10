@@ -27,12 +27,7 @@
 
             <!-- Action Buttons Section -->
             <HBox spacing="15" alignment="CENTER" styleClass="vaccine-action-container">
-                <Button text="Nueva Vacuna +" styleClass="vaccine-button-base, vaccine-create-button"
-                        />
-                <Button text="Editar Vacuna" styleClass="vaccine-button-base, vaccine-edit-button"
-                        />
-                <Button text="Eliminar Vacuna" styleClass="vaccine-button-base, vaccine-delete-button"
-                        />
+                <Button text="Nueva Vacuna +" styleClass="vaccine-button-base, vaccine-create-button"/>
             </HBox>
 
             <!-- Table Section -->
@@ -41,9 +36,11 @@
 
                 <TableView fx:id="vaccineTable" styleClass="vaccine-table">
                     <columns>
-                        <TableColumn fx:id="vaccineNameColumn" text="Nombre de la Vacuna" prefWidth="400"
+                        <TableColumn fx:id="vaccineNameColumn" text="Nombre de la Vacuna" prefWidth="320"
                                      styleClass="vaccine-table-column"/>
-                        <TableColumn fx:id="vaccinationDateColumn" text="Fecha de Vacunación" prefWidth="200"
+                        <TableColumn fx:id="vaccinationDateColumn" text="Fecha de Vacunación" prefWidth="180"
+                                     styleClass="vaccine-table-column"/>
+                        <TableColumn fx:id="actionsColumn" text="Acciones" prefWidth="100"
                                      styleClass="vaccine-table-column"/>
                     </columns>
                 </TableView>
@@ -61,13 +58,7 @@
                     <Label fx:id="lastVaccineLabel" text="N/A" styleClass="summary-value"/>
                 </VBox>
             </HBox>
-
-            <!-- Navigation Buttons -->
-            <HBox spacing="20" alignment="CENTER" styleClass="vaccine-nav-container">
-                <Button text="Volver a Detalles" styleClass="vaccine-button-base, vaccine-back-button"
-                       />
-            </HBox>
-
+            <Button text="Volver a Detalles" styleClass="vaccine-button-base, vaccine-back-button"/>
         </VBox>
     </HBox>
 </ScrollPane>

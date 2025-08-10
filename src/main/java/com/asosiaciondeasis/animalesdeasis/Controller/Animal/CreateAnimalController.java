@@ -66,7 +66,6 @@ public class CreateAnimalController implements IPortalAwareController {
     private void configureDatePickers() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
-
         admissionDatePicker.setConverter(new StringConverter<>() {
             @Override
             public String toString(LocalDate date) {

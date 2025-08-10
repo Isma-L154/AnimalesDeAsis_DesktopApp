@@ -19,7 +19,7 @@
             <VBox alignment="CENTER" spacing="10" styleClass="detail-header">
                 <Label text="Detalles del Animal" styleClass="detail-title" />
 
-                <Button fx:id="vaccineManagementBtn" text="💉" styleClass="vaccine-access-button"
+                <Button fx:id="vaccineManagementBtn" text="Vacunas 💉" styleClass="vaccine-access-button"
                         onAction="#goToVaccineManagement">
                     <tooltip>
                         <Tooltip text="Historial de Vacunas" />

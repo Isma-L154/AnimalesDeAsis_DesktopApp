@@ -147,8 +147,6 @@ public class SyncService {
             if (!vaccineDAO.existsVaccine(vaccine.getId())) {
                 vaccine.setSynced(true);
                 vaccineDAO.insertVaccine(vaccine);
-            } else {
-                // TODO handle updates if needed
             }
         }
     }

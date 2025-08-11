@@ -87,6 +87,7 @@ public class EditVaccineController implements Initializable {
 
                 currentVaccine.setVaccineName(vaccineName);
                 currentVaccine.setVaccinationDate(isoDate);
+                currentVaccine.setSynced(false);
 
                 if (onVaccineUpdated != null) {
                     onVaccineUpdated.accept(currentVaccine);

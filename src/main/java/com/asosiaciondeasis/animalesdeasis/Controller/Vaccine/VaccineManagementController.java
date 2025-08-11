@@ -124,8 +124,23 @@ public class VaccineManagementController implements IPortalAwareController {
                 });
 
                 deleteButton.setOnAction(event -> {
-                    // TODO: Implementar eliminación
-                    System.out.println("Eliminar vacuna: " + getTableView().getItems().get(getIndex()).getVaccineName());
+                    Vaccine vaccine = getTableView().getItems().get(getIndex());
+
+
+                    boolean confirmed = NavigationHelper.showConfirmationAlert("Confirmar eliminación",
+                            "¿Estás seguro de que deseas eliminar esta vacuna?",
+                            "Vacuna: " + vaccine.getVaccineName() + " - " + vaccine.getVaccinationDate());
+
+                    if (confirmed) {
+                        try {
+                            ServiceFactory.getVaccineService().deleteVaccine(vaccine.getId());
+                            loadVaccinesForAnimal();
+                            NavigationHelper.showSuccessAlert("Éxito", "Vacuna eliminada correctamente.");
+
+                        } catch (Exception e) {
+                            NavigationHelper.showErrorAlert("Error", "No se pudo eliminar la vacuna", e.getMessage());
+                        }
+                    }
                 });
 
                 buttonsContainer.getChildren().addAll(editButton, deleteButton);

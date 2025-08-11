@@ -26,7 +26,6 @@ import java.util.regex.Pattern;
 
 public class EditAnimalController implements IPortalAwareController {
 
-    private final AnimalService animalService = ServiceFactory.getAnimalService();
     private final PlaceService placeService = ServiceFactory.getPlaceService();
     private final BarcodeScannerUtil scannerUtil = new BarcodeScannerUtil();
 
@@ -165,7 +164,7 @@ public class EditAnimalController implements IPortalAwareController {
             currentAnimal.setPlaceId(selectedPlace.getId());
         }
         currentAnimal.setSynced(false);
-        boolean updated = animalService.updateAnimal(currentAnimal);
+        boolean updated = ServiceFactory.getAnimalService().updateAnimal(currentAnimal);
         if (updated) {
             NavigationHelper.showSuccessAlert("Exito", "Animal actualizado exitosamente.");
             NavigationHelper.goToAnimalModule(portalController);

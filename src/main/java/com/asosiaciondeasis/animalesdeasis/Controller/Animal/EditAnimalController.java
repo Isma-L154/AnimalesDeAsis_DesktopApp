@@ -167,7 +167,7 @@ public class EditAnimalController implements IPortalAwareController {
         currentAnimal.setSynced(false);
         boolean updated = animalService.updateAnimal(currentAnimal);
         if (updated) {
-            NavigationHelper.showInfoAlert("Exito", "Animal actualizado exitosamente.");
+            NavigationHelper.showSuccessAlert("Exito", "Animal actualizado exitosamente.");
             NavigationHelper.goToAnimalModule(portalController);
         } else {
             NavigationHelper.showErrorAlert("Error", null, "Ocurrió un error al actualizar el animal.");

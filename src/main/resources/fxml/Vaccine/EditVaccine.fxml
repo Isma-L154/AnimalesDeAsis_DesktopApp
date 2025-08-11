@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.asosiaciondeasis.animalesdeasis.Controller.Vaccine.EditVaccineController"
+      spacing="20" alignment="CENTER"
+      styleClass="vaccine-edit-container"
+      stylesheets="@/css/Vaccine/EditForm.css">
+
+    <!-- Header -->
+    <VBox alignment="CENTER" spacing="10" styleClass="vaccine-edit-header">
+        <Label text="Editar Vacuna" styleClass="vaccine-edit-title"/>
+        <Label fx:id="animalInfoLabel" text="Animal: [Nombre del Animal]"
+               styleClass="vaccine-edit-subtitle"/>
+        <Separator prefWidth="280" styleClass="vaccine-edit-separator"/>
+    </VBox>
+
+    <!-- Form -->
+    <VBox spacing="15" alignment="CENTER" styleClass="vaccine-edit-form">
+
+        <!-- Vaccine Name Field -->
+        <VBox spacing="5" alignment="CENTER_LEFT">
+            <Label text="Nombre de la Vacuna" styleClass="vaccine-edit-label"/>
+            <TextField fx:id="vaccineNameField"
+                       promptText="Ej: Rabia, Parvovirus, etc."
+                       styleClass="vaccine-edit-textfield"
+                       prefWidth="250"/>
+        </VBox>
+
+        <!-- Date Field -->
+        <VBox spacing="5" alignment="CENTER_LEFT">
+            <Label text="Fecha de Vacunación (DD-MM-YYYY)" styleClass="vaccine-edit-label"/>
+            <DatePicker fx:id="vaccinationDatePicker"
+                        promptText="Selecciona la fecha"
+                        styleClass="vaccine-edit-datepicker"
+                        prefWidth="250"/>
+        </VBox>
+
+    </VBox>
+
+    <!-- Buttons -->
+    <HBox spacing="15" alignment="CENTER" styleClass="vaccine-edit-buttons">
+        <Button text="Cancelar"
+                styleClass="vaccine-edit-button-base, vaccine-edit-cancel-button"
+                onAction="#onCancelAction"
+                prefWidth="110"/>
+        <Button text="Actualizar"
+                styleClass="vaccine-edit-button-base, vaccine-edit-update-button"
+                onAction="#onUpdateAction"
+                prefWidth="110"/>
+    </HBox>
+
+</VBox>

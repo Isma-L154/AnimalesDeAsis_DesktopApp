@@ -55,16 +55,19 @@
 
 
     <Label fx:id="resultsCountLabel" text="Total: 0 animales" styleClass="results-count"/>
-            <TableView fx:id="animalTable" prefHeight="500" styleClass="animal-table">
-                <columns>
-                    <TableColumn fx:id="nameColumn" text="Nombre"/>
-                    <TableColumn fx:id="speciesColumn" text="Especie"/>
-                    <TableColumn fx:id="idAdmissionDate" text="Fecha de Ingreso" prefWidth="150"/>
-                    <TableColumn fx:id="sexColumn" text="Sexo" prefWidth="150"/>
-                    <TableColumn fx:id="adoptedColumn" text="Adoptado" prefWidth="150"/>
-                    <TableColumn fx:id="actionsColumn" text="Acciones" prefWidth="350"/>
-                </columns>
-            </TableView>
+    <TableView fx:id="animalTable" prefHeight="500" styleClass="animal-table">
+        <columns>
+            <TableColumn fx:id="nameColumn" text="Nombre" prefWidth="150"/>
+            <TableColumn fx:id="speciesColumn" text="Especie" prefWidth="120"/>
+            <TableColumn fx:id="idAdmissionDate" text="Fecha de Ingreso" prefWidth="150"/>
+            <TableColumn fx:id="sexColumn" text="Sexo"/>
+            <TableColumn fx:id="adoptedColumn" text="Adoptado" prefWidth="100"/>
+            <TableColumn fx:id="actionsColumn" text="Acciones" prefWidth="350"/>
+        </columns>
+        <columnResizePolicy>
+            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+        </columnResizePolicy>
+    </TableView>
 
             <Pagination fx:id="pagination" pageCount="1" styleClass="pagination"/>
 </VBox>

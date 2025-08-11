@@ -67,6 +67,7 @@ public class AnimalManagementController implements IPortalAwareController {
             addActionButtons();
             setUpPagination(); // Load the first page of animals
             updateResultsCount();
+            animalTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -184,7 +185,7 @@ public class AnimalManagementController implements IPortalAwareController {
                     "No se encontraron animales con los filtros seleccionados." :
                     "Se encontraron " + filteredAnimals.size() + " animales.";
 
-            NavigationHelper.showInfoAlert("Filtros aplicados", message);
+            NavigationHelper.showSuccessAlert("Filtros aplicados", message);
 
         } catch (Exception e) {
             NavigationHelper.showErrorAlert("Error aplicando filtros",
@@ -268,36 +269,31 @@ public class AnimalManagementController implements IPortalAwareController {
                 deleteBtn.setOnAction(event -> {
                     Animal animal = getTableView().getItems().get(getIndex());
 
-                    // Confirmar eliminación
-                    Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
-                    confirmAlert.setTitle("Confirmar eliminación");
-                    confirmAlert.setHeaderText("¿Estás seguro de que deseas eliminar este animal?");
-                    confirmAlert.setContentText("Animal: " + animal.getName() + " - " + animal.getSpecies());
+                    // Show confirmation dialog before deleting
+                    boolean confirmed = NavigationHelper.showConfirmationAlert("Confirmar eliminación",
+                            "¿Estás seguro de que deseas eliminar este animal?",
+                            "Animal: " + animal.getName() + " - " + animal.getSpecies());
 
-                    confirmAlert.showAndWait().ifPresent(response -> {
-                        if (response == ButtonType.OK) {
-                            try {
-                                ServiceFactory.getAnimalService().deleteAnimal(animal.getRecordNumber());
+                    if (confirmed) {
+                        try {
+                            ServiceFactory.getAnimalService().deleteAnimal(animal.getRecordNumber());
 
-                                allAnimals = ServiceFactory.getAnimalService().getActiveAnimals();
+                            allAnimals = ServiceFactory.getAnimalService().getActiveAnimals();
 
-                                if (hasActiveFilters()) {
-                                    handleApplyFilters();
-                                } else {
-                                    filteredAnimals.clear();
-                                    filteredAnimals.addAll(allAnimals);
-                                    setUpPagination();
-                                    updateResultsCount();
-                                    getTableView().refresh();
-                                }
-
-                                NavigationHelper.showInfoAlert("Éxito", "Animal eliminado correctamente.");
-
-                            } catch (Exception e) {
-                                NavigationHelper.showErrorAlert("Error", "No se pudo eliminar el animal", e.getMessage());
+                            if (hasActiveFilters()) {
+                                handleApplyFilters();
+                            } else {
+                                filteredAnimals.clear();
+                                filteredAnimals.addAll(allAnimals);
+                                setUpPagination();
+                                updateResultsCount();
+                                getTableView().refresh();
                             }
+                            NavigationHelper.showSuccessAlert("Éxito", "Animal eliminado correctamente.");
+                        } catch (Exception e) {
+                            NavigationHelper.showErrorAlert("Error", "No se pudo eliminar el animal", e.getMessage());
                         }
-                    });
+                    }
                 });
             }
 

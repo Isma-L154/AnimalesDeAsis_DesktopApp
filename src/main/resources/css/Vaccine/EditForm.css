@@ -1,0 +1,210 @@
+/* Main Container */
+.vaccine-edit-container {
+    -fx-background-color: #ffffff;
+    -fx-padding: 30px;
+    -fx-background-radius: 12px;
+    -fx-border-radius: 12px;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);
+    -fx-min-width: 400px;
+    -fx-max-width: 450px;
+    -fx-pref-width: 420px;
+}
+
+/* Header Section */
+.vaccine-edit-header {
+    -fx-padding: 0 0 10px 0;
+}
+
+.vaccine-edit-title {
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c3e50;
+    -fx-alignment: center;
+}
+
+.vaccine-edit-subtitle {
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-size: 14px;
+    -fx-text-fill: #7f8c8d;
+    -fx-alignment: center;
+    -fx-font-style: italic;
+}
+
+.vaccine-edit-separator {
+    -fx-background-color: #ecf0f1;
+    -fx-pref-height: 2px;
+    -fx-max-height: 2px;
+}
+
+/* Form Section */
+.vaccine-edit-form {
+    -fx-padding: 15px 0;
+    -fx-alignment: center-left;
+}
+
+.vaccine-edit-label {
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #34495e;
+    -fx-padding: 0 0 3px 5px;
+}
+
+/* Text Field Styles */
+.vaccine-edit-textfield {
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-size: 14px;
+    -fx-padding: 10px 12px;
+    -fx-background-color: #ffffff;
+    -fx-border-color: #bdc3c7;
+    -fx-border-width: 1.5px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-text-fill: #2c3e50;
+}
+
+.vaccine-edit-textfield:focused {
+    -fx-border-color: #3498db;
+    -fx-background-color: #f8f9fa;
+    -fx-effect: dropshadow(gaussian, rgba(52, 152, 219, 0.3), 5, 0, 0, 0);
+}
+
+.vaccine-edit-textfield:hover {
+    -fx-border-color: #85929e;
+}
+
+/* DatePicker Styles */
+.vaccine-edit-datepicker {
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-size: 14px;
+}
+
+.vaccine-edit-datepicker .text-field {
+    -fx-padding: 10px 12px;
+    -fx-background-color: #ffffff;
+    -fx-border-color: #bdc3c7;
+    -fx-border-width: 1.5px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-text-fill: #2c3e50;
+}
+
+.vaccine-edit-datepicker:focused .text-field {
+    -fx-border-color: #3498db;
+    -fx-background-color: #f8f9fa;
+    -fx-effect: dropshadow(gaussian, rgba(52, 152, 219, 0.3), 5, 0, 0, 0);
+}
+
+.vaccine-edit-datepicker:hover .text-field {
+    -fx-border-color: #85929e;
+}
+
+.vaccine-edit-datepicker .arrow-button {
+    -fx-background-color: #ecf0f1;
+    -fx-background-radius: 0 7px 7px 0;
+    -fx-border-color: #bdc3c7;
+    -fx-border-width: 0 1.5px 1.5px 0;
+}
+
+.vaccine-edit-datepicker .arrow-button:hover {
+    -fx-background-color: #d5dbdb;
+}
+
+.vaccine-edit-datepicker .arrow-button .arrow {
+    -fx-background-color: #34495e;
+}
+
+/* Buttons Section */
+.vaccine-edit-buttons {
+    -fx-padding: 20px 0 0 0;
+    -fx-alignment: center;
+}
+
+.vaccine-edit-button-base {
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-padding: 10px 20px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-cursor: hand;
+    -fx-pref-height: 38px;
+    -fx-min-height: 38px;
+    -fx-max-height: 38px;
+}
+
+/* Cancel Button */
+.vaccine-edit-cancel-button {
+    -fx-background-color: #ecf0f1;
+    -fx-text-fill: #2c3e50;
+    -fx-border-color: #bdc3c7;
+    -fx-border-width: 1.5px;
+    -fx-pref-width: 110;
+    -fx-min-width: 110;
+}
+
+.vaccine-edit-cancel-button:hover {
+    -fx-background-color: #d5dbdb;
+    -fx-border-color: #85929e;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 1);
+}
+
+.vaccine-edit-cancel-button:pressed {
+    -fx-background-color: #bdc3c7;
+    -fx-effect: none;
+}
+
+/* Update Button */
+.vaccine-edit-update-button {
+    -fx-background-color: #f39c12;
+    -fx-text-fill: #ffffff;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-pref-width: 110;
+    -fx-min-width: 110;
+}
+
+.vaccine-edit-update-button:hover {
+    -fx-background-color: #e67e22;
+    -fx-effect: dropshadow(gaussian, rgba(243, 156, 18, 0.4), 8, 0, 0, 2);
+}
+
+.vaccine-edit-update-button:pressed {
+    -fx-background-color: #d35400;
+    -fx-effect: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .vaccine-edit-container {
+        -fx-min-width: 320px;
+        -fx-max-width: 380px;
+        -fx-padding: 20px;
+    }
+
+    .vaccine-edit-textfield, .vaccine-edit-datepicker {
+        -fx-pref-width: 220px;
+    }
+
+    .vaccine-edit-buttons {
+        -fx-spacing: 10px;
+    }
+
+    .vaccine-edit-button-base {
+        -fx-pref-width: 80px;
+    }
+}
+
+/* Focus and validation styles */
+.vaccine-edit-textfield.error {
+    -fx-border-color: #e74c3c;
+    -fx-background-color: #fdf2f2;
+}
+
+.vaccine-edit-datepicker.error .text-field {
+    -fx-border-color: #e74c3c;
+    -fx-background-color: #fdf2f2;
+}

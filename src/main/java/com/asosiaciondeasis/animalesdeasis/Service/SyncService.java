@@ -59,7 +59,6 @@ public class SyncService {
      * Fetches data from Firebase and stores it in the local SQLite database
      * only if it doesn't already exist locally.
      */
-    //TODO Try to put the sync(true) before pushing the local changes
     private void PullChanges() throws Exception {
         Firestore db = FirestoreClient.getFirestore();
         try {
@@ -90,9 +89,6 @@ public class SyncService {
                         animalDAO.updateAnimal(firebaseAnimal);
                         pullVaccines(doc, recordNumber);
                         System.out.println("🔁 Animal updated from Firebase: " + recordNumber);
-                    } else {
-
-                        System.out.println("⏭️ Local version is newer, skipping: " + recordNumber);
                     }
                 }
             }

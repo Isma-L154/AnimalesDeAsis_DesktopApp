@@ -29,6 +29,10 @@ public class CreateVaccineController implements Initializable{
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        setUpDatePickerFormat();
+    }
+
+    private void setUpDatePickerFormat() {
         // DatePicker is going to be in format dd-MM-yyyy, in here we set the converter
         vaccinationDatePicker.setConverter(new StringConverter<LocalDate>() {
             private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
@@ -54,8 +58,7 @@ public class CreateVaccineController implements Initializable{
         vaccinationDatePicker.setValue(LocalDate.now());
     }
 
-    public void setAnimalInfo(String recordNumber, String name) {
-        this.animalRecordNumber = recordNumber;
+    public void setAnimalInfo(String name) {
         this.animalName = name;
         animalInfoLabel.setText("Animal: " + name);
     }
@@ -69,7 +72,7 @@ public class CreateVaccineController implements Initializable{
 
     @FXML
     public void onSaveAction() {
-        if (!validateFields()) return;
+        if (!validateForm()) return;
 
         Vaccine newVaccine = new Vaccine();
 
@@ -94,23 +97,24 @@ public class CreateVaccineController implements Initializable{
     @FXML
     public void onCancelAction() {closeWindow();}
 
-    private boolean validateFields(){
+    private boolean validateForm() {
+        StringBuilder errors = new StringBuilder();
+
         if (vaccineNameField.getText() == null || vaccineNameField.getText().trim().isEmpty()) {
-            NavigationHelper.showWarningAlert("Campo requerido", "El nombre de la vacuna es obligatorio.");
-            vaccineNameField.requestFocus();
-            return false;
+            errors.append("- El nombre de la vacuna es obligatorio\n");
+        } else if (vaccineNameField.getText().trim().length() > 100) {
+            errors.append("- El nombre de la vacuna no puede exceder 100 caracteres\n");
         }
 
         if (vaccinationDatePicker.getValue() == null) {
-            NavigationHelper.showWarningAlert("Campo requerido", "La fecha de vacunación es obligatoria.");
-            vaccinationDatePicker.requestFocus();
-            return false;
+            errors.append("- La fecha de vacunación es obligatoria\n");
+        } else if (vaccinationDatePicker.getValue().isAfter(LocalDate.now())) {
+            errors.append("- La fecha de vacunación no puede ser futura\n");
         }
 
-        // In here we check if the date is in the future
-        if (vaccinationDatePicker.getValue().isAfter(LocalDate.now())) {
-            NavigationHelper.showWarningAlert("Fecha inválida", "La fecha de vacunación no puede ser futura.");
-            vaccinationDatePicker.requestFocus();
+        if (errors.length() > 0) {
+            NavigationHelper.showErrorAlert("Datos inválidos",
+                    "Por favor corrija los siguientes errores:", errors.toString());
             return false;
         }
 

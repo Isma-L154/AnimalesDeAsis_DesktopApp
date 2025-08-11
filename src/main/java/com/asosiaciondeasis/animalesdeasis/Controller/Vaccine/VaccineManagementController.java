@@ -2,6 +2,7 @@ package com.asosiaciondeasis.animalesdeasis.Controller.Vaccine;
 
 import com.asosiaciondeasis.animalesdeasis.Abstraccions.IPortalAwareController;
 import com.asosiaciondeasis.animalesdeasis.Config.ServiceFactory;
+import com.asosiaciondeasis.animalesdeasis.Controller.Animal.DetailAnimalController;
 import com.asosiaciondeasis.animalesdeasis.Controller.PortalController;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Model.Vaccine;
@@ -16,6 +17,7 @@ import javafx.scene.control.*;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -102,40 +104,6 @@ public class VaccineManagementController implements IPortalAwareController {
         }
     }
 
-    @FXML
-    public void onCreateNewVaccine() {
-        try{
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Vaccine/CreateVaccine.fxml"));
-            Parent root = loader.load();
-            CreateVaccineController controller = loader.getController();
-            controller.setAnimalInfo(currentAnimal.getRecordNumber(), currentAnimal.getName());
-
-            controller.setOnVaccineCreated(vaccine -> {
-                try {
-                    ServiceFactory.getVaccineService().registerVaccine(vaccine);
-                    loadVaccinesForAnimal();
-
-                    NavigationHelper.showInfoAlert("Éxito", "Vacuna registrada correctamente");
-                } catch (Exception e) {
-                    NavigationHelper.showErrorAlert("Error", "No se pudo registrar la vacuna: ", e.getMessage());
-                }
-            });
-
-            // Create a new modal stage for the vaccine creation, because we want to make something smaller and focused
-            // than the main window, so the user can focus on the task of creating a new vaccine
-            Stage stage = new Stage();
-            stage.setTitle("Nueva Vacuna");
-            stage.initModality(Modality.APPLICATION_MODAL);
-            stage.initOwner(vaccineTable.getScene().getWindow());
-            stage.setResizable(false);
-            stage.setScene(new Scene(root));
-
-            stage.showAndWait();
-        } catch (Exception e) {
-            NavigationHelper.showErrorAlert("Error", "No se pudo abrir la ventana de creación de vacuna: ", e.getMessage());
-        }
-    }
-
     private void addActionsButtons() {
         actionsColumn.setCellFactory(column -> new TableCell<Vaccine, Void>() {
             private final HBox buttonsContainer = new HBox(10);
@@ -143,7 +111,6 @@ public class VaccineManagementController implements IPortalAwareController {
             private final Button deleteButton = new Button("Eliminar");
 
             {
-                // Aplicar clases CSS como en AnimalManagement
                 editButton.getStyleClass().addAll("action-btn", "edit-btn");
                 deleteButton.getStyleClass().addAll("action-btn", "delete-btn");
 
@@ -151,10 +118,9 @@ public class VaccineManagementController implements IPortalAwareController {
                 editButton.setMinSize(65, 28);
                 editButton.setMaxSize(65, 28);
 
-                // Los botones no hacen nada por ahora
                 editButton.setOnAction(event -> {
-                    // TODO: Implementar edición
-                    System.out.println("Editar vacuna: " + getTableView().getItems().get(getIndex()).getVaccineName());
+                    Vaccine vaccine = getTableView().getItems().get(getIndex());
+                    onEditVaccine(vaccine);
                 });
 
                 deleteButton.setOnAction(event -> {
@@ -176,6 +142,112 @@ public class VaccineManagementController implements IPortalAwareController {
                 }
             }
         });
+    }
+
+    @FXML
+    public void onCreateNewVaccine() {
+        try{
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Vaccine/CreateVaccine.fxml"));
+            Parent root = loader.load();
+            CreateVaccineController controller = loader.getController();
+            controller.setAnimalInfo(currentAnimal.getName());
+
+            controller.setOnVaccineCreated(vaccine -> {
+                try {
+                    ServiceFactory.getVaccineService().registerVaccine(vaccine);
+                    loadVaccinesForAnimal();
+
+                    NavigationHelper.showSuccessAlert("Éxito", "Vacuna registrada correctamente");
+                } catch (Exception e) {
+                    NavigationHelper.showErrorAlert("Error", "No se pudo registrar la vacuna: ", e.getMessage());
+                }
+            });
+
+            /**
+             * Create a new modal stage for the vaccine creation, because we want to make something smaller and focused
+             * than the main window, so the user can focus on the task of creating a new vaccine
+             * */
+
+            Stage stage = new Stage();
+            stage.setTitle("Nueva Vacuna");
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.initOwner(vaccineTable.getScene().getWindow());
+            stage.setResizable(false);
+            stage.setScene(new Scene(root));
+
+            try {
+                Image icon = new Image(getClass().getResourceAsStream("/images/AdeAsisLogo.png"));
+                stage.getIcons().add(icon);
+            } catch (Exception e) {
+                System.out.println("No se pudo cargar el icono del modal: " + e.getMessage());
+            }
+
+            stage.showAndWait();
+        } catch (Exception e) {
+            NavigationHelper.showErrorAlert("Error", "No se pudo abrir la ventana de creación de vacuna: ", e.getMessage());
+        }
+    }
+
+    private void onEditVaccine(Vaccine vaccine) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Vaccine/EditVaccine.fxml"));
+            Parent root = loader.load();
+            EditVaccineController controller = loader.getController();
+            controller.setAnimalInfo(currentAnimal.getName());
+            controller.setVaccineData(vaccine);
+
+            controller.setOnVaccineUpdated(updatedVaccine -> {
+                try {
+                    ServiceFactory.getVaccineService().updateVaccine(updatedVaccine);
+                    loadVaccinesForAnimal();
+                    NavigationHelper.showSuccessAlert("Éxito", "Vacuna actualizada correctamente");
+                } catch (Exception e) {
+                    NavigationHelper.showErrorAlert("Error", "No se pudo actualizar la vacuna: ", e.getMessage());
+                }
+            });
+
+            /**
+             * Create a new modal stage for the vaccine edition, because we want to make something smaller and focused
+             * than the main window, so the user can focus on the task of editing a vaccine
+             * */
+
+            Stage stage = new Stage();
+            stage.setTitle("Editar Vacuna");
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.initOwner(vaccineTable.getScene().getWindow());
+            stage.setResizable(false);
+            stage.setScene(new Scene(root));
+
+            try {
+                Image icon = new Image(getClass().getResourceAsStream("/images/AdeAsisLogo.png"));
+                stage.getIcons().add(icon);
+            } catch (Exception e) {
+                System.out.println("No se pudo cargar el icono del modal: " + e.getMessage());
+            }
+
+            stage.showAndWait();
+        } catch (Exception e) {
+            NavigationHelper.showErrorAlert("Error", "No se pudo abrir la ventana de edición de vacuna: ", e.getMessage());
+        }
+    }
+
+    @FXML
+    private void goBackDetail() {
+        if (currentAnimal != null && portalController != null) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Animal/DetailAnimal.fxml"));
+                Parent root = loader.load();
+                DetailAnimalController detailController = loader.getController();
+                detailController.setPortalController(portalController);
+                detailController.setAnimalDetails(currentAnimal, ServiceFactory.getPlaceService().getAllPlaces());
+                portalController.setContent(root);
+
+            } catch (Exception e) {
+                NavigationHelper.showErrorAlert("Error", "No se pudo cargar los detalles del animal", e.getMessage());
+            }
+        } else {
+            NavigationHelper.showErrorAlert("Error", "No se puede regresar", "Datos del animal no disponibles.");
+        }
     }
 
     @Override

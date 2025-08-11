@@ -59,7 +59,7 @@
                     <Label fx:id="lastVaccineLabel" text="N/A" styleClass="summary-value"/>
                 </VBox>
             </HBox>
-            <Button text="Volver a Detalles" styleClass="vaccine-button-base, vaccine-back-button"/>
+            <Button text="Volver a Detalles" styleClass="vaccine-button-base, vaccine-back-button" onAction="#goBackDetail"/>
         </VBox>
     </HBox>
 </ScrollPane>

@@ -58,8 +58,9 @@ public class CreateVaccineController implements Initializable{
         vaccinationDatePicker.setValue(LocalDate.now());
     }
 
-    public void setAnimalInfo(String name) {
+    public void setAnimalInfo(String name, String recordNumber) {
         this.animalName = name;
+        this.animalRecordNumber = recordNumber;
         animalInfoLabel.setText("Animal: " + name);
     }
 

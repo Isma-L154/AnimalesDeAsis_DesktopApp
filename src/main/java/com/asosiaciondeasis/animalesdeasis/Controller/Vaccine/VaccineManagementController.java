@@ -165,7 +165,7 @@ public class VaccineManagementController implements IPortalAwareController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Vaccine/CreateVaccine.fxml"));
             Parent root = loader.load();
             CreateVaccineController controller = loader.getController();
-            controller.setAnimalInfo(currentAnimal.getName());
+            controller.setAnimalInfo(currentAnimal.getName(), currentAnimal.getRecordNumber());
 
             controller.setOnVaccineCreated(vaccine -> {
                 try {

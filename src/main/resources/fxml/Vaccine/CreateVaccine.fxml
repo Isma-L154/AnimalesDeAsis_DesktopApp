@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.asosiaciondeasis.animalesdeasis.Controller.Vaccine.CreateVaccineController"
+            spacing="20" alignment="CENTER"
+            styleClass="vaccine-create-container"
+            stylesheets="@/css/Vaccine/CreateForm.css">
+
+    <!-- Header -->
+    <VBox alignment="CENTER" spacing="10" styleClass="vaccine-create-header">
+        <Label text="Nueva Vacuna" styleClass="vaccine-create-title"/>
+        <Label fx:id="animalInfoLabel" text="Animal: [Nombre del Animal]"
+               styleClass="vaccine-create-subtitle"/>
+        <Separator prefWidth="280" styleClass="vaccine-create-separator"/>
+    </VBox>
+
+    <!-- Form -->
+    <VBox spacing="15" alignment="CENTER" styleClass="vaccine-create-form">
+
+        <!-- Vaccine Name Field -->
+        <VBox spacing="5" alignment="CENTER_LEFT">
+            <Label text="Nombre de la Vacuna" styleClass="vaccine-create-label"/>
+            <TextField fx:id="vaccineNameField"
+                       promptText="Ej: Rabia, Parvovirus, etc."
+                       styleClass="vaccine-create-textfield"
+                       prefWidth="250"/>
+        </VBox>
+
+        <!-- Date Field -->
+        <VBox spacing="5" alignment="CENTER_LEFT">
+            <Label text="Fecha de Vacunación (DD-MM-YYYY)" styleClass="vaccine-create-label"/>
+            <DatePicker fx:id="vaccinationDatePicker"
+                        promptText="Selecciona la fecha"
+                        styleClass="vaccine-create-datepicker"
+                        prefWidth="250"/>
+        </VBox>
+
+    </VBox>
+
+    <!-- Buttons -->
+    <HBox spacing="15" alignment="CENTER" styleClass="vaccine-create-buttons">
+        <Button text="Cancelar"
+                styleClass="vaccine-create-button-base, vaccine-create-cancel-button"
+                onAction="#onCancelAction"
+                prefWidth="100"/>
+        <Button text="Guardar"
+                styleClass="vaccine-create-button-base, vaccine-create-save-button"
+                onAction="#onSaveAction"
+                prefWidth="100"/>
+    </HBox>
+
+</VBox>

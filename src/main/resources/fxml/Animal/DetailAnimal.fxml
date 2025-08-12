@@ -17,8 +17,14 @@
 
             <!-- Header Section -->
             <VBox alignment="CENTER" spacing="10" styleClass="detail-header">
-
                 <Label text="Detalles del Animal" styleClass="detail-title" />
+
+                <Button fx:id="vaccineManagementBtn" text="Vacunas 💉" styleClass="vaccine-access-button"
+                        onAction="#goToVaccineManagement">
+                    <tooltip>
+                        <Tooltip text="Historial de Vacunas" />
+                    </tooltip>
+                </Button>
 
                 <Separator prefWidth="200" styleClass="detail-separator" />
             </VBox>
@@ -87,7 +93,7 @@
             <!-- Button Section -->
             <HBox spacing="20" alignment="CENTER" styleClass="detail-button-container">
                 <Button text="Cancelar" styleClass="detail-button-base, detail-back-button" onAction="#goToAnimalModule"/>
-                <Button text="Editar" styleClass="detail-button-base, detail-edit-button" />
+                <Button text="Editar" styleClass="detail-button-base, detail-edit-button" onAction="#goToEditModule"/>
             </HBox>
 
         </VBox>

@@ -67,6 +67,7 @@ public class AnimalManagementController implements IPortalAwareController {
             addActionButtons();
             setUpPagination(); // Load the first page of animals
             updateResultsCount();
+            animalTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -184,7 +185,7 @@ public class AnimalManagementController implements IPortalAwareController {
                     "No se encontraron animales con los filtros seleccionados." :
                     "Se encontraron " + filteredAnimals.size() + " animales.";
 
-            NavigationHelper.showInfoAlert("Filtros aplicados", message);
+            NavigationHelper.showSuccessAlert("Filtros aplicados", message);
 
         } catch (Exception e) {
             NavigationHelper.showErrorAlert("Error aplicando filtros",
@@ -215,102 +216,79 @@ public class AnimalManagementController implements IPortalAwareController {
         }
     }
 
-    //TODO Fix the action buttons in the table
-    private void addActionButtons() {
+    private void addActionButtons(){
         actionsColumn.setCellFactory(col -> new TableCell<>() {
-            private final Button editBtn = new Button("Editar");
-            private final Button deleteBtn = new Button("Eliminar");
-            private final Button detailBtn = new Button("Detalles");
-
+            private final Button editBtn = createButton("Editar", "edit-btn", "Editar");
+            private final Button deleteBtn = createButton("Eliminar", "delete-btn", "Desactivar");
+            private final Button detailBtn = createButton("Detalles", "detail-btn", "Detalles");
             {
-                editBtn.setTooltip(new Tooltip("Editar"));
-                deleteBtn.setTooltip(new Tooltip("Desactivar"));
-                detailBtn.setTooltip(new Tooltip("Detalles"));
-
-                editBtn.getStyleClass().add("edit-btn");
-                deleteBtn.getStyleClass().add("delete-btn");
-                detailBtn.getStyleClass().add("detail-btn");
-
-                editBtn.setOnAction(event -> {
-                    Animal animal = getTableView().getItems().get(getIndex());
-                    if (portalController != null) {
-                        try {
-                            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Animal/EditAnimal.fxml"));
-                            Parent root = loader.load();
-                            EditAnimalController editController = loader.getController();
-                            editController.setPortalController(portalController);
-                            editController.setAnimalData(animal);
-                            portalController.setContent(root);
-
-                        } catch (Exception e) {
-                            NavigationHelper.showErrorAlert("Error", "No se pudo cargar el formulario de edición", e.getMessage());
-                        }
-                    }
-                });
-
-                detailBtn.setOnAction(event -> {
-                    Animal animal = getTableView().getItems().get(getIndex());
-                    if (portalController != null) {
-                        try {
-                            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Animal/DetailAnimal.fxml"));
-                            Parent root = loader.load();
-                            DetailAnimalController detailController = loader.getController();
-                            detailController.setPortalController(portalController);
-                            detailController.setAnimalDetails(animal, ServiceFactory.getPlaceService().getAllPlaces());
-                            portalController.setContent(root);
-
-                        } catch (Exception e) {
-                            NavigationHelper.showErrorAlert("Error", "No se pudo cargar los detalles del animal", e.getMessage());
-                        }
-                    }
-                });
-
-                deleteBtn.setOnAction(event -> {
-                    Animal animal = getTableView().getItems().get(getIndex());
-
-                    // Confirmar eliminación
-                    Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
-                    confirmAlert.setTitle("Confirmar eliminación");
-                    confirmAlert.setHeaderText("¿Estás seguro de que deseas eliminar este animal?");
-                    confirmAlert.setContentText("Animal: " + animal.getName() + " - " + animal.getSpecies());
-
-                    confirmAlert.showAndWait().ifPresent(response -> {
-                        if (response == ButtonType.OK) {
-                            try {
-                                ServiceFactory.getAnimalService().deleteAnimal(animal.getRecordNumber());
-
-                                allAnimals = ServiceFactory.getAnimalService().getActiveAnimals();
-
-                                if (hasActiveFilters()) {
-                                    handleApplyFilters();
-                                } else {
-                                    filteredAnimals.clear();
-                                    filteredAnimals.addAll(allAnimals);
-                                    setUpPagination();
-                                    updateResultsCount();
-                                    getTableView().refresh();
-                                }
-
-                                NavigationHelper.showInfoAlert("Éxito", "Animal eliminado correctamente.");
-
-                            } catch (Exception e) {
-                                NavigationHelper.showErrorAlert("Error", "No se pudo eliminar el animal", e.getMessage());
-                            }
-                        }
-                    });
-                });
+                editBtn.setOnAction(event -> handleEditAnimal());
+                deleteBtn.setOnAction(event -> handleDeleteAnimal());
+                detailBtn.setOnAction(event -> handleDetailAnimal());
             }
-
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
-
                 if (empty) {
                     setGraphic(null);
                 } else {
                     HBox buttonBox = new HBox(5, detailBtn, editBtn, deleteBtn);
                     buttonBox.setAlignment(Pos.CENTER);
                     setGraphic(buttonBox);
+                }
+            }
+
+            private Button createButton(String text, String styleClass, String tooltipText) {
+                Button button = new Button(text);
+                button.setTooltip(new Tooltip(tooltipText));
+                button.getStyleClass().add(styleClass);
+                return button;
+            }
+            private void handleEditAnimal() {
+                Animal animal = getTableView().getItems().get(getIndex());
+                if (portalController != null) {
+                    try {
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Animal/EditAnimal.fxml"));
+                        Parent root = loader.load();
+                        EditAnimalController editController = loader.getController();
+                        editController.setPortalController(portalController);
+                        editController.setAnimalData(animal);
+                        portalController.setContent(root);
+                    } catch (Exception e) {
+                        NavigationHelper.showErrorAlert("Error", "No se pudo cargar el formulario de edición", e.getMessage());
+                    }
+                }
+            }
+            private void handleDeleteAnimal() {
+                Animal animal = getTableView().getItems().get(getIndex());
+
+                boolean confirmed = NavigationHelper.showConfirmationAlert("Confirmar eliminación",
+                        "¿Estás seguro de que deseas eliminar este animal?",
+                        "Animal: " + animal.getName() + " - " + animal.getSpecies());
+
+                if (confirmed) {
+                    try {
+                        ServiceFactory.getAnimalService().deleteAnimal(animal.getRecordNumber());
+                        refreshAnimalList();
+                        NavigationHelper.showSuccessAlert("Éxito", "Animal eliminado correctamente.");
+                    } catch (Exception e) {
+                        NavigationHelper.showErrorAlert("Error", "No se pudo eliminar el animal", e.getMessage());
+                    }
+                }
+            }
+            private void handleDetailAnimal() {
+                Animal animal = getTableView().getItems().get(getIndex());
+                if (portalController != null) {
+                    try {
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Animal/DetailAnimal.fxml"));
+                        Parent root = loader.load();
+                        DetailAnimalController detailController = loader.getController();
+                        detailController.setPortalController(portalController);
+                        detailController.setAnimalDetails(animal, ServiceFactory.getPlaceService().getAllPlaces());
+                        portalController.setContent(root);
+                    } catch (Exception e) {
+                        NavigationHelper.showErrorAlert("Error", "No se pudo cargar los detalles del animal", e.getMessage());
+                    }
                 }
             }
         });
@@ -332,6 +310,18 @@ public class AnimalManagementController implements IPortalAwareController {
                 (adoptionFilter.getValue() != null && !adoptionFilter.getValue().isEmpty());
     }
 
+    private void refreshAnimalList() throws Exception {
+        allAnimals = ServiceFactory.getAnimalService().getActiveAnimals();
+
+        if (hasActiveFilters()) {
+            handleApplyFilters();
+        } else {
+            filteredAnimals = allAnimals;
+            setUpPagination();
+            updateResultsCount();
+            animalTable.refresh();
+        }
+    }
     /**
      * We are doing this to initialize the combo boxes with default values, because in the FXML file
      * the system does not allow setting default values for ComboBoxes.

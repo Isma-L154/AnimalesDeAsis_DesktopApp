@@ -41,7 +41,7 @@ public class VaccineDAO implements IVaccineDAO {
     @Override
     public List<Vaccine> getVaccinesByAnimal(String animalRecordNumber) throws Exception {
         List<Vaccine> vaccines = new ArrayList<>();
-        String sql = "SELECT id, animal_record_number, vaccine_name, vaccination_date FROM vaccines WHERE animal_record_number = ?";
+        String sql = "SELECT * FROM vaccines WHERE animal_record_number = ?";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
@@ -53,8 +53,7 @@ public class VaccineDAO implements IVaccineDAO {
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                Vaccine vaccine = mapResultSetToVaccine(rs);
-                vaccines.add(vaccine);
+                vaccines.add(mapResultSetToVaccine(rs));
             }
 
         } catch (SQLException e) {
@@ -77,14 +76,15 @@ public class VaccineDAO implements IVaccineDAO {
     public void updateVaccine(Vaccine vaccine) throws Exception {
         String sql = """
                     UPDATE vaccines
-                    SET vaccine_name = ?, vaccination_date = ?, last_modified = datetime('now')
+                    SET vaccine_name = ?, vaccination_date = ?, synced = ?, last_modified = strftime('%Y-%m-%dT%H:%M:%S', 'now')
                     WHERE id = ?
                 """;
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, vaccine.getVaccineName());
             pstmt.setString(2, vaccine.getVaccinationDate());
-            pstmt.setInt(3, vaccine.getId());
+            pstmt.setInt(3, vaccine.isSynced() ? 1 : 0);
+            pstmt.setInt(4, vaccine.getId());
 
             int rowsAffected = pstmt.executeUpdate();
             if (rowsAffected == 0) {
@@ -121,20 +121,21 @@ public class VaccineDAO implements IVaccineDAO {
     }
 
     @Override
-    public List<Vaccine> getUnsyncedVaccinesByAnimal(String animalRecordNumber) throws Exception {
+    public List<Vaccine> getAllUnsyncedVaccines() throws Exception {
         List<Vaccine> vaccines = new ArrayList<>();
-        String sql = "SELECT * FROM vaccines WHERE animal_record_number = ? AND synced = 0";
+        String sql = "SELECT * FROM vaccines WHERE synced = 0";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setString(1, animalRecordNumber);
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                Vaccine vaccine = mapResultSetToVaccine(rs);
-                vaccines.add(vaccine);
+                vaccines.add(mapResultSetToVaccine(rs));
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new Exception("Error retrieving all unsynced vaccines", e);
         }
+
         return vaccines;
     }
 

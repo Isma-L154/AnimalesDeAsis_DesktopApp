@@ -1,0 +1,84 @@
+.custom-alert {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1px;
+    -fx-border-radius: 12px;
+    -fx-background-radius: 12px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 15, 0, 0, 3);
+}
+
+.custom-alert .header-panel {
+    -fx-background-color: linear-gradient(to right, #593414, #F2921D);
+    -fx-background-radius: 12px 12px 0 0;
+    -fx-padding: 15px;
+}
+
+.custom-alert .header-panel .label {
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.custom-alert .content {
+    -fx-padding: 20px;
+    -fx-font-size: 14px;
+    -fx-text-fill: #2c3e50;
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+}
+
+.custom-alert .button-bar {
+    -fx-padding: 10px 20px 20px 20px;
+    -fx-spacing: 10px;
+}
+
+.custom-alert .button-bar .button {
+    -fx-background-color: linear-gradient(to bottom, #F2921D, #E67E22);
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 16px;
+    -fx-background-radius: 20px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(242, 146, 29, 0.3), 4, 0, 0, 2);
+}
+
+.custom-alert .button-bar .button:hover {
+    -fx-background-color: linear-gradient(to bottom, #E67E22, #D68910);
+    -fx-effect: dropshadow(gaussian, rgba(242, 146, 29, 0.5), 6, 0, 0, 2);
+}
+
+.custom-alert .button-bar .button:default {
+    -fx-background-color: linear-gradient(to bottom, #27ae60, #229954);
+}
+
+.custom-alert .button-bar .button:default:hover {
+    -fx-background-color: linear-gradient(to bottom, #229954, #1e8449);
+}
+
+.custom-alert .button-bar .button:cancel-button {
+    -fx-background-color: linear-gradient(to bottom, #95a5a6, #7f8c8d);
+}
+
+.custom-alert .button-bar .button:cancel-button:hover {
+    -fx-background-color: linear-gradient(to bottom, #7f8c8d, #6c7b7d);
+}
+
+/* Success Alert Specific */
+.success-alert .header-panel {
+    -fx-background-color: linear-gradient(to right, #27ae60, #2ecc71);
+}
+
+/* Error Alert Icon */
+.custom-alert.error .graphic {
+    -fx-text-fill: #e74c3c;
+}
+
+/* Warning Alert Icon */
+.custom-alert.warning .graphic {
+    -fx-text-fill: #f39c12;
+}
+
+/* Info Alert Icon */
+.custom-alert.information .graphic {
+    -fx-text-fill: #3498db;
+}

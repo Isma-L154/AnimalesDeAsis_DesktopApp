@@ -1,7 +1,9 @@
 /* Contenedor principal */
 .animal-management-container {
-    -fx-padding: 30;
+    -fx-padding: 20px;
     -fx-background-color: linear-gradient(to bottom, #f8f9ff, #ffffff);
+    -fx-pref-width: 1250px;
+    -fx-min-width: 1200px;
 }
 
 .section-title {
@@ -191,7 +193,6 @@
     -fx-background-color: linear-gradient(to bottom, #8e44ad, #7d3c98);
 }
 
-/* Contador de resultados */
 .results-count {
     -fx-font-size: 14px;
     -fx-font-weight: bold;
@@ -199,7 +200,6 @@
     -fx-padding: 0 0 0 10;
 }
 
-/* Tabla mejorada con encabezados más legibles */
 .animal-table {
     -fx-background-color: #ffffff;
     -fx-background-radius: 15;
@@ -207,20 +207,25 @@
     -fx-border-color: #e8e8e8;
     -fx-border-radius: 15;
     -fx-border-width: 1;
+    -fx-pref-width: 1200px;
+    -fx-min-width: 1150px;
+    -fx-max-width: 1300px;
+    -fx-pref-height: 600px;
+    -fx-margin-bottom: 30px; /* Not supported in JavaFX, use padding on pagination instead */
 }
 
 .animal-table .column-header {
     -fx-background-color: linear-gradient(to bottom, #593414, #4a2a11);
-    -fx-text-fill: #FFFFFF; /* Texto blanco para mejor contraste */
+    -fx-text-fill: #FFFFFF;
     -fx-font-weight: bold;
-    -fx-font-size: 14px; /* Aumentamos un poco el tamaño */
+    -fx-font-size: 14px;
     -fx-padding: 12 8;
     -fx-alignment: CENTER;
-    -fx-effect: dropshadow(three-pass-box, rgba(255,255,255,0.1), 1, 0, 0, 1); /* Sutil sombra blanca */
+    -fx-effect: dropshadow(three-pass-box, rgba(255,255,255,0.1), 1, 0, 0, 1);
 }
 
 .animal-table .column-header .label {
-    -fx-text-fill: #FFFFFF; /* Asegurar que el label también sea blanco */
+    -fx-text-fill: #FFFFFF;
     -fx-font-weight: bold;
 }
 
@@ -266,7 +271,7 @@
     -fx-font-weight: bold;
     -fx-background-radius: 15;
     -fx-cursor: hand;
-    -fx-padding: 6 12;
+    -fx-padding: 6 10;
     -fx-text-fill: white;
     -fx-font-size: 11px;
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 3, 0, 0, 1);
@@ -305,7 +310,14 @@
 
 /* Paginación */
 .pagination {
-    -fx-padding: 20 0 0 0;
+    -fx-padding: 15 0 0 0;
+    -fx-alignment: CENTER;
+    -fx-max-width: infinity;
+}
+
+.pagination .pagination-control {
+    -fx-padding: 10;
+    -fx-spacing: 5;
 }
 
 .pagination .pagination-control .number-button {
@@ -313,9 +325,34 @@
     -fx-text-fill: #34495e;
     -fx-background-radius: 20;
     -fx-cursor: hand;
+    -fx-min-width: 35;
+    -fx-min-height: 35;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
 }
 
 .pagination .pagination-control .number-button:selected {
     -fx-background-color: linear-gradient(to bottom, #F2921D, #E67E22);
     -fx-text-fill: white;
+    -fx-effect: dropshadow(three-pass-box, rgba(242, 146, 29, 0.4), 4, 0, 0, 1);
+}
+
+.pagination .pagination-control .number-button:hover {
+    -fx-background-color: #d5dbdb;
+    -fx-scale-x: 1.1;
+    -fx-scale-y: 1.1;
+}
+
+.pagination .pagination-control .left-arrow-button,
+.pagination .pagination-control .right-arrow-button {
+    -fx-background-color: #bdc3c7;
+    -fx-text-fill: #34495e;
+    -fx-background-radius: 20;
+    -fx-min-width: 35;
+    -fx-min-height: 35;
+}
+
+.pagination .pagination-control .left-arrow-button:hover,
+.pagination .pagination-control .right-arrow-button:hover {
+    -fx-background-color: #95a5a6;
 }

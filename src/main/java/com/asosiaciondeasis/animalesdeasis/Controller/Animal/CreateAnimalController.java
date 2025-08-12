@@ -66,7 +66,6 @@ public class CreateAnimalController implements IPortalAwareController {
     private void configureDatePickers() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
-
         admissionDatePicker.setConverter(new StringConverter<>() {
             @Override
             public String toString(LocalDate date) {
@@ -131,11 +130,7 @@ public class CreateAnimalController implements IPortalAwareController {
 
             Platform.runLater(() -> {
                 chipNumberField.setText(code);
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Éxito");
-                alert.setHeaderText(null);
-                alert.setContentText("Código escaneado exitosamente.");
-                alert.showAndWait();
+                NavigationHelper.showSuccessAlert("Exito", "Código escaneado: " + code);
             });
         });
     }
@@ -178,7 +173,7 @@ public class CreateAnimalController implements IPortalAwareController {
 
         boolean saved = animalService.registerAnimal(animal);
         if (saved) {
-            NavigationHelper.showInfoAlert("Exito", "Animal actualizado exitosamente.");
+            NavigationHelper.showSuccessAlert("Exito", "Animal actualizado exitosamente.");
             NavigationHelper.goToAnimalModule(portalController);
         } else {
             NavigationHelper.showErrorAlert("Error", null, "Ocurrió un error al actualizar el animal.");

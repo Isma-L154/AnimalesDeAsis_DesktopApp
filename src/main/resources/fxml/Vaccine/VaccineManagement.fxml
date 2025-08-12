@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<ScrollPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.asosiaciondeasis.animalesdeasis.Controller.Vaccine.VaccineManagementController"
+            fitToWidth="true"
+            styleClass="vaccine-scroll-pane"
+            stylesheets="@/css/Vaccine/VaccineManagement.css">
+
+    <HBox alignment="CENTER">
+        <VBox spacing="25" alignment="TOP_CENTER"
+              styleClass="vaccine-main-container"
+              maxWidth="800" prefWidth="700">
+
+            <!-- Header Section -->
+            <VBox alignment="CENTER" spacing="15" styleClass="vaccine-header">
+                <Label text="Historial de Vacunación" styleClass="vaccine-title" />
+
+                <Label fx:id="animalInfoLabel" text="Animal: [Nombre del Animal]"
+                       styleClass="animal-info-subtitle" />
+
+                <Separator prefWidth="300" styleClass="vaccine-separator" />
+            </VBox>
+
+            <!-- Action Buttons Section -->
+            <HBox spacing="15" alignment="CENTER" styleClass="vaccine-action-container">
+                <Button text="Agregar Vacuna +" styleClass="vaccine-button-base, vaccine-create-button"
+                        onAction="#onCreateNewVaccine"/>
+            </HBox>
+
+            <!-- Table Section -->
+            <VBox styleClass="vaccine-table-card">
+                <Label text="Registro de Vacunas" styleClass="table-title" />
+
+                <TableView fx:id="vaccineTable" styleClass="vaccine-table">
+                    <columns>
+                        <TableColumn fx:id="vaccineNameColumn" text="Nombre de la Vacuna" prefWidth="250"
+                                     styleClass="vaccine-table-column"/>
+                        <TableColumn fx:id="vaccinationDateColumn" text="Fecha de Vacunación" prefWidth="200"
+                                     styleClass="vaccine-table-column"/>
+                        <TableColumn fx:id="actionsColumn" text="Acciones" prefWidth="160"
+                                     styleClass="vaccine-table-column"/>
+                    </columns>
+                </TableView>
+            </VBox>
+
+            <!-- Summary Section -->
+            <HBox spacing="30" alignment="CENTER" styleClass="vaccine-summary-container">
+                <VBox alignment="CENTER" spacing="5" styleClass="summary-card">
+                    <Label text="Total Vacunas" styleClass="summary-title"/>
+                    <Label fx:id="totalVaccinesLabel" text="0" styleClass="summary-value"/>
+                </VBox>
+
+                <VBox alignment="CENTER" spacing="5" styleClass="summary-card">
+                    <Label text="Última Vacuna" styleClass="summary-title"/>
+                    <Label fx:id="lastVaccineLabel" text="N/A" styleClass="summary-value"/>
+                </VBox>
+            </HBox>
+            <Button text="Volver a Detalles" styleClass="vaccine-button-base, vaccine-back-button" onAction="#goBackDetail"/>
+        </VBox>
+    </HBox>
+</ScrollPane>

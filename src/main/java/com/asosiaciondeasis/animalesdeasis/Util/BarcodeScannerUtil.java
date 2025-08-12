@@ -1,13 +1,14 @@
 package com.asosiaciondeasis.animalesdeasis.Util;
 
+import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
 import com.github.sarxos.webcam.Webcam;
 import com.google.zxing.*;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
 import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
@@ -15,7 +16,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
-import java.awt.*;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.util.concurrent.ExecutorService;
@@ -24,55 +24,78 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class BarcodeScannerUtil {
-    /**
-     * This class is a placeholder for barcode scanning functionality.
-     * Is implemented using libraries like ZXing or ZBar for Java.
-     */
 
     private static final Logger LOGGER = Logger.getLogger(BarcodeScannerUtil.class.getName());
     private volatile boolean running = false;
     private Webcam webcam;
-    private ExecutorService executor;
+    private ExecutorService captureExecutor;
+    private ExecutorService decodeExecutor;
 
     /**
-     * Starts the barcode scanning process using the default webcam.
-     * The scanned code is returned through the provided callback.
-     * <p>
-     * This method manages UI, webcam access and scanning in a separate thread.
-     * Resources are properly released and errors are handled.
-     *
+     * Starts the barcode scanning process and opens the webcam dialog.
      * @param callback Callback to handle the scanned code.
      */
-
     public void startScanning(ScanCallback callback) {
         if (!initializeWebcam()) return;
 
         running = true;
-        executor = Executors.newSingleThreadExecutor();
+
+        captureExecutor = Executors.newSingleThreadExecutor();
+        decodeExecutor = Executors.newSingleThreadExecutor();
 
         Stage stage = createScannerStage();
         ImageView imageView = (ImageView) ((BorderPane) stage.getScene().getRoot()).getCenter();
 
-        executor.submit(() -> scanLoop(callback, imageView, stage));
+        captureExecutor.submit(() -> {
+            while (running) {
+                try {
+                    BufferedImage image = webcam.getImage();
+                    if (image != null) {
+                        Platform.runLater(() -> {
+                            WritableImage fxImage = SwingFXUtils.toFXImage(image, null);
+                            imageView.setImage(fxImage);
+                        });
+
+                        decodeExecutor.submit(() -> {
+                            String scannedCode = decodeBarcode(image);
+                            if (scannedCode != null && running) {
+                                running = false;
+                                Platform.runLater(() -> {
+                                    callback.onCodeScanned(scannedCode);
+                                    stage.close();
+                                });
+                            }
+                        });
+                    }
+                } catch (Exception e) {
+                    LOGGER.log(Level.SEVERE, "Error en captura", e);
+                }
+            }
+        });
     }
 
+
     /**
-     * Initializes the webcam device.
-     *
-     * @return true if successful, false otherwise.
+     * Initializes the webcam and sets the best available resolution.
+     * @return true if the webcam was initialized successfully, false otherwise.
      */
     private boolean initializeWebcam() {
         webcam = Webcam.getDefault();
         if (webcam == null) {
-            showError("No se detectó ninguna cámara.");
+            NavigationHelper.showErrorAlert("Error", null,"No se detectó ninguna cámara." );
             LOGGER.warning("No webcam detected.");
             return false;
         }
-        webcam.setViewSize(new Dimension(640, 480));
+
+        // CAMBIO: Seleccionar resolución más alta disponible
+        Dimension bestRes = getMaxResolution(webcam.getViewSizes());
+        LOGGER.info("Resolución seleccionada: " + bestRes.width + "x" + bestRes.height);
+        webcam.setViewSize(bestRes);
+
         try {
             webcam.open();
         } catch (Exception e) {
-            showError("No se pudo abrir la cámara.");
+            NavigationHelper.showErrorAlert("Error", null,"No se pudo abrir la camara." );
             LOGGER.log(Level.SEVERE, "Failed to open webcam", e);
             return false;
         }
@@ -80,12 +103,32 @@ public class BarcodeScannerUtil {
     }
 
     /**
-     * Creates and setups the Camera using JavaFX.
+     * Returns the maximum resolution from the supported resolutions.
+     * @param supportedResolutions Array of supported resolutions.
+     * @return The highest available resolution.
+     */
+    private Dimension getMaxResolution(Dimension[] supportedResolutions) {
+        Dimension max = supportedResolutions[0];
+        for (Dimension d : supportedResolutions) {
+            if (d.width * d.height > max.width * max.height) {
+                max = d;
+            }
+        }
+        return max;
+    }
+
+    /**
+     * Creates and configures the JavaFX stage for barcode scanning.
+     * @return The configured Stage.
      */
     private Stage createScannerStage() {
         ImageView imageView = new ImageView();
         imageView.setPreserveRatio(true);
-        imageView.setFitWidth(640);
+
+        // CAMBIO: Ajustar tamaño más grande
+        imageView.setFitWidth(800);
+        imageView.setFitHeight(600);
+        BorderPane.setAlignment(imageView, Pos.CENTER);
 
         Button cancelBtn = new Button("Cancelar");
         cancelBtn.setOnAction(e -> stopScanning());
@@ -97,6 +140,8 @@ public class BarcodeScannerUtil {
         Stage stage = new Stage();
         stage.setTitle("Escaneo de código de barras");
         stage.setScene(new Scene(root));
+        stage.setMinWidth(800);
+        stage.setMinHeight(600);
         stage.initModality(Modality.APPLICATION_MODAL);
         stage.setOnCloseRequest(e -> stopScanning());
         Platform.runLater(stage::show);
@@ -105,59 +150,14 @@ public class BarcodeScannerUtil {
     }
 
     /**
-     * Scans the webcam for barcodes in a loop.
-     * If a barcode is detected, it calls the callback and stops scanning.
-     * If no barcode is detected, it continues scanning until stopped.
-     *
-     * @param callback  Callback to handle the scanned code.
-     * @param imageView ImageView to display the webcam feed.
-     * @param stage     Stage to show the scanner UI.
-     */
-    private void scanLoop(ScanCallback callback, ImageView imageView, Stage stage) {
-        try {
-            while (running) {
-                BufferedImage image = webcam.getImage();
-                if (image == null) continue;
-
-                // Update the UI with the latest webcam image
-                Platform.runLater(() -> {
-                    WritableImage fxImage = SwingFXUtils.toFXImage(image, null);
-                    imageView.setImage(fxImage);
-                });
-
-                String scannedCode = decodeBarcode(image);
-                if (scannedCode != null) {
-                    running = false;
-                    Platform.runLater(() -> {
-                        callback.onCodeScanned(scannedCode);
-                        stage.close();
-                    });
-                    break;
-                }
-                Thread.sleep(200);
-            }
-        } catch (InterruptedException e) {
-            LOGGER.log(Level.WARNING, "Scanning interrupted", e);
-            Thread.currentThread().interrupt();
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Unexpected error in scan loop", e);
-        } finally {
-            stopScanning();
-            Platform.runLater(stage::close);
-        }
-    }
-
-    /**
-     * Decodes the barcode from the given image using ZXing library.
-     * If no barcode is found, it returns null.
-     *
-     * @param image BufferedImage containing the webcam feed.
-     * @return The decoded barcode text or null if not found.
+     * Attempts to decode a barcode from the given BufferedImage.
+     * @param image The image to decode.
+     * @return The decoded barcode as a String, or null if not found.
      */
     private String decodeBarcode(BufferedImage image) {
-        LuminanceSource source = new BufferedImageLuminanceSource(image);
-        BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
         try {
+            LuminanceSource source = new BufferedImageLuminanceSource(image);
+            BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
             Result result = new MultiFormatReader().decode(bitmap);
             return result.getText();
         } catch (NotFoundException e) {
@@ -169,32 +169,23 @@ public class BarcodeScannerUtil {
     }
 
     /**
-     * Stops the scanning process and releases resources.
+     * Stops the scanning process, closes the webcam, and shuts down executors.
      */
     public synchronized void stopScanning() {
         running = false;
         if (webcam != null && webcam.isOpen()) {
             webcam.close();
         }
-        if (executor != null && !executor.isShutdown()) {
-            executor.shutdownNow();
+        if (captureExecutor != null && !captureExecutor.isShutdown()) {
+            captureExecutor.shutdownNow();
+        }
+        if (decodeExecutor != null && !decodeExecutor.isShutdown()) {
+            decodeExecutor.shutdownNow();
         }
     }
 
     /**
-     * Shows an error dialog in the UI thread.
+     * Callback interface for handling scanned barcode results.
      */
-    private void showError(String message) {
-        Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Error de cámara");
-            alert.setHeaderText(null);
-            alert.setContentText(message);
-            alert.showAndWait();
-        });
-    }
-
-    public interface ScanCallback {
-        void onCodeScanned(String code);
-    }
+    public interface ScanCallback { void onCodeScanned(String code);}
 }

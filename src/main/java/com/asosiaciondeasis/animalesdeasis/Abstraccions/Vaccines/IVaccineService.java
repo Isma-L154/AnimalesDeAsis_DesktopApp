@@ -14,5 +14,5 @@ public interface IVaccineService {
 
     void deleteVaccine(int id) throws Exception;
 
-    boolean existsVaccine(int id) throws Exception;
+    Vaccine existsVaccine(int id) throws Exception;
 }

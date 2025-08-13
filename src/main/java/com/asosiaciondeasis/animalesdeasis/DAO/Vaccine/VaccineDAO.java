@@ -140,16 +140,16 @@ public class VaccineDAO implements IVaccineDAO {
     }
 
     @Override
-    public boolean existsVaccine(int id) throws Exception {
-        String sql = "SELECT 1 FROM vaccines WHERE id = ?";
+    public Vaccine existsVaccine(int id) throws Exception {
+        String sql = "SELECT * FROM vaccines WHERE id = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, id);
             ResultSet rs = pstmt.executeQuery();
-            return rs.next();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
+            if (rs.next()) {
+                return mapResultSetToVaccine(rs);
+            }
         }
+        return null;
     }
 
     private Vaccine mapResultSetToVaccine(ResultSet rs) throws SQLException {

@@ -7,6 +7,7 @@ import com.asosiaciondeasis.animalesdeasis.DAO.Vaccine.VaccineDAO;
 import com.asosiaciondeasis.animalesdeasis.Service.Animal.AnimalService;
 import com.asosiaciondeasis.animalesdeasis.Service.Place.PlaceService;
 import com.asosiaciondeasis.animalesdeasis.Service.Statistics.StatisticsService;
+import com.asosiaciondeasis.animalesdeasis.Service.SyncService;
 import com.asosiaciondeasis.animalesdeasis.Service.Vaccine.VaccineService;
 
 import java.sql.Connection;
@@ -36,7 +37,7 @@ public class ServiceFactory {
         return new StatisticsService(new StatisticsDAO(conn));
     }
 
-    public static PlaceService getPlaceService() {
-        return new PlaceService(new PlacesDAO(conn));
-    }
+    public static PlaceService getPlaceService() {return new PlaceService(new PlacesDAO(conn));}
+
+    public static SyncService getSyncService() {return new SyncService(conn);}
 }

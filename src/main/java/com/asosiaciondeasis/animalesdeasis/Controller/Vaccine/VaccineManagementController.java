@@ -6,6 +6,7 @@ import com.asosiaciondeasis.animalesdeasis.Controller.Animal.DetailAnimalControl
 import com.asosiaciondeasis.animalesdeasis.Controller.PortalController;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Model.Vaccine;
+import com.asosiaciondeasis.animalesdeasis.Service.SyncService;
 import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
 
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
@@ -131,15 +132,8 @@ public class VaccineManagementController implements IPortalAwareController {
                             "¿Estás seguro de que deseas eliminar esta vacuna?",
                             "Vacuna: " + vaccine.getVaccineName() + " - " + vaccine.getVaccinationDate());
 
-                    if (confirmed) {
-                        try {
-                            ServiceFactory.getVaccineService().deleteVaccine(vaccine.getId());
-                            loadVaccinesForAnimal();
-                            NavigationHelper.showSuccessAlert("Éxito", "Vacuna eliminada correctamente.");
-
-                        } catch (Exception e) {
-                            NavigationHelper.showErrorAlert("Error", "No se pudo eliminar la vacuna", e.getMessage());
-                        }
+                    if(confirmed) {
+                        onDeleteVaccine(vaccine);
                     }
                 });
 
@@ -243,6 +237,24 @@ public class VaccineManagementController implements IPortalAwareController {
             stage.showAndWait();
         } catch (Exception e) {
             NavigationHelper.showErrorAlert("Error", "No se pudo abrir la ventana de edición de vacuna: ", e.getMessage());
+        }
+    }
+
+    private void onDeleteVaccine(Vaccine vaccine) {
+        try {
+            // Delete it in Firebase and Local
+            ServiceFactory.getSyncService().deleteVaccineAndSync(vaccine);
+            loadVaccinesForAnimal();
+            NavigationHelper.showSuccessAlert(
+                    "Éxito",
+                    "Vacuna eliminada correctamente."
+            );
+        } catch (Exception e) {
+            NavigationHelper.showErrorAlert(
+                    "Error",
+                    "No se pudo eliminar la vacuna",
+                    e.getMessage()
+            );
         }
     }
 

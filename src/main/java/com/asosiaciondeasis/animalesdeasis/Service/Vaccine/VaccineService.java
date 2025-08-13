@@ -35,7 +35,7 @@ public class VaccineService implements IVaccineService {
     }
 
     @Override
-    public boolean existsVaccine(int id) throws Exception {
+    public Vaccine existsVaccine(int id) throws Exception {
         return vaccineDAO.existsVaccine(id);
     }
 }

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.BarChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.chart.PieChart?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.FlowPane?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<ScrollPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.asosiaciondeasis.animalesdeasis.Controller.Statistic.StatisticsController"
+            stylesheets="@/css/Statistics/StatisticsDashboard.css"
+            styleClass="dashboard-scroll" fitToWidth="true">
+    <content>
+        <VBox spacing="25.0" styleClass="dashboard-container">
+            <padding>
+                <Insets bottom="25.0" left="25.0" right="25.0" top="25.0" />
+            </padding>
+
+            <!-- Header Section -->
+            <HBox alignment="CENTER_LEFT" spacing="20.0" styleClass="header-section">
+                <FontIcon iconLiteral="fas-chart-line" iconSize="32" styleClass="header-icon" />
+                <Label styleClass="dashboard-title" text="Dashboard de Estadísticas" />
+                <HBox alignment="CENTER_RIGHT" spacing="15.0" HBox.hgrow="ALWAYS">
+                    <Label styleClass="year-label" text="Año:" />
+                    <ComboBox fx:id="yearComboBox" onAction="#onYearChanged" styleClass="year-combo" />
+                    <Button fx:id="refreshButton" onAction="#refreshData" styleClass="btn-refresh" text="Actualizar">
+                        <graphic>
+                            <FontIcon iconLiteral="fas-sync" iconSize="14" />
+                        </graphic>
+                    </Button>
+                    <Button fx:id="exportButton" onAction="#exportToCSV" styleClass="btn-export" text="Exportar CSV">
+                        <graphic>
+                            <FontIcon iconLiteral="fas-download" iconSize="14" />
+                        </graphic>
+                    </Button>
+                </HBox>
+            </HBox>
+
+            <!-- Key Metrics Cards using FlowPane for TilesFX -->
+            <FlowPane fx:id="tilesContainer" hgap="20.0" vgap="20.0" styleClass="tiles-container" />
+
+            <!-- Charts Section -->
+            <GridPane hgap="25.0" vgap="25.0" styleClass="charts-grid">
+                <columnConstraints>
+                    <ColumnConstraints hgrow="ALWAYS" percentWidth="60.0" />
+                    <ColumnConstraints hgrow="ALWAYS" percentWidth="40.0" />
+                </columnConstraints>
+                <rowConstraints>
+                    <RowConstraints vgrow="ALWAYS" minHeight="350.0" />
+                    <RowConstraints vgrow="ALWAYS" minHeight="350.0" />
+                </rowConstraints>
+
+                <!-- Monthly Admissions Chart -->
+                <VBox styleClass="chart-container" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                    <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="chart-header">
+                        <FontIcon iconLiteral="fas-chart-bar" iconSize="18" styleClass="chart-icon" />
+                        <Label styleClass="chart-title" text="Admisiones Mensuales" />
+                    </HBox>
+                    <BarChart fx:id="monthlyAdmissionsChart" animated="true" legendVisible="false"
+                              styleClass="monthly-chart" VBox.vgrow="ALWAYS">
+                        <xAxis>
+                            <CategoryAxis fx:id="monthsAxis" styleClass="chart-axis" />
+                        </xAxis>
+                        <yAxis>
+                            <NumberAxis fx:id="admissionsAxis" styleClass="chart-axis" />
+                        </yAxis>
+                    </BarChart>
+                </VBox>
+
+                <!-- Adoption Rate Pie Chart -->
+                <VBox styleClass="chart-container" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                    <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="chart-header">
+                        <FontIcon iconLiteral="fas-chart-pie" iconSize="18" styleClass="chart-icon" />
+                        <Label styleClass="chart-title" text="Estado de Adopciones" />
+                    </HBox>
+                    <PieChart fx:id="adoptionPieChart" animated="true" styleClass="adoption-pie" VBox.vgrow="ALWAYS" />
+                </VBox>
+
+                <!-- Trend Line Chart -->
+                <VBox styleClass="chart-container" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2">
+                    <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="chart-header">
+                        <FontIcon iconLiteral="fas-chart-line" iconSize="18" styleClass="chart-icon" />
+                        <Label styleClass="chart-title" text="Tendencia de Admisiones" />
+                    </HBox>
+                    <LineChart fx:id="trendChart" animated="true" legendVisible="false"
+                               styleClass="trend-chart" VBox.vgrow="ALWAYS">
+                        <xAxis>
+                            <CategoryAxis fx:id="trendMonthsAxis" styleClass="chart-axis" />
+                        </xAxis>
+                        <yAxis>
+                            <NumberAxis fx:id="trendAxis" styleClass="chart-axis" />
+                        </yAxis>
+                    </LineChart>
+                </VBox>
+            </GridPane>
+
+            <!-- Status Bar -->
+            <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="status-bar">
+                <FontIcon iconLiteral="fas-info-circle" iconSize="14" styleClass="status-icon" />
+                <Label fx:id="statusLabel" styleClass="status-text" text="Dashboard cargado correctamente" />
+                <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
+                    <Label fx:id="lastUpdateLabel" styleClass="last-update"/>
+                </HBox>
+            </HBox>
+        </VBox>
+    </content>
+</ScrollPane>

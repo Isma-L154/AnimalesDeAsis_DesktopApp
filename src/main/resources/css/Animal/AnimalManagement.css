@@ -1,9 +1,7 @@
-/* Contenedor principal */
+
 .animal-management-container {
     -fx-padding: 20px;
     -fx-background-color: linear-gradient(to bottom, #f8f9ff, #ffffff);
-    -fx-pref-width: 1250px;
-    -fx-min-width: 1200px;
 }
 
 .section-title {
@@ -13,7 +11,7 @@
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 2, 0, 0, 1);
 }
 
-/* Botón principal mejorado */
+
 .create-button {
     -fx-background-color: linear-gradient(to bottom, #F2921D, #E67E22);
     -fx-text-fill: white;
@@ -34,7 +32,7 @@
     -fx-scale-x: 1.05;
 }
 
-/* Contenedor de filtros */
+
 .filter-container {
     -fx-background-color: #ffffff;
     -fx-background-radius: 15;
@@ -97,7 +95,7 @@
     -fx-effect: dropshadow(three-pass-box, rgba(242, 146, 29, 0.3), 4, 0, 0, 0);
 }
 
-/* Botones de filtro */
+
 .apply-filters-btn {
     -fx-background-color: linear-gradient(to bottom, #27ae60, #229954);
     -fx-text-fill: white;
@@ -130,7 +128,7 @@
     -fx-background-color: linear-gradient(to bottom, #c0392b, #a93226);
 }
 
-/* Contenedor de búsqueda */
+
 .search-container {
     -fx-background-color: #ffffff;
     -fx-background-radius: 15;
@@ -207,11 +205,9 @@
     -fx-border-color: #e8e8e8;
     -fx-border-radius: 15;
     -fx-border-width: 1;
-    -fx-pref-width: 1200px;
     -fx-min-width: 1150px;
-    -fx-max-width: 1300px;
     -fx-pref-height: 600px;
-    -fx-margin-bottom: 30px; /* Not supported in JavaFX, use padding on pagination instead */
+    -fx-margin-bottom: 30px;
 }
 
 .animal-table .column-header {

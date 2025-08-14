@@ -17,9 +17,6 @@ public interface IAnimalDAO {
      *
      * @return The Animal object if found, otherwise null.
      */
-    Animal findByChipNumber(String chipNumber) throws Exception;
-
-    Animal findByBarcode(String barcode) throws Exception;
 
     List<Animal> findByFilters(String species, String startDate, String endDate, Boolean adopted) throws Exception;
 

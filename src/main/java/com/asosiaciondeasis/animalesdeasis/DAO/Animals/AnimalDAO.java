@@ -112,42 +112,6 @@ public class AnimalDAO implements IAnimalDAO {
         return null;
     }
 
-    @Override
-    public Animal findByChipNumber(String chipNumber) throws Exception {
-
-        String sql = "SELECT * FROM animals WHERE chip_number = ? AND active = 1";
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, chipNumber);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return mapResultSetToAnimal(rs);
-                }
-            }
-        } catch (SQLException e) {
-            throw new Exception("Error finding animal by chip number", e);
-        }
-        return null; //No animal found
-    }
-
-    @Override
-    public Animal findByBarcode(String barcode) throws Exception {
-
-        String sql = "SELECT * FROM animals WHERE barcode = ? AND active = 1";
-
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, barcode);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return mapResultSetToAnimal(rs);
-                }
-            }
-        } catch (SQLException e) {
-            throw new Exception("Error finding animal by barcode", e);
-        }
-
-        return null; //No animal found
-    }
-
     /**
      * The dates in this Method should be in YYY-MM-DD Format --> I do the conversion in the Util Package called DateUtil.
      * This method already receives the date in the correct format, in the Service(BL) package

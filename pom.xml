@@ -63,8 +63,15 @@
             <artifactId>webcam-capture</artifactId>
             <version>0.3.12</version>
         </dependency>
+        <!--****************-->
 
-
+        <!--****************-->
+        <!-- Icons -->
+        <dependency>
+            <groupId>org.kordamp.ikonli</groupId>
+            <artifactId>ikonli-fontawesome5-pack</artifactId>
+            <version>12.3.1</version>
+        </dependency>
         <!--****************-->
 
         <dependency>
@@ -132,7 +139,7 @@
         <dependency>
             <groupId>eu.hansolo</groupId>
             <artifactId>tilesfx</artifactId>
-            <version>21.0.3</version>
+            <version>17.1.17</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.openjfx</groupId>

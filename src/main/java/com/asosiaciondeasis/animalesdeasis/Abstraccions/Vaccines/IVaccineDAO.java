@@ -16,5 +16,5 @@ public interface IVaccineDAO {
 
     List<Vaccine> getAllUnsyncedVaccines() throws Exception;
 
-    boolean existsVaccine(int id) throws Exception;
+    Vaccine existsVaccine(int id) throws Exception;
 }

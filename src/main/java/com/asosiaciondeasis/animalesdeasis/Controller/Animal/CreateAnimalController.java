@@ -173,10 +173,10 @@ public class CreateAnimalController implements IPortalAwareController {
 
         boolean saved = animalService.registerAnimal(animal);
         if (saved) {
-            NavigationHelper.showSuccessAlert("Exito", "Animal actualizado exitosamente.");
+            NavigationHelper.showSuccessAlert("Exito", "Animal ingresado exitosamente.");
             NavigationHelper.goToAnimalModule(portalController);
         } else {
-            NavigationHelper.showErrorAlert("Error", null, "Ocurrió un error al actualizar el animal.");
+            NavigationHelper.showErrorAlert("Error", null, "Ocurrió un error al ingresar el animal.");
         }
     }
 

@@ -119,7 +119,14 @@ public class AnimalManagementController implements IPortalAwareController {
 
         pagination.setPageFactory(pageIndex -> {
             loadAnimals(pageIndex);
-            return animalTable;
+            return new Label();
+        });
+
+
+        pagination.currentPageIndexProperty().addListener((obs, oldIndex, newIndex) -> {
+            if (newIndex != null) {
+                loadAnimals(newIndex.intValue());
+            }
         });
 
         loadAnimals(0);

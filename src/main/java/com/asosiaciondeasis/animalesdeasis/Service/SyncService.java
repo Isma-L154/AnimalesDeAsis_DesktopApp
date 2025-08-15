@@ -18,7 +18,7 @@ import java.util.Set;
 
 
 /**
- * Service class responsible for syncing local SQLite database with Firebase.
+ * Service class responsible for syncing the local SQLite database with Firebase.
  */
 public class SyncService {
 
@@ -34,9 +34,6 @@ public class SyncService {
 
         this.animalDAO = new AnimalDAO(conn);
         this.vaccineDAO = new VaccineDAO(conn);
-
-        //Initialize Firebase only once in here
-        FirebaseConfig.initialize();
     }
 
     /**
@@ -45,6 +42,10 @@ public class SyncService {
      */
 
     public void sync() {
+        if (!FirebaseConfig.isFirebaseAvailable()) {
+            System.out.println("Firebase not available - skipping sync");
+            return;
+        }
         if (!NetworkUtils.isInternetAvailable()) {
             System.out.println("No internet connection");
             return;
@@ -187,19 +188,22 @@ public class SyncService {
     }
 
     public void deleteVaccineAndSync(Vaccine vaccine) throws Exception {
-
-        Firestore db = FirestoreClient.getFirestore();
-
-        DocumentReference vaccineDoc = db.collection("animals")
-                .document(vaccine.getAnimalRecordNumber())
-                .collection("vaccines")
-                .document(String.valueOf(vaccine.getId()));
-
-        ApiFuture<WriteResult> deleteFuture = vaccineDoc.delete();
-        deleteFuture.get(); // wait for Firebase delete
-
-        // Delete the vaccine from the local database
         vaccineDAO.deleteVaccine(vaccine.getId());
-    }
 
+        // Only try Firebase if available
+        if (FirebaseConfig.isFirebaseAvailable()) {
+            try {
+                Firestore db = FirestoreClient.getFirestore();
+                DocumentReference vaccineDoc = db.collection("animals")
+                        .document(vaccine.getAnimalRecordNumber())
+                        .collection("vaccines")
+                        .document(String.valueOf(vaccine.getId()));
+
+                ApiFuture<WriteResult> deleteFuture = vaccineDoc.delete();
+                deleteFuture.get();
+            } catch (Exception e) {
+                System.out.println("Failed to delete from Firebase: " + e.getMessage());
+            }
+        }
+    }
 }

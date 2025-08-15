@@ -1,6 +1,7 @@
 package com.asosiaciondeasis.animalesdeasis;
 
 import com.asosiaciondeasis.animalesdeasis.Config.DatabaseConnection;
+import com.asosiaciondeasis.animalesdeasis.Config.FirebaseConfig;
 import com.asosiaciondeasis.animalesdeasis.Config.SQLiteSetup;
 import com.asosiaciondeasis.animalesdeasis.Service.SyncService;
 import com.asosiaciondeasis.animalesdeasis.Util.NetworkUtils;
@@ -12,31 +13,39 @@ import java.util.TimerTask;
 public class AppInitializer {
 
     /**
-     * 24 Hours in milliseconds, because we need the sync with Firebase everytime the app initialize
+     * 24 Hours in milliseconds, because we need the sync with Firebase everytime the app initializes
      * or every 24 hours.
      */
     private static final long SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000;
     private static SyncService syncService;
+    private static boolean firebaseEnabled = false;
 
     public static void initializeApp() {
         try {
             //Initialize db for the first time
             SQLiteSetup.initializeDatabase();
 
+            //Initialize Firebase
+            firebaseEnabled = FirebaseConfig.initialize();
+
             //SQLite Connection
             Connection conn = DatabaseConnection.getConnection();
 
-            //Initialize Firebase in here once
-            syncService = new SyncService(conn);
+            // Only initialize sync service if Firebase is available
+            if (firebaseEnabled) {
+                syncService = new SyncService(conn);
 
-            /** Sync if there's internet */
-            if (NetworkUtils.isInternetAvailable()) {
-                syncService.sync();
+                if (NetworkUtils.isInternetAvailable()) {
+                    syncService.sync();
+                } else {
+                    System.out.println("No internet connection available");
+                }
+
+                schedulePeriodicSync();
             } else {
-                System.out.println("No internet connection available");
+                System.out.println("📱 Running in offline-only mode - no sync available");
             }
 
-            schedulePeriodicSync();
             System.out.println("✅ App Initialized");
 
         } catch (Exception e) {
@@ -46,6 +55,7 @@ public class AppInitializer {
 
 
     private static void schedulePeriodicSync() {
+        if (!firebaseEnabled) return;
         Timer timer = new Timer(true);
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override

@@ -2,12 +2,26 @@
     -fx-background-color: #ffffff;
         -fx-min-width: 1036px;
         -fx-min-height: 798px;
+        -fx-max-width: Infinity;
+        -fx-max-height: Infinity;
+        -fx-pref-width: Infinity;
+        -fx-pref-height: Infinity;
+}
+
+
+.content-pane {
+    -fx-background-color: transparent;
+    -fx-max-width: Infinity;
+    -fx-max-height: Infinity;
+    -fx-pref-width: Infinity;
+    -fx-pref-height: Infinity;
 }
 .header {
     -fx-background-color: white;
     -fx-padding: 10 20;
     -fx-effect: dropshadow( gaussian , rgba(0,0,0,0.25) , 8,0,0,2 );
     -fx-alignment: center-left;
+    -fx-max-width: Infinity;
 }
 
 
@@ -35,6 +49,7 @@
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 8, 0.5, 2, 0);
     -fx-pref-width: 220px;
     -fx-padding: 60 20 20 20;
+    -fx-max-height: Infinity;
 }
 
 

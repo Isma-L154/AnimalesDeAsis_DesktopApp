@@ -2,6 +2,7 @@ package com.asosiaciondeasis.animalesdeasis.Controller.Animal;
 
 
 import com.asosiaciondeasis.animalesdeasis.Abstraccions.IPortalAwareController;
+import com.asosiaciondeasis.animalesdeasis.Config.ServiceFactory;
 import com.asosiaciondeasis.animalesdeasis.Controller.PortalController;
 import com.asosiaciondeasis.animalesdeasis.Controller.Vaccine.VaccineManagementController;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
@@ -10,6 +11,7 @@ import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 
 import java.util.List;
@@ -28,6 +30,7 @@ public class DetailAnimalController implements IPortalAwareController {
     @FXML private Label placeProvinceLabel;
     @FXML private Label rescueReasonLabel;
     @FXML private Label ailmentsLabel;
+    @FXML private Button editButton;
 
     private List<Place> allPlaces;
     private Animal currentAnimal;
@@ -64,6 +67,7 @@ public class DetailAnimalController implements IPortalAwareController {
         } else {
             placeProvinceLabel.setText("Sin información");
         }
+        updateEditButtonVisibility();
     }
 
     @FXML
@@ -103,6 +107,20 @@ public class DetailAnimalController implements IPortalAwareController {
             }
         } else {
             NavigationHelper.showErrorAlert("Error", null, "No se pudo obtener el animal para gestionar las vacunas.");
+        }
+    }
+
+    private void updateEditButtonVisibility() {
+        try {
+            Animal currentAnimalFromDB = ServiceFactory.getAnimalService().findByRecordNumber(currentAnimal.getRecordNumber());
+
+            if (currentAnimalFromDB != null) {
+                boolean isActive = currentAnimalFromDB.isActive();
+                editButton.setVisible(isActive);
+                editButton.setManaged(isActive);
+            }
+        } catch (Exception e) {
+            NavigationHelper.showErrorAlert("Error", "No se pudo verificar el estado del animal", e.getMessage());
         }
     }
     private String validate(String value) {

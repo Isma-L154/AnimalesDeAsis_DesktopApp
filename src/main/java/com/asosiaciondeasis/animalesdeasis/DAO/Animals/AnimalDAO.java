@@ -112,50 +112,21 @@ public class AnimalDAO implements IAnimalDAO {
         return null;
     }
 
-    @Override
-    public Animal findByChipNumber(String chipNumber) throws Exception {
-
-        String sql = "SELECT * FROM animals WHERE chip_number = ? AND active = 1";
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, chipNumber);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return mapResultSetToAnimal(rs);
-                }
-            }
-        } catch (SQLException e) {
-            throw new Exception("Error finding animal by chip number", e);
-        }
-        return null; //No animal found
-    }
-
-    @Override
-    public Animal findByBarcode(String barcode) throws Exception {
-
-        String sql = "SELECT * FROM animals WHERE barcode = ? AND active = 1";
-
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, barcode);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return mapResultSetToAnimal(rs);
-                }
-            }
-        } catch (SQLException e) {
-            throw new Exception("Error finding animal by barcode", e);
-        }
-
-        return null; //No animal found
-    }
-
     /**
      * The dates in this Method should be in YYY-MM-DD Format --> I do the conversion in the Util Package called DateUtil.
      * This method already receives the date in the correct format, in the Service(BL) package
      */
     @Override
-    public List<Animal> findByFilters(String species, String startDate, String endDate, Boolean adopted) throws Exception {
+    public List<Animal> findByFilters(String species, String startDate, String endDate, Boolean showInactive) throws Exception {
         List<Animal> animals = new ArrayList<>();
-        StringBuilder sql = new StringBuilder("SELECT * FROM animals WHERE active = 1");
+        StringBuilder sql = new StringBuilder("SELECT * FROM animals WHERE 1=1");
+
+        // Check if we want to show inactive animals
+        if (showInactive != null && showInactive) {
+            sql.append(" AND active = 0");
+        } else {
+            sql.append(" AND active = 1");
+        }
 
         // Build dynamic WHERE clauses
         if (species != null && !species.isBlank()) {
@@ -166,10 +137,6 @@ public class AnimalDAO implements IAnimalDAO {
             sql.append(" AND admission_date BETWEEN ? AND ?");
         }
 
-        if (adopted != null) {
-            sql.append(" AND adopted = ?");
-        }
-
         try (PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
             int index = 1;
 
@@ -178,12 +145,8 @@ public class AnimalDAO implements IAnimalDAO {
             }
 
             if (startDate != null && endDate != null) {
-                pstmt.setString(index++, startDate);  // Already ISO format
+                pstmt.setString(index++, startDate);
                 pstmt.setString(index++, endDate);
-            }
-
-            if (adopted != null) {
-                pstmt.setInt(index++, adopted ? 1 : 0);
             }
 
             ResultSet rs = pstmt.executeQuery();
@@ -191,7 +154,6 @@ public class AnimalDAO implements IAnimalDAO {
             while (rs.next()) {
                 animals.add(mapResultSetToAnimal(rs));
             }
-
 
         } catch (SQLException e) {
             throw new Exception("Error fetching animals by filters", e);
@@ -318,6 +280,7 @@ public class AnimalDAO implements IAnimalDAO {
         animal.setNeuteringDate(rs.getString("neutering_date"));
         animal.setAdopted(rs.getInt("adopted") == 1);
         animal.setSynced(rs.getInt("synced") == 1);
+        animal.setActive(rs.getInt("active") == 1);
         animal.setLastModified(rs.getString("last_modified"));
         return animal;
     }

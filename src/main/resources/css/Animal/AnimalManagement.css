@@ -1,9 +1,7 @@
-/* Contenedor principal */
+
 .animal-management-container {
     -fx-padding: 20px;
     -fx-background-color: linear-gradient(to bottom, #f8f9ff, #ffffff);
-    -fx-pref-width: 1250px;
-    -fx-min-width: 1200px;
 }
 
 .section-title {
@@ -13,7 +11,7 @@
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 2, 0, 0, 1);
 }
 
-/* Botón principal mejorado */
+
 .create-button {
     -fx-background-color: linear-gradient(to bottom, #F2921D, #E67E22);
     -fx-text-fill: white;
@@ -34,7 +32,7 @@
     -fx-scale-x: 1.05;
 }
 
-/* Contenedor de filtros */
+
 .filter-container {
     -fx-background-color: #ffffff;
     -fx-background-radius: 15;
@@ -96,8 +94,26 @@
     -fx-border-color: #F2921D;
     -fx-effect: dropshadow(three-pass-box, rgba(242, 146, 29, 0.3), 4, 0, 0, 0);
 }
+.filter-column {
+    -fx-min-width: 250px;
+    -fx-padding: 10;
+    -fx-background-color: #f9f9f9;
+    -fx-background-radius: 5;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 5;
+    -fx-border-width: 1;
+}
 
-/* Botones de filtro */
+.filter-sublabel {
+    -fx-font-size: 10px;
+    -fx-text-fill: #666;
+}
+
+.filter-input-label {
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+
 .apply-filters-btn {
     -fx-background-color: linear-gradient(to bottom, #27ae60, #229954);
     -fx-text-fill: white;
@@ -130,7 +146,7 @@
     -fx-background-color: linear-gradient(to bottom, #c0392b, #a93226);
 }
 
-/* Contenedor de búsqueda */
+
 .search-container {
     -fx-background-color: #ffffff;
     -fx-background-radius: 15;
@@ -192,6 +208,14 @@
 .show-all-btn:hover {
     -fx-background-color: linear-gradient(to bottom, #8e44ad, #7d3c98);
 }
+.filter-checkbox {
+    -fx-font-size: 12px;
+    -fx-text-fill: #333;
+}
+
+.filter-checkbox:selected .box {
+    -fx-background-color: #4CAF50;
+}
 
 .results-count {
     -fx-font-size: 14px;
@@ -207,11 +231,9 @@
     -fx-border-color: #e8e8e8;
     -fx-border-radius: 15;
     -fx-border-width: 1;
-    -fx-pref-width: 1200px;
     -fx-min-width: 1150px;
-    -fx-max-width: 1300px;
     -fx-pref-height: 600px;
-    -fx-margin-bottom: 30px; /* Not supported in JavaFX, use padding on pagination instead */
+    -fx-margin-bottom: 30px;
 }
 
 .animal-table .column-header {
@@ -264,7 +286,7 @@
     -fx-background-color: #fafbfc;
 }
 
-/* Botones de acción mejorados */
+/* Buttons */
 .edit-btn,
 .delete-btn,
 .detail-btn {
@@ -306,6 +328,23 @@
     -fx-background-color: linear-gradient(to bottom, #005577, #003d55);
     -fx-scale-x: 1.05;
     -fx-scale-y: 1.05;
+}
+.reactivate-btn {
+    -fx-background-color: #28a745;
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-border-radius: 3px;
+    -fx-background-radius: 3px;
+    -fx-cursor: hand;
+    -fx-padding: 5 10 5 10;
+    -fx-min-width: 70px;
+    -fx-pref-height: 25px;
+}
+
+.reactivate-btn:hover {
+    -fx-background-color: #218838;
+    -fx-opacity: 0.9;
 }
 
 /* Paginación */

@@ -93,7 +93,7 @@
             <!-- Button Section -->
             <HBox spacing="20" alignment="CENTER" styleClass="detail-button-container">
                 <Button text="Cancelar" styleClass="detail-button-base, detail-back-button" onAction="#goToAnimalModule"/>
-                <Button text="Editar" styleClass="detail-button-base, detail-edit-button" onAction="#goToEditModule"/>
+                <Button  fx:id="editButton" text="Editar" styleClass="detail-button-base, detail-edit-button" onAction="#goToEditModule"/>
             </HBox>
 
         </VBox>

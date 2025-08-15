@@ -18,7 +18,7 @@ import java.util.Set;
 
 
 /**
- * Service class responsible for syncing local SQLite database with Firebase.
+ * Service class responsible for syncing the local SQLite database with Firebase.
  */
 public class SyncService {
 
@@ -34,9 +34,6 @@ public class SyncService {
 
         this.animalDAO = new AnimalDAO(conn);
         this.vaccineDAO = new VaccineDAO(conn);
-
-        //Initialize Firebase only once in here
-        FirebaseConfig.initialize();
     }
 
     /**
@@ -45,6 +42,10 @@ public class SyncService {
      */
 
     public void sync() {
+        if (!FirebaseConfig.isFirebaseAvailable()) {
+            System.out.println("Firebase not available - skipping sync");
+            return;
+        }
         if (!NetworkUtils.isInternetAvailable()) {
             System.out.println("No internet connection");
             return;
@@ -181,25 +182,33 @@ public class SyncService {
         for (Vaccine localVaccine : localVaccines) {
             if (!firebaseIds.contains(localVaccine.getId()) && localVaccine.isSynced()) {
                 vaccineDAO.deleteVaccine(localVaccine.getId());
-                System.out.println("💀 Vaccine deleted locally: " + localVaccine.getVaccineName());
+                System.out.println("Vaccine deleted locally: " + localVaccine.getVaccineName());
             }
         }
     }
 
     public void deleteVaccineAndSync(Vaccine vaccine) throws Exception {
+        // First try Firebase deletion, then local
+        if (FirebaseConfig.isFirebaseAvailable()) {
+            try {
+                Firestore db = FirestoreClient.getFirestore();
+                DocumentReference vaccineDoc = db.collection("animals")
+                        .document(vaccine.getAnimalRecordNumber())
+                        .collection("vaccines")
+                        .document(String.valueOf(vaccine.getId()));
 
-        Firestore db = FirestoreClient.getFirestore();
+                ApiFuture<WriteResult> deleteFuture = vaccineDoc.delete();
+                deleteFuture.get(); // Wait for Firebase deletion to complete
 
-        DocumentReference vaccineDoc = db.collection("animals")
-                .document(vaccine.getAnimalRecordNumber())
-                .collection("vaccines")
-                .document(String.valueOf(vaccine.getId()));
-
-        ApiFuture<WriteResult> deleteFuture = vaccineDoc.delete();
-        deleteFuture.get(); // wait for Firebase delete
-
-        // Delete the vaccine from the local database
-        vaccineDAO.deleteVaccine(vaccine.getId());
+                // Only delete locally if Firebase deletion succeeded
+                vaccineDAO.deleteVaccine(vaccine.getId());
+            } catch (Exception e) {
+                System.out.println("Failed to delete from Firebase: " + e.getMessage());
+                throw e;
+            }
+        } else {
+            // If Firebase not available, only delete locally
+            vaccineDAO.deleteVaccine(vaccine.getId());
+        }
     }
-
 }

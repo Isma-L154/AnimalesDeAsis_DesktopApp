@@ -3,8 +3,6 @@
     -fx-background-color: #ffffff;
     -fx-min-width: 1036px;
     -fx-min-height: 798px;
-    -fx-pref-width: 1036px;
-    -fx-pref-height: 798px;
 }
 .text-container {
     -fx-alignment: CENTER;

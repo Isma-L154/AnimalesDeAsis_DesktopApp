@@ -136,7 +136,7 @@ public class CsvStatisticsExporter {
             writer.println();
 
 
-            
+
             writer.println("METADATOS DEL REPORTE");
             writer.println("Campo,Valor");
             writer.println("Sistema,Dashboard de Estadísticas");

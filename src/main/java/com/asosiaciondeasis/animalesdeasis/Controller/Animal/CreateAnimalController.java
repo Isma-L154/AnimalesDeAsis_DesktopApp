@@ -181,15 +181,15 @@ public class CreateAnimalController implements IPortalAwareController {
     }
 
     private boolean validateInputs() {
-        String chip = chipNumberField.getText().trim();
         String collectedBy = collectedByField.getText().trim();
         String name = nameField.getText().trim();
 
-        Pattern noSpecialChars = Pattern.compile("^[a-zA-Z0-9\\s]+$");
-
-        if (!noSpecialChars.matcher(name).matches()) {
-            NavigationHelper.showErrorAlert("Error", null, "El nombre no debe contener caracteres especiales.");
-            return false;
+        if(!name.isEmpty()){
+            Pattern noSpecialChars = Pattern.compile("^[a-zA-Z0-9\\s]+$");
+            if (!noSpecialChars.matcher(name).matches()) {
+                NavigationHelper.showErrorAlert("Error", null, "El nombre no debe contener caracteres especiales.");
+                return false;
+            }
         }
 
         if (speciesComboBox.getValue() == null) {

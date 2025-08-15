@@ -11,16 +11,19 @@ public class FirebaseConfig {
 
     // Flag to ensure Firebase is initialized only once
     private static boolean initialized = false;
+    private static boolean firebaseAvailable = false;
 
-    public static void initialize() {
-        if (initialized) return;
+    public static boolean initialize() {
+        if (initialized) return firebaseAvailable;
 
         try {
-            // Load the service account JSON from resources folder
-            InputStream serviceAccount = FirebaseConfig.class.getResourceAsStream("/FireConfig/animalesdeasis-6bfd7-firebase-adminsdk-fbsvc-0d6981b8e6.json");
-
+            // Load the service account JSON from the resources folder
+            InputStream serviceAccount = CredentialsManager.getDecryptedCredentials();
             if (serviceAccount == null) {
-                throw new RuntimeException("JSON not found");
+                System.out.println("Firebase credentials not found - running in offline mode");
+                initialized = true;
+                firebaseAvailable = false;
+                return false;
             }
 
             // Build Firebase options using the credentials from the JSON file
@@ -31,10 +34,17 @@ public class FirebaseConfig {
             // Initialize Firebase with the options
             FirebaseApp.initializeApp(options);
             initialized = true;
+            firebaseAvailable = true;
             System.out.println("✅ Firebase initialized successfully");
+            return true;
         } catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException("Error initializing Firebase");
+            initialized = true;
+            firebaseAvailable = false;
+            return false;
         }
+    }
+    public static boolean isFirebaseAvailable() {
+        return firebaseAvailable;
     }
 }

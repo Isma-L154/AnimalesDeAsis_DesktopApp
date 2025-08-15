@@ -1,5 +1,6 @@
 package com.asosiaciondeasis.animalesdeasis.Controller;
 
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -26,19 +27,51 @@ public class WelcomeController implements Initializable {
         this.stage = stage;
     }
 
-    //TODO fix the maximize issue in this method
+
     @FXML
     public void handleContinue(ActionEvent event) {
         try {
+            boolean wasMaximized = stage.isMaximized();
+
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/PortalView.fxml"));
             Scene scene = new Scene(loader.load());
+
             stage.setScene(scene);
-            stage.setMinWidth(1036);
-            stage.setMinHeight(798);
-            javafx.application.Platform.runLater(() -> {
-                stage.setMaximized(true);
-                stage.centerOnScreen();
+
+            Platform.runLater(() -> {
+                if (wasMaximized) {
+                    stage.setMaximized(false);
+
+                    Platform.runLater(() -> {
+                        stage.setMinWidth(1036);
+                        stage.setMinHeight(798);
+                        stage.setMaximized(true);
+
+
+                        Platform.runLater(() -> {
+                            double width = stage.getWidth();
+                            double height = stage.getHeight();
+
+                            stage.setWidth(width - 1);
+                            stage.setHeight(height - 1);
+
+                            Platform.runLater(() -> {
+                                stage.setWidth(width);
+                                stage.setHeight(height);
+
+                                // Forzar repaint final
+                                scene.getRoot().requestLayout();
+                                scene.getRoot().applyCss();
+                            });
+                        });
+                    });
+                } else {
+                    stage.setMinWidth(1036);
+                    stage.setMinHeight(798);
+                    stage.centerOnScreen();
+                }
             });
+
         } catch (IOException e) {
             e.printStackTrace();
         }

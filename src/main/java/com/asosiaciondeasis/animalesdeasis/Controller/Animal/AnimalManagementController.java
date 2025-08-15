@@ -4,6 +4,7 @@ import com.asosiaciondeasis.animalesdeasis.Abstraccions.IPortalAwareController;
 import com.asosiaciondeasis.animalesdeasis.Config.ServiceFactory;
 import com.asosiaciondeasis.animalesdeasis.Controller.PortalController;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
+import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
 import javafx.animation.FadeTransition;
 import javafx.beans.property.ReadOnlyStringWrapper;
@@ -171,8 +172,8 @@ public class AnimalManagementController implements IPortalAwareController {
             LocalDate startDate = startDateFilter.getValue();
             LocalDate endDate = endDateFilter.getValue();
 
-            String startDateStr = startDate != null ? startDate.toString() : null;
-            String endDateStr = endDate != null ? endDate.toString() : null;
+            String startDateStr = startDate != null ? DateUtils.convertToIsoFormat(startDate) : null;
+            String endDateStr = endDate != null ? DateUtils.convertToIsoFormat(endDate) : null;
 
             Boolean showInactive = inactiveFilter.isSelected();
 

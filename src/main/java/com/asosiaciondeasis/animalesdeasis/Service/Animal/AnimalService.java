@@ -34,13 +34,7 @@ public class AnimalService implements IAnimalService {
 
     @Override
     public List<Animal> findByFilters(String species, String startDate, String endDate, Boolean showInactive) throws Exception {
-        /**
-         * In here we change the format of the date, calling the class that we have on 'DateUtils'
-         * */
-        String isoStartDate = (startDate != null) ? DateUtils.convertToIsoFormat(startDate) : null;
-        String isoEndDate = (endDate != null) ? DateUtils.convertToIsoFormat(endDate) : null;
-
-        return animalDAO.findByFilters(species, isoStartDate, isoEndDate, showInactive);
+        return animalDAO.findByFilters(species, startDate, endDate, showInactive);
     }
 
     @Override

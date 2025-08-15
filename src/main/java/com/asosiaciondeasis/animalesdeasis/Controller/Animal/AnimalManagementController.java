@@ -118,11 +118,11 @@ public class AnimalManagementController implements IPortalAwareController {
         pagination.setPageCount(Math.max(totalPages, 1));
         pagination.setCurrentPageIndex(0);
 
+        // Fix: Return the actual table instead of a Label
         pagination.setPageFactory(pageIndex -> {
             loadAnimals(pageIndex);
-            return new Label();
+            return new Label(); // Return the table itself
         });
-
 
         pagination.currentPageIndexProperty().addListener((obs, oldIndex, newIndex) -> {
             if (newIndex != null) {
@@ -172,8 +172,9 @@ public class AnimalManagementController implements IPortalAwareController {
             LocalDate startDate = startDateFilter.getValue();
             LocalDate endDate = endDateFilter.getValue();
 
-            String startDateStr = startDate != null ? DateUtils.convertToIsoFormat(startDate) : null;
-            String endDateStr = endDate != null ? DateUtils.convertToIsoFormat(endDate) : null;
+            // Fix: Convert LocalDate to String properly
+            String startDateStr = startDate != null ? startDate.toString() : null;
+            String endDateStr = endDate != null ? endDate.toString() : null;
 
             Boolean showInactive = inactiveFilter.isSelected();
 

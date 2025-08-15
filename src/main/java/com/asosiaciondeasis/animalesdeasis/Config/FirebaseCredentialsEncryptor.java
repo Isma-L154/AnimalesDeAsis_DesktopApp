@@ -1,11 +1,15 @@
 package com.asosiaciondeasis.animalesdeasis.Config;
 
 import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
 
 /**
  * FIREBASE CREDENTIALS ENCRYPTION UTILITY
@@ -44,9 +48,10 @@ public class FirebaseCredentialsEncryptor {
 
     private static final String ALGORITHM = "AES";
     private static final String TRANSFORMATION = "AES/ECB/PKCS5Padding";
+    private static final int IV_LENGTH = 16;
 
     // IMPORTANT: Update this path to point to your downloaded Firebase JSON file
-    private static final String INPUT_FILE = "your-project-firebase-adminsdk.json";
+    private static final String INPUT_FILE = "src/main/resources/FireConfig/your-project-firebase-adminsdk.json";
     private static final String OUTPUT_FILE = "firebase-credentials.enc";
 
     /**
@@ -54,26 +59,6 @@ public class FirebaseCredentialsEncryptor {
      * NOTE: This key generation method is NOT secure for production use.
      * It's designed for development/demo purposes only.
      */
-
-    private static String generateKey() {
-        try {
-            String systemInfo = System.getProperty("os.name") +
-                    System.getProperty("user.name") +
-                    "AnimalesDeAsis2024!";
-
-            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
-            byte[] hash = md.digest(systemInfo.getBytes());
-
-            // AES-128 requires exactly 16 bytes
-            byte[] keyBytes = new byte[16];
-            System.arraycopy(hash, 0, keyBytes, 0, 16);
-
-            return new String(keyBytes, "ISO-8859-1");
-        } catch (Exception e) {
-            return "AnimalesDeAsis16"; // Fallback key
-        }
-    }
-
     /**
      * Encrypts the Firebase credentials JSON file.
      *
@@ -85,18 +70,15 @@ public class FirebaseCredentialsEncryptor {
             // Read the original JSON file
             byte[] fileContent = Files.readAllBytes(Paths.get(inputFilePath));
 
-            // Encrypt the content
-            SecretKeySpec keySpec = new SecretKeySpec(generateKey().getBytes("ISO-8859-1"), ALGORITHM);
-            Cipher cipher = Cipher.getInstance(TRANSFORMATION);
-            cipher.init(Cipher.ENCRYPT_MODE, keySpec);
-            byte[] encryptedData = cipher.doFinal(fileContent);
+            // Use CredentialsManager's encrypt method (no duplication!)
+            byte[] encryptedData = CredentialsManager.encrypt(fileContent);
 
             // Write encrypted data to the output file
             try (FileOutputStream fos = new FileOutputStream(outputFilePath)) {
                 fos.write(encryptedData);
             }
 
-            System.out.println("✅ Firebase credentials encrypted successfully!");
+            System.out.println("✅ Firebase credentials encrypted successfully with CBC mode!");
             System.out.println("📁 Encrypted file saved as: " + outputFilePath);
             System.out.println("📋 Next steps:");
             System.out.println("   1. Copy '" + outputFilePath + "' to 'src/main/resources/FireConfig/'");
@@ -121,12 +103,12 @@ public class FirebaseCredentialsEncryptor {
      * 5. Re-comment this method when done
      */
     
-    /*
+/*
     public static void main(String[] args) {
         System.out.println("🔐 Firebase Credentials Encryptor");
         System.out.println("==================================");
         
-        // Check if input file exists
+        // Check if an input file exists
         if (!Files.exists(Paths.get(INPUT_FILE))) {
             System.err.println("❌ Input file not found: " + INPUT_FILE);
             System.err.println("💡 Make sure to:");
@@ -139,5 +121,5 @@ public class FirebaseCredentialsEncryptor {
         // Encrypt the credentials
         encryptCredentials(INPUT_FILE, OUTPUT_FILE);
     }
-    */
+*/
 }

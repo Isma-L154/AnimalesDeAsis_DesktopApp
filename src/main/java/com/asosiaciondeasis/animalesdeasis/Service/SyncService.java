@@ -182,15 +182,13 @@ public class SyncService {
         for (Vaccine localVaccine : localVaccines) {
             if (!firebaseIds.contains(localVaccine.getId()) && localVaccine.isSynced()) {
                 vaccineDAO.deleteVaccine(localVaccine.getId());
-                System.out.println("💀 Vaccine deleted locally: " + localVaccine.getVaccineName());
+                System.out.println("Vaccine deleted locally: " + localVaccine.getVaccineName());
             }
         }
     }
 
     public void deleteVaccineAndSync(Vaccine vaccine) throws Exception {
-        vaccineDAO.deleteVaccine(vaccine.getId());
-
-        // Only try Firebase if available
+        // First try Firebase deletion, then local
         if (FirebaseConfig.isFirebaseAvailable()) {
             try {
                 Firestore db = FirestoreClient.getFirestore();
@@ -200,10 +198,17 @@ public class SyncService {
                         .document(String.valueOf(vaccine.getId()));
 
                 ApiFuture<WriteResult> deleteFuture = vaccineDoc.delete();
-                deleteFuture.get();
+                deleteFuture.get(); // Wait for Firebase deletion to complete
+
+                // Only delete locally if Firebase deletion succeeded
+                vaccineDAO.deleteVaccine(vaccine.getId());
             } catch (Exception e) {
                 System.out.println("Failed to delete from Firebase: " + e.getMessage());
+                throw e;
             }
+        } else {
+            // If Firebase not available, only delete locally
+            vaccineDAO.deleteVaccine(vaccine.getId());
         }
     }
 }

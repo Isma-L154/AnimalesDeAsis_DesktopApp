@@ -337,16 +337,28 @@ public class AnimalManagementController implements IPortalAwareController {
                 inactiveFilter.isSelected();
     }
 
+    /**
+     * We change this method to refresh the animal list when the filters are applied or cleared.
+     * This way, we ensure that the table is always updated with the latest data based on the filters.
+     * Also, when we delete or reactivate an animal, we call this method to refresh the list without pop-up messages.
+     * */
     private void refreshAnimalList() throws Exception {
         allAnimals = ServiceFactory.getAnimalService().getActiveAnimals();
 
         if (hasActiveFilters()) {
-            handleApplyFilters();
+            String species = getFilterValue(speciesFilter.getValue());
+            LocalDate startDate = startDateFilter.getValue();
+            LocalDate endDate = endDateFilter.getValue();
+            String startDateStr = startDate != null ? startDate.toString() : null;
+            String endDateStr = endDate != null ? endDate.toString() : null;
+            Boolean showInactive = inactiveFilter.isSelected();
+
+            filteredAnimals = ServiceFactory.getAnimalService().findByFilters(species, startDateStr, endDateStr, showInactive);
         } else {
             filteredAnimals = allAnimals;
-            setUpPagination();
-            updateResultsCount();
         }
+        setUpPagination();
+        updateResultsCount();
         animalTable.refresh();
     }
     /**

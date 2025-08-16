@@ -30,8 +30,9 @@ public class CsvStatisticsExporter {
 
     /**
      * Exports statistics data to a CSV file for the specified year with a file chooser dialog.
+     * @return true if export was successful, false if cancelled by user
      */
-    public void export(int year, Window ownerWindow) throws Exception {
+    public boolean export(int year, Window ownerWindow) throws Exception {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Guardar estadísticas como CSV");
         fileChooser.setInitialFileName("Estadisticas_" + year + ".csv");
@@ -44,7 +45,7 @@ public class CsvStatisticsExporter {
 
         if (selectedFile == null) {
             System.out.println("Exportación cancelada por el usuario.");
-            return;
+            return false;
         }
 
         if (!selectedFile.getName().toLowerCase().endsWith(".csv")) {
@@ -52,6 +53,7 @@ public class CsvStatisticsExporter {
         }
 
         exportToFile(selectedFile, year);
+        return true;
     }
 
     /**

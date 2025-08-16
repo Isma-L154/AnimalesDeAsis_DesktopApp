@@ -73,7 +73,7 @@ public class AnimalDAO implements IAnimalDAO {
     @Override
     public List<Animal> getAllAnimals() throws Exception {
         List<Animal> animals = new ArrayList<>();
-        String sql = "SELECT * FROM animals WHERE active = 1;";
+        String sql = "SELECT * FROM animals ORDER BY admission_date DESC";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
@@ -136,6 +136,7 @@ public class AnimalDAO implements IAnimalDAO {
         if (startDate != null && endDate != null) {
             sql.append(" AND admission_date BETWEEN ? AND ?");
         }
+        sql.append(" ORDER BY admission_date DESC");
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
             int index = 1;

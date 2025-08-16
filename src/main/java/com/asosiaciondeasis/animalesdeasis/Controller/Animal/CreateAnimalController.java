@@ -61,6 +61,18 @@ public class CreateAnimalController implements IPortalAwareController {
         sexComboBox.setItems(FXCollections.observableArrayList("Macho", "Hembra"));
         SpinnerValueFactory<Integer> ageFactory = new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 50, 0);
         ageSpinner.setValueFactory(ageFactory);
+        rescueReasonArea.setTextFormatter(new TextFormatter<>(change -> {
+            if (change.getControlNewText().length() > 300) {
+                return null;
+            }
+            return change;
+        }));
+        ailmentsArea.setTextFormatter(new TextFormatter<>(change -> {
+            if (change.getControlNewText().length() > 500) {
+                return null;
+            }
+            return change;
+        }));
     }
 
     private void configureDatePickers() {
@@ -77,6 +89,18 @@ public class CreateAnimalController implements IPortalAwareController {
                 return string.isEmpty() ? null : LocalDate.parse(string, formatter);
             }
         });
+        admissionDatePicker.setDayCellFactory(picker -> new DateCell() {
+            @Override
+            public void updateItem(LocalDate date, boolean empty) {
+                super.updateItem(date, empty);
+                if (date.isAfter(LocalDate.now())) {
+                    setDisable(true);
+                    setStyle("-fx-background-color: #ffcccc;");
+                    setTooltip(new Tooltip("No se pueden seleccionar fechas futuras"));
+                }
+            }
+        });
+
 
         neuteringDatePicker.setConverter(new StringConverter<>() {
             @Override

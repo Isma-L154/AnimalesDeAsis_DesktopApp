@@ -1,4 +1,3 @@
-
 .dashboard-scroll {
     -fx-background-color: #f8f9fa;
     -fx-background-radius: 0;
@@ -115,6 +114,28 @@
 .tiles-container {
     -fx-padding: 15 0;
 }
+.tile > .title-text {
+    -fx-font-size: 45px !important;
+    -fx-font-weight: bold !important;
+    -fx-fill: white !important;
+}
+
+.tile .title {
+    -fx-font-size: 45px !important;
+    -fx-font-weight: bold !important;
+    -fx-text-fill: white !important;
+}
+
+.tile > .text-flow > .text {
+    -fx-font-size: 20px !important;
+    -fx-font-weight: bold !important;
+}
+
+
+.tile .value {
+    -fx-font-size: 36px !important;
+    -fx-font-weight: 900 !important;
+}
 
 /* =================================
    CHARTS GRID
@@ -169,8 +190,8 @@
 }
 
 .monthly-chart .default-color0.chart-bar {
-    -fx-background-color: linear-gradient(to bottom, #3498db, #2980b9);
-        -fx-background-radius: 4 4 0 0;
+    -fx-background-color: linear-gradient(to bottom, #2980b9, #1f4e79);
+    -fx-background-radius: 4 4 0 0;
 }
 
 .monthly-chart .chart-vertical-grid-lines,
@@ -184,9 +205,9 @@
 }
 
 .adoption-pie .chart-pie-label {
-    -fx-fill: #495057;
-    -fx-font-size: 12px;
-    -fx-font-weight: 600;
+    -fx-fill: #2c3e50; /* Color más oscuro */
+    -fx-font-size: 14px; /* Aumentado de 12px */
+    -fx-font-weight: 700; /* Más bold */
 }
 
 .trend-chart {
@@ -199,14 +220,14 @@
 }
 
 .trend-chart .default-color0.chart-series-line {
-    -fx-stroke: #e74c3c;
-    -fx-stroke-width: 3px;
+    -fx-stroke: #c0392b; /* Rojo más oscuro */
+    -fx-stroke-width: 4px; /* Más gruesa */
 }
 
 .trend-chart .default-color0.chart-line-symbol {
-    -fx-background-color: #e74c3c;
-    -fx-background-radius: 6px;
-    -fx-padding: 4px;
+    -fx-background-color: #c0392b;
+    -fx-background-radius: 8px; /* Más grande */
+    -fx-padding: 6px; /* Más grande */
 }
 
 .trend-chart .chart-vertical-grid-lines,
@@ -217,14 +238,15 @@
 
 /* Chart Axes */
 .chart-axis {
-    -fx-tick-label-font-size: 11px;
-    -fx-tick-label-fill: #6c757d;
-    -fx-tick-label-font-weight: 500;
+    -fx-tick-label-font-size: 13px; /* Aumentado de 11px */
+    -fx-tick-label-fill: #2c3e50; /* Color más oscuro */
+    -fx-tick-label-font-weight: 600; /* Más bold */
 }
 
 .chart-axis .axis-label {
-    -fx-text-fill: #495057;
-    -fx-font-weight: 600;
+    -fx-text-fill: #2c3e50;
+    -fx-font-weight: 700; /* Más bold */
+    -fx-font-size: 14px; /* Tamaño específico */
 }
 
 .chart-axis .axis-tick-mark {
@@ -267,7 +289,7 @@
 }
 
 .default-color1.chart-pie {
-    -fx-pie-color: #e74c3c;
+    -fx-pie-color: #c0392b;
 }
 
 /* =================================

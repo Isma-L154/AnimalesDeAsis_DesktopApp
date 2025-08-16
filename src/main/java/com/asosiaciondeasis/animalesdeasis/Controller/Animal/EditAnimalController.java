@@ -5,7 +5,6 @@ import com.asosiaciondeasis.animalesdeasis.Config.ServiceFactory;
 import com.asosiaciondeasis.animalesdeasis.Controller.PortalController;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Model.Place;
-import com.asosiaciondeasis.animalesdeasis.Service.Animal.AnimalService;
 import com.asosiaciondeasis.animalesdeasis.Service.Place.PlaceService;
 import com.asosiaciondeasis.animalesdeasis.Util.BarcodeScannerUtil;
 import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
@@ -63,6 +62,19 @@ public class EditAnimalController implements IPortalAwareController {
         sexComboBox.setItems(FXCollections.observableArrayList("Macho", "Hembra"));
         SpinnerValueFactory<Integer> ageFactory = new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 50, 0);
         ageSpinner.setValueFactory(ageFactory);
+        rescueReasonArea.setTextFormatter(new TextFormatter<>(change -> {
+            if (change.getControlNewText().length() > 300) {
+                return null;
+            }
+            return change;
+        }));
+
+        ailmentsArea.setTextFormatter(new TextFormatter<>(change -> {
+            if (change.getControlNewText().length() > 500) {
+                return null;
+            }
+            return change;
+        }));
     }
 
     private void configureDatePickers() {
@@ -84,6 +96,18 @@ public class EditAnimalController implements IPortalAwareController {
         neuteringDatePicker.setConverter(converter);
         admissionDatePicker.setPromptText("dd-MM-yyyy");
         neuteringDatePicker.setPromptText("dd-MM-yyyy");
+
+        admissionDatePicker.setDayCellFactory(picker -> new DateCell() {
+            @Override
+            public void updateItem(LocalDate date, boolean empty) {
+                super.updateItem(date, empty);
+                if (date.isAfter(LocalDate.now())) {
+                    setDisable(true);
+                    setStyle("-fx-background-color: #ffcccc;");
+                    setTooltip(new Tooltip("No se pueden seleccionar fechas futuras"));
+                }
+            }
+        });
     }
 
     private void loadPlaces() {

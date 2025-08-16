@@ -5,12 +5,15 @@ import com.asosiaciondeasis.animalesdeasis.Service.Statistics.StatisticsService;
 import com.asosiaciondeasis.animalesdeasis.Util.Exporters.CsvStatisticsExporter;
 
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.chart.*;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
@@ -21,6 +24,7 @@ import eu.hansolo.tilesfx.Tile;
 import eu.hansolo.tilesfx.TileBuilder;
 import javafx.scene.paint.Color;
 import javafx.stage.Window;
+import javafx.util.Duration;
 
 import java.net.URL;
 import java.time.LocalDateTime;
@@ -61,18 +65,20 @@ public class StatisticsController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        // Inicializar servicios usando ServiceFactory
         initializeServices();
 
         setupYearComboBox();
         setupTiles();
         setupCharts();
-        loadInitialData();
-        updateLastUpdateTime();
+        Timeline initialLoadTimeline = new Timeline(new KeyFrame(Duration.millis(300), e -> {
+            loadInitialData();
+            updateLastUpdateTime();
+        }));
+        initialLoadTimeline.play();
     }
-
     /**
-     * Inicializa los servicios necesarios usando ServiceFactory
+     * Initializes the services required for this controller.
+     * This method is called during the initialization phase to set up the necessary services.
      */
     private void initializeServices() {
         try {
@@ -95,13 +101,11 @@ public class StatisticsController implements Initializable {
     }
 
     @FXML
-    private void refreshData() {
-        // Verificar que los servicios estén inicializados
+    public void refreshData() {
         if (statisticsService == null) {
             updateStatus("Error: Servicios no inicializados", false);
             return;
         }
-
         setUIEnabled(false);
         updateStatus("Cargando datos...", false);
 
@@ -113,14 +117,11 @@ public class StatisticsController implements Initializable {
             @Override
             protected Void call() throws Exception {
                 try {
-                    // Cargar datos usando el servicio
                     taskMonthlyData = statisticsService.getMonthlyAdmissions(currentYear);
                     taskTotalAdmissions = statisticsService.getTotalAdmissions(currentYear);
                     taskAdoptionRate = statisticsService.getAdoptionRate(currentYear);
 
-                    // Actualizar UI en el hilo de JavaFX
                     Platform.runLater(() -> {
-                        // Asignar datos a las variables de instancia
                         monthlyData = taskMonthlyData != null ? taskMonthlyData : new LinkedHashMap<>();
                         totalAdmissions = taskTotalAdmissions;
                         adoptionRate = taskAdoptionRate;
@@ -163,15 +164,17 @@ public class StatisticsController implements Initializable {
             @Override
             protected Void call() throws Exception {
                 try {
-                    // Obtener la ventana actual para el FileChooser
                     Platform.runLater(() -> {
                         try {
                             Window window = exportButton.getScene().getWindow();
-                            csvExporter.export(currentYear, window);
+                            boolean exported = csvExporter.export(currentYear, window);
 
-                            updateStatus("Exportación completada", true);
-                            NavigationHelper.showSuccessAlert("Éxito", "Exportación completada");
-
+                            if (exported) {
+                                updateStatus("Exportación completada", true);
+                                NavigationHelper.showSuccessAlert("Éxito", "Exportación completada");
+                            } else {
+                                updateStatus("Exportación cancelada", false);
+                            }
                         } catch (Exception e) {
                             updateStatus("Error al exportar: " + e.getMessage(), false);
                             NavigationHelper.showErrorAlert("Error", "Error al exportar datos", e.getMessage());
@@ -183,7 +186,6 @@ public class StatisticsController implements Initializable {
                 } catch (Exception e) {
                     Platform.runLater(() -> {
                         updateStatus("Error al exportar: " + e.getMessage(), false);
-                        NavigationHelper.showErrorAlert("Error", "Error al exportar datos", e.getMessage());
                         setUIEnabled(true);
                     });
                     throw e;
@@ -204,8 +206,7 @@ public class StatisticsController implements Initializable {
     private void setupYearComboBox() {
         ObservableList<Integer> years = FXCollections.observableArrayList();
         int currentYear = LocalDateTime.now().getYear();
-
-        // Solo los últimos 5 años
+        //Show only the last 5 years
         for (int i = currentYear; i >= currentYear - 4; i--) {
             years.add(i);
         }
@@ -228,7 +229,9 @@ public class StatisticsController implements Initializable {
                     .value(0)
                     .decimals(0)
                     .animated(true)
+                    .textSize(Tile.TextSize.BIGGER)
                     .build();
+
 
             // Adoption Rate Tile
             adoptionRateTile = TileBuilder.create()
@@ -238,9 +241,13 @@ public class StatisticsController implements Initializable {
                     .textColor(Color.WHITE)
                     .backgroundColor(Color.web("#27ae60"))
                     .foregroundColor(Color.WHITE)
+                    .unitColor(Color.WHITE)
+                    .barColor(Color.WHITESMOKE)
+                    .thresholdColor(Color.WHITE)
                     .value(0)
                     .decimals(1)
                     .animated(true)
+                    .textSize(Tile.TextSize.BIGGER)
                     .build();
 
             // Monthly Average Tile
@@ -254,7 +261,9 @@ public class StatisticsController implements Initializable {
                     .value(0)
                     .decimals(1)
                     .animated(true)
+                    .textSize(Tile.TextSize.BIGGER)
                     .build();
+
 
             // Add tiles to container
             tilesContainer.getChildren().addAll(
@@ -274,6 +283,9 @@ public class StatisticsController implements Initializable {
             // Configure monthly admissions chart
             monthsAxis.setLabel("Mes");
             admissionsAxis.setLabel("Número de Admisiones");
+            admissionsAxis.setTickUnit(1);
+            admissionsAxis.setMinorTickVisible(false);
+            admissionsAxis.setAutoRanging(false);
             monthlyAdmissionsChart.setTitle("");
             monthlyAdmissionsChart.setAnimated(true);
             monthlyAdmissionsChart.setLegendVisible(false);
@@ -281,6 +293,8 @@ public class StatisticsController implements Initializable {
             // Configure trend chart
             trendMonthsAxis.setLabel("Mes");
             trendAxis.setLabel("Admisiones");
+            trendAxis.setTickUnit(1);
+            trendAxis.setMinorTickVisible(false);
             trendChart.setTitle("");
             trendChart.setAnimated(true);
             trendChart.setLegendVisible(false);
@@ -334,13 +348,17 @@ public class StatisticsController implements Initializable {
                     "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
             };
 
-            // Asegurar que todos los meses están presentes (con 0 si no hay datos)
+            int maxValue = 0;
             for (int i = 1; i <= 12; i++) {
                 String monthKey = String.format("%02d", i);
                 int value = monthlyData.getOrDefault(monthKey, 0);
+                maxValue = Math.max(maxValue, value);
                 String monthName = monthNames[i - 1];
                 series.getData().add(new XYChart.Data<>(monthName, value));
             }
+
+            admissionsAxis.setLowerBound(0);
+            admissionsAxis.setUpperBound(Math.max(maxValue + 1, 5)); // Al menos hasta 5
 
             monthlyAdmissionsChart.getData().clear();
             monthlyAdmissionsChart.getData().add(series);

@@ -25,7 +25,7 @@ public class Main extends Application {
         controller.setStage(stage);
 
         Scene scene = new Scene(root);
-        stage.setTitle("Asociación de Asís - Cargando...");
+        stage.setTitle("Asociación de Asís - Sistema de Gestión");
         stage.setScene(scene);
         stage.setMaximized(true);
         stage.setResizable(true);

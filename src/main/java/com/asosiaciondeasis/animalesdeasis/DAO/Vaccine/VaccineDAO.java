@@ -41,7 +41,7 @@ public class VaccineDAO implements IVaccineDAO {
     @Override
     public List<Vaccine> getVaccinesByAnimal(String animalRecordNumber) throws Exception {
         List<Vaccine> vaccines = new ArrayList<>();
-        String sql = "SELECT * FROM vaccines WHERE animal_record_number = ?";
+        String sql = "SELECT * FROM vaccines WHERE animal_record_number = ? ORDER BY vaccination_date DESC";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
 

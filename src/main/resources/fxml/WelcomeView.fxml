@@ -18,7 +18,7 @@
             </children>
         </VBox>
         <VBox alignment="CENTER" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
-            <ImageView fx:id="dogImageView" fitHeight="800.0" fitWidth="1200.0" pickOnBounds="true" preserveRatio="true" styleClass="dog-image">
+            <ImageView fx:id="dogImageView" fitHeight="600.0" fitWidth="900.0" pickOnBounds="true" preserveRatio="true" styleClass="dog-image">
                 <image>
                     <Image url="@/images/DogWelcomePage.png" />
                 </image>

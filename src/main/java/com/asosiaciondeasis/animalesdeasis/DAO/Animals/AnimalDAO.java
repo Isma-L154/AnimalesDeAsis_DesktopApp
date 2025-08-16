@@ -212,7 +212,7 @@ public class AnimalDAO implements IAnimalDAO {
      */
     @Override
     public void deleteAnimal(String recordNumber) throws Exception {
-        String sql = "UPDATE animals SET active = 0 WHERE record_number = ?";
+        String sql = "UPDATE animals SET active = 0, synced = 0, last_modified = strftime('%Y-%m-%dT%H:%M:%S', 'now') WHERE record_number = ?";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, recordNumber);
@@ -230,7 +230,8 @@ public class AnimalDAO implements IAnimalDAO {
     @Override
     public void reactivateAnimal(String recordNumber) throws Exception {
 
-        String sql = "UPDATE animals SET active = 1 WHERE record_number = ?";
+        String sql = "UPDATE animals SET active = 1, synced = 0, last_modified = strftime('%Y-%m-%dT%H:%M:%S', 'now') WHERE record_number = ?";
+        
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, recordNumber);
             int rows = pstmt.executeUpdate();

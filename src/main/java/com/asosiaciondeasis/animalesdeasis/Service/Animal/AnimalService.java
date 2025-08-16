@@ -45,7 +45,6 @@ public class AnimalService implements IAnimalService {
 
     @Override
     public void deleteAnimal(String recordNumber) throws Exception {
-
         animalDAO.deleteAnimal(recordNumber);
     }
 

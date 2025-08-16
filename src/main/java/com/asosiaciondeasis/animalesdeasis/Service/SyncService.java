@@ -162,8 +162,10 @@ public class SyncService {
 
             if (localVaccine == null) {
                 firebaseVaccine.setSynced(true);
+
                 vaccineDAO.insertVaccine(firebaseVaccine);
-                System.out.println("⬇ Vaccine inserted from Firebase: " + firebaseVaccine.getVaccineName());
+                System.out.println("⬇ Vaccine inserted from Firebase: " + firebaseVaccine.getVaccineName() +
+                        " [LastModified: " + firebaseVaccine.getLastModified() + "]");
             } else {
                 // Compare timestamps to decide update
                 LocalDateTime firebaseModified = LocalDateTime.parse(firebaseVaccine.getLastModified());
@@ -172,11 +174,13 @@ public class SyncService {
                 if (firebaseModified.isAfter(localModified)) {
                     firebaseVaccine.setSynced(true);
                     vaccineDAO.updateVaccine(firebaseVaccine);
-                    System.out.println("🔁 Vaccine updated from Firebase: " + firebaseVaccine.getVaccineName());
+                    System.out.println("🔁 Vaccine updated from Firebase: " + firebaseVaccine.getVaccineName() +
+                            " [Firebase: " + firebaseModified + " vs Local: " + localModified + "]");
+                } else {
+                    System.out.println("⏭ Vaccine skipped (local is newer): " + firebaseVaccine.getVaccineName());
                 }
             }
         }
-
         /** Delete local vaccines that no longer exist in Firebase AND were previously synced */
         List<Vaccine> localVaccines = vaccineDAO.getVaccinesByAnimal(recordNumber);
         for (Vaccine localVaccine : localVaccines) {

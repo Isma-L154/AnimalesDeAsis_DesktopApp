@@ -207,7 +207,7 @@ public class VaccineManagementController implements IPortalAwareController {
 
             controller.setOnVaccineUpdated(updatedVaccine -> {
                 try {
-                    ServiceFactory.getVaccineService().updateVaccine(updatedVaccine);
+                    ServiceFactory.getVaccineService().updateVaccine(updatedVaccine, true);
                     loadVaccinesForAnimal();
                     NavigationHelper.showSuccessAlert("Éxito", "Vacuna actualizada correctamente");
                 } catch (Exception e) {

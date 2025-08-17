@@ -87,7 +87,7 @@ public class SQLiteSetup {
 
                 String createVaccines = """
                         CREATE TABLE IF NOT EXISTS vaccines (
-                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            id TEXT PRIMARY KEY,
                             animal_record_number TEXT NOT NULL,
                             vaccine_name TEXT NOT NULL,
                             vaccination_date TEXT,

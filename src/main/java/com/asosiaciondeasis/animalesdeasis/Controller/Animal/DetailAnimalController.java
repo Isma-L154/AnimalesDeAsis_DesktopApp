@@ -25,7 +25,6 @@ public class DetailAnimalController implements IPortalAwareController {
     @FXML private Label ageLabel;
     @FXML private Label sexLabel;
     @FXML private Label chipNumberLabel;
-    @FXML private Label barcodeLabel;
     @FXML private Label admissionDateLabel;
     @FXML private Label neuteringDateLabel;
     @FXML private Label collectedByLabel;

@@ -20,86 +20,143 @@ import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class BarcodeScannerUtil {
 
     private static final Logger LOGGER = Logger.getLogger(BarcodeScannerUtil.class.getName());
-    private volatile boolean running = false;
+    private final AtomicBoolean running = new AtomicBoolean(false);
+    private final AtomicBoolean callbackExecuted = new AtomicBoolean(false);
     private Webcam webcam;
     private ExecutorService captureExecutor;
     private ExecutorService decodeExecutor;
+    private Stage currentStage;
 
     /**
      * Starts the barcode scanning process and opens the webcam dialog.
      * @param callback Callback to handle the scanned code.
      */
-    public void startScanning(ScanCallback callback) {
-        if (!initializeWebcam()) return;
+    public synchronized void startScanning(ScanCallback callback) {
+        // Reset state for new scanning session
+        resetState();
 
-        running = true;
+        if (!initializeWebcam()) {
+            return;
+        }
 
-        captureExecutor = Executors.newSingleThreadExecutor();
-        decodeExecutor = Executors.newSingleThreadExecutor();
+        running.set(true);
+        callbackExecuted.set(false);
 
-        Stage stage = createScannerStage();
-        ImageView imageView = (ImageView) ((BorderPane) stage.getScene().getRoot()).getCenter();
+        captureExecutor = Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r, "BarcodeCaptureThread");
+            t.setDaemon(true);
+            return t;
+        });
+
+        decodeExecutor = Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r, "BarcodeDecodeThread");
+            t.setDaemon(true);
+            return t;
+        });
+
+        currentStage = createScannerStage();
+        ImageView imageView = (ImageView) ((BorderPane) currentStage.getScene().getRoot()).getCenter();
 
         captureExecutor.submit(() -> {
-            while (running) {
-                try {
-                    BufferedImage image = webcam.getImage();
-                    if (image != null) {
-                        Platform.runLater(() -> {
-                            WritableImage fxImage = SwingFXUtils.toFXImage(image, null);
-                            imageView.setImage(fxImage);
-                        });
+            try {
+                while (running.get() && !Thread.currentThread().isInterrupted()) {
+                    try {
+                        BufferedImage image = webcam.getImage();
+                        if (image != null && running.get()) {
+                            Platform.runLater(() -> {
+                                if (running.get()) {
+                                    WritableImage fxImage = SwingFXUtils.toFXImage(image, null);
+                                    imageView.setImage(fxImage);
+                                }
+                            });
 
-                        decodeExecutor.submit(() -> {
-                            String scannedCode = decodeBarcode(image);
-                            if (scannedCode != null && running) {
-                                running = false;
-                                Platform.runLater(() -> {
-                                    callback.onCodeScanned(scannedCode);
-                                    stage.close();
-                                });
-                            }
-                        });
+                            decodeExecutor.submit(() -> {
+                                String scannedCode = decodeBarcode(image);
+                                if (scannedCode != null && running.get() && callbackExecuted.compareAndSet(false, true)) {
+                                    running.set(false);
+                                    Platform.runLater(() -> {
+                                        try {
+                                            callback.onCodeScanned(scannedCode);
+                                            NavigationHelper.showSuccessAlert("Escaneo Exitoso",
+                                                    "Código escaneado correctamente: " + scannedCode);
+                                            if (currentStage != null) {
+                                                currentStage.close();
+                                            }
+                                        } finally {
+                                            stopScanning();
+                                        }
+                                    });
+                                }
+                            });
+                        }
+
+                        // Small delay to prevent excessive CPU usage
+                        Thread.sleep(50);
+
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    } catch (Exception e) {
+                        LOGGER.log(Level.SEVERE, "Error en captura", e);
                     }
-                } catch (Exception e) {
-                    LOGGER.log(Level.SEVERE, "Error en captura", e);
                 }
+            } finally {
+                LOGGER.info("Capture thread terminated");
             }
         });
     }
 
+    /**
+     * Resets the internal state for a new scanning session
+     */
+    private void resetState() {
+        stopScanning();
+        running.set(false);
+        callbackExecuted.set(false);
+    }
 
     /**
      * Initializes the webcam and sets the best available resolution.
      * @return true if the webcam was initialized successfully, false otherwise.
      */
     private boolean initializeWebcam() {
-        webcam = Webcam.getDefault();
-        if (webcam == null) {
-            NavigationHelper.showErrorAlert("Error", null,"No se detectó ninguna cámara." );
-            LOGGER.warning("No webcam detected.");
-            return false;
-        }
-
-        // CAMBIO: Seleccionar resolución más alta disponible
-        Dimension bestRes = getMaxResolution(webcam.getViewSizes());
-        LOGGER.info("Resolución seleccionada: " + bestRes.width + "x" + bestRes.height);
-        webcam.setViewSize(bestRes);
-
         try {
+            // Close any existing webcam
+            if (webcam != null && webcam.isOpen()) {
+                webcam.close();
+                webcam = null;
+            }
+
+            webcam = Webcam.getDefault();
+            if (webcam == null) {
+                NavigationHelper.showErrorAlert("Error", null, "No se detectó ninguna cámara.");
+                LOGGER.warning("No webcam detected.");
+                return false;
+            }
+
+            Dimension bestRes = getMaxResolution(webcam.getViewSizes());
+            LOGGER.info("Resolución seleccionada: " + bestRes.width + "x" + bestRes.height);
+            webcam.setViewSize(bestRes);
+
             webcam.open();
+
+            // Wait a moment for the camera to initialize
+            Thread.sleep(500);
+
+            return true;
         } catch (Exception e) {
-            NavigationHelper.showErrorAlert("Error", null,"No se pudo abrir la camara." );
+            NavigationHelper.showErrorAlert("Error", null, "No se pudo abrir la cámara: " + e.getMessage());
             LOGGER.log(Level.SEVERE, "Failed to open webcam", e);
             return false;
         }
-        return true;
     }
 
     /**
@@ -124,14 +181,17 @@ public class BarcodeScannerUtil {
     private Stage createScannerStage() {
         ImageView imageView = new ImageView();
         imageView.setPreserveRatio(true);
-
-        // CAMBIO: Ajustar tamaño más grande
         imageView.setFitWidth(800);
         imageView.setFitHeight(600);
         BorderPane.setAlignment(imageView, Pos.CENTER);
 
         Button cancelBtn = new Button("Cancelar");
-        cancelBtn.setOnAction(e -> stopScanning());
+        cancelBtn.setOnAction(e -> {
+            stopScanning();
+            if (currentStage != null) {
+                currentStage.close();
+            }
+        });
 
         BorderPane root = new BorderPane();
         root.setCenter(imageView);
@@ -143,7 +203,9 @@ public class BarcodeScannerUtil {
         stage.setMinWidth(800);
         stage.setMinHeight(600);
         stage.initModality(Modality.APPLICATION_MODAL);
+
         stage.setOnCloseRequest(e -> stopScanning());
+
         Platform.runLater(stage::show);
 
         return stage;
@@ -172,20 +234,53 @@ public class BarcodeScannerUtil {
      * Stops the scanning process, closes the webcam, and shuts down executors.
      */
     public synchronized void stopScanning() {
-        running = false;
+        running.set(false);
+
+        // Close webcam
         if (webcam != null && webcam.isOpen()) {
-            webcam.close();
+            try {
+                webcam.close();
+                LOGGER.info("Webcam closed successfully");
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, "Error closing webcam", e);
+            }
         }
-        if (captureExecutor != null && !captureExecutor.isShutdown()) {
-            captureExecutor.shutdownNow();
-        }
-        if (decodeExecutor != null && !decodeExecutor.isShutdown()) {
-            decodeExecutor.shutdownNow();
+
+        // Shutdown executors
+        shutdownExecutor(captureExecutor, "CaptureExecutor");
+        shutdownExecutor(decodeExecutor, "DecodeExecutor");
+
+        captureExecutor = null;
+        decodeExecutor = null;
+    }
+
+    /**
+     * Properly shuts down an executor service
+     */
+    private void shutdownExecutor(ExecutorService executor, String name) {
+        if (executor != null && !executor.isShutdown()) {
+            try {
+                executor.shutdown();
+                if (!executor.awaitTermination(2, TimeUnit.SECONDS)) {
+                    LOGGER.warning(name + " did not terminate gracefully, forcing shutdown");
+                    executor.shutdownNow();
+                    if (!executor.awaitTermination(2, TimeUnit.SECONDS)) {
+                        LOGGER.severe(name + " did not terminate");
+                    }
+                }
+                LOGGER.info(name + " shutdown successfully");
+            } catch (InterruptedException e) {
+                LOGGER.warning(name + " shutdown interrupted");
+                executor.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
     /**
      * Callback interface for handling scanned barcode results.
      */
-    public interface ScanCallback { void onCodeScanned(String code);}
+    public interface ScanCallback {
+        void onCodeScanned(String code);
+    }
 }

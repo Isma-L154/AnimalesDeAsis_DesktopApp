@@ -25,17 +25,17 @@ public class VaccineService implements IVaccineService {
     }
 
     @Override
-    public void updateVaccine(Vaccine vaccine) throws Exception {
-        vaccineDAO.updateVaccine(vaccine);
+    public void updateVaccine(Vaccine vaccine, boolean timestamp) throws Exception {
+        vaccineDAO.updateVaccine(vaccine, true);
     }
 
     @Override
-    public void deleteVaccine(int id) throws Exception {
+    public void deleteVaccine(String id) throws Exception {
         vaccineDAO.deleteVaccine(id);
     }
 
     @Override
-    public Vaccine existsVaccine(int id) throws Exception {
+    public Vaccine existsVaccine(String id) throws Exception {
         return vaccineDAO.existsVaccine(id);
     }
 }

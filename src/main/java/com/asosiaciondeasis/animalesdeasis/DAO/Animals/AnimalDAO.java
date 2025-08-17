@@ -29,15 +29,29 @@ public class AnimalDAO implements IAnimalDAO {
 
     @Override
     public boolean insertAnimal(Animal animal) throws Exception {
-        String sql = """
-                    INSERT INTO animals (
-                        record_number, chip_number, barcode, admission_date,
-                        collected_by, place_id, reason_for_rescue, species,
-                        approximate_age, sex, name, ailments, neutering_date, adopted
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """;
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        String sql;
 
+        if (animal.getLastModified() != null && !animal.getLastModified().trim().isEmpty()) {
+            sql = """
+            INSERT INTO animals (
+                record_number, chip_number, barcode, admission_date,
+                collected_by, place_id, reason_for_rescue, species,
+                approximate_age, sex, name, ailments, neutering_date, adopted,
+                synced, active, last_modified
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """;
+        } else {
+            sql = """
+            INSERT INTO animals (
+                record_number, chip_number, barcode, admission_date,
+                collected_by, place_id, reason_for_rescue, species,
+                approximate_age, sex, name, ailments, neutering_date, adopted,
+                synced, active
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """;
+        }
+
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, animal.getRecordNumber());
             pstmt.setString(2, animal.getChipNumber());
             pstmt.setString(3, animal.getBarcode());
@@ -52,6 +66,12 @@ public class AnimalDAO implements IAnimalDAO {
             pstmt.setString(12, animal.getAilments());
             pstmt.setString(13, animal.getNeuteringDate());
             pstmt.setInt(14, animal.isAdopted() ? 1 : 0);
+            pstmt.setInt(15, animal.isSynced() ? 1 : 0);
+            pstmt.setInt(16, animal.isActive() ? 1 : 0);
+
+            if (animal.getLastModified() != null && !animal.getLastModified().trim().isEmpty()) {
+                pstmt.setString(17, animal.getLastModified());
+            }
 
             pstmt.executeUpdate();
             System.out.println("✅ Animal inserted successfully.");
@@ -60,7 +80,6 @@ public class AnimalDAO implements IAnimalDAO {
             e.printStackTrace();
             return false;
         }
-
     }
 
     /**
@@ -73,7 +92,7 @@ public class AnimalDAO implements IAnimalDAO {
     @Override
     public List<Animal> getAllAnimals() throws Exception {
         List<Animal> animals = new ArrayList<>();
-        String sql = "SELECT * FROM animals ORDER BY admission_date DESC";
+        String sql = "SELECT * FROM animals WHERE active = 1 ORDER BY admission_date DESC";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
@@ -165,17 +184,20 @@ public class AnimalDAO implements IAnimalDAO {
 
 
     @Override
-    public boolean updateAnimal(Animal animal) throws Exception {
+    public boolean updateAnimal(Animal animal, boolean timestamp) throws Exception {
+        String timestampClause = timestamp ?
+                ", last_modified = strftime('%Y-%m-%dT%H:%M:%S', 'now')" :
+                "";
+
         String updateSql = """
-                    UPDATE animals
-                    SET chip_number = ?, barcode = ?, admission_date = ?, collected_by = ?, place_id = ?, 
-                        reason_for_rescue = ?, species = ?, approximate_age = ?, sex = ?, name = ?, ailments = ?, 
-                        neutering_date = ?, adopted = ?, synced = ?, last_modified = strftime('%Y-%m-%dT%H:%M:%S', 'now')
-                    WHERE record_number = ?
-                """;
+        UPDATE animals
+        SET chip_number = ?, barcode = ?, admission_date = ?, collected_by = ?, place_id = ?,
+            reason_for_rescue = ?, species = ?, approximate_age = ?, sex = ?, name = ?,
+            ailments = ?, neutering_date = ?, adopted = ?, synced = ?""" + timestampClause + """
+        WHERE record_number = ?
+    """;
 
         try (PreparedStatement pstmt = conn.prepareStatement(updateSql)) {
-
             pstmt.setString(1, animal.getChipNumber());
             pstmt.setString(2, animal.getBarcode());
             pstmt.setString(3, animal.getAdmissionDate());
@@ -193,7 +215,6 @@ public class AnimalDAO implements IAnimalDAO {
             pstmt.setString(15, animal.getRecordNumber());
 
             int rowsAffected = pstmt.executeUpdate();
-
             if (rowsAffected == 0) {
                 throw new Exception("⚠️ No active animal found with recordNumber: " + animal.getRecordNumber());
             }
@@ -261,7 +282,6 @@ public class AnimalDAO implements IAnimalDAO {
         }
         return unsyncedAnimals;
     }
-
     /**
      * Private method to map the info of the animal, it is used in every method of the class that his purpose is
      * to search for a specific animal.

@@ -6,12 +6,14 @@ import com.asosiaciondeasis.animalesdeasis.DAO.Vaccine.VaccineDAO;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Model.Vaccine;
 import com.asosiaciondeasis.animalesdeasis.Util.NetworkUtils;
+import com.asosiaciondeasis.animalesdeasis.Util.SyncEventManager;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.google.firebase.cloud.FirestoreClient;
 
 import java.sql.Connection;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -24,7 +26,6 @@ public class SyncService {
 
     private final AnimalDAO animalDAO;
     private final VaccineDAO vaccineDAO;
-
 
     /**
      * Constructor initializes DAOs with a DB connection obtained from DatabaseConnection.
@@ -53,6 +54,7 @@ public class SyncService {
         try {
             PullChanges();
             PushChanges();
+            SyncEventManager.notifyListeners();
         } catch (Exception e) {
             System.out.println("Sync process failed -> " + e.getMessage());
         }
@@ -64,41 +66,43 @@ public class SyncService {
      * For Vaccines → Also detect deletions in Firebase and remove locally
      * ONLY if the local vaccine was previously synced (avoid deleting new unsynced vaccines).
      */
+
     private void PullChanges() throws Exception {
         Firestore db = FirestoreClient.getFirestore();
+        int processedAnimals = 0;
+
         try {
             ApiFuture<QuerySnapshot> query = db.collection("animals").get();
             List<QueryDocumentSnapshot> documents = query.get().getDocuments();
 
             for (QueryDocumentSnapshot doc : documents) {
-                Animal firebaseAnimal = doc.toObject(Animal.class);
-                String recordNumber = firebaseAnimal.getRecordNumber();
+                try {
+                    Animal firebaseAnimal = doc.toObject(Animal.class);
+                    String recordNumber = firebaseAnimal.getRecordNumber();
 
-                Animal localAnimal = animalDAO.findByRecordNumber(recordNumber);
+                    if (recordNumber == null || recordNumber.trim().isEmpty()) continue;
 
-                if (localAnimal == null) {
-                    /** Animal does not exist locally → Insert it */
-                    firebaseAnimal.setSynced(true);
-                    animalDAO.insertAnimal(firebaseAnimal);
-                    pullVaccines(doc, recordNumber);
-                    System.out.println("⬇ Animal inserted from Firebase: " + recordNumber);
+                    Animal localAnimal = animalDAO.findByRecordNumber(recordNumber);
 
-                } else {
-                    /** Compare lastModified timestamps to decide whether to update */
-                    LocalDateTime firebaseModified = LocalDateTime.parse(firebaseAnimal.getLastModified());
-                    LocalDateTime localModified = LocalDateTime.parse(localAnimal.getLastModified());
-
-                    if (firebaseModified.isAfter(localModified)) {
-
+                    if (localAnimal == null) {
                         firebaseAnimal.setSynced(true);
-                        animalDAO.updateAnimal(firebaseAnimal);
-                        pullVaccines(doc, recordNumber);
-                        System.out.println("🔁 Animal updated from Firebase: " + recordNumber);
+                        animalDAO.insertAnimal(firebaseAnimal);
+                    } else if (shouldUpdateFromFirebase(firebaseAnimal, localAnimal)) {
+                        firebaseAnimal.setSynced(true);
+                        animalDAO.updateAnimal(firebaseAnimal, false);
                     }
+
+                    pullVaccines(doc, recordNumber);
+                    processedAnimals++;
+
+                } catch (Exception e) {
+                    System.out.println("❌ Error procesando animal: " + e.getMessage());
                 }
             }
+
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            System.out.println("❌ Error en sincronización: " + e.getMessage());
+            throw e;
         }
     }
 
@@ -113,29 +117,36 @@ public class SyncService {
     private void PushChanges() throws Exception {
         Firestore db = FirestoreClient.getFirestore();
 
-        /** Get all local animals that are NOT synced */
+        // Sync animals (no changes needed here)
         List<Animal> unsyncedAnimals = animalDAO.getUnsyncedAnimals();
-
         for (Animal animal : unsyncedAnimals) {
+            animal.setSynced(true);
             DocumentReference animalDoc = db.collection("animals").document(animal.getRecordNumber());
             ApiFuture<WriteResult> writeResult = animalDoc.set(animal);
-            writeResult.get(); // Wait for upload to finish
+            writeResult.get();
 
-            animal.setSynced(true);
-            animalDAO.updateAnimal(animal);
-            System.out.println("Animal synced to Firebase: " + animal.getRecordNumber());
+            animalDAO.updateAnimal(animal, false);
+            System.out.println("⬆ Animal synced to Firebase: " + animal.getRecordNumber());
         }
 
-        /** Sync ALL unsynced vaccines (from new animals and existing animals) */
         List<Vaccine> allUnsyncedVaccines = vaccineDAO.getAllUnsyncedVaccines();
         for (Vaccine vaccine : allUnsyncedVaccines) {
-            DocumentReference animalDoc = db.collection("animals").document(vaccine.getAnimalRecordNumber());
-            DocumentReference vaccineDoc = animalDoc.collection("vaccines").document(String.valueOf(vaccine.getId()));
-            ApiFuture<WriteResult> vaccineWrite = vaccineDoc.set(vaccine);
-            vaccineWrite.get(); // Wait for upload
-            vaccine.setSynced(true);
-            vaccineDAO.updateVaccine(vaccine);
-            System.out.println("⬆ Vaccine synced to Firebase: " + vaccine.getVaccineName() + " for animal: " + vaccine.getAnimalRecordNumber());
+            try {
+                DocumentReference animalDoc = db.collection("animals").document(vaccine.getAnimalRecordNumber());
+
+                // Use the vaccine's GUID as document ID directly
+                DocumentReference vaccineDoc = animalDoc.collection("vaccines").document(vaccine.getId());
+
+                vaccine.setSynced(true);
+                ApiFuture<WriteResult> vaccineWrite = vaccineDoc.set(vaccine);
+                vaccineWrite.get();
+
+                vaccineDAO.updateVaccine(vaccine, false);
+                System.out.println("⬆ Vacuna sincronizada: " + vaccine.getVaccineName() + " [ID: " + vaccine.getId() + "]");
+
+            } catch (Exception e) {
+                System.out.println("❌ Error sincronizando vacuna: " + e.getMessage());
+            }
         }
 
         if (unsyncedAnimals.isEmpty() && allUnsyncedVaccines.isEmpty()) {
@@ -149,70 +160,69 @@ public class SyncService {
         ApiFuture<QuerySnapshot> vaccineQuery = vaccinesRef.get();
         List<QueryDocumentSnapshot> vaccineDocs = vaccineQuery.get().getDocuments();
 
-        /** Track all vaccine IDs that exist in Firebase for this animal */
-        Set<Integer> firebaseIds = new HashSet<>();
+        Set<String> firebaseVaccineIds = new HashSet<>();
 
-        /** Insert or update vaccines from Firebase */
         for (QueryDocumentSnapshot vaccineDoc : vaccineDocs) {
             Vaccine firebaseVaccine = vaccineDoc.toObject(Vaccine.class);
-            firebaseVaccine.setAnimalRecordNumber(recordNumber);
-            firebaseIds.add(firebaseVaccine.getId());
+            String vaccineId = vaccineDoc.getId();
 
-            Vaccine localVaccine = vaccineDAO.existsVaccine(firebaseVaccine.getId());
+            firebaseVaccineIds.add(vaccineId);
+
+            Vaccine localVaccine = vaccineDAO.existsVaccine(vaccineId);
 
             if (localVaccine == null) {
-                firebaseVaccine.setSynced(true);
+                Vaccine newVaccine = Vaccine.fromExistingRecord(vaccineId);
+                newVaccine.setAnimalRecordNumber(recordNumber);
+                newVaccine.setVaccineName(firebaseVaccine.getVaccineName());
+                newVaccine.setVaccinationDate(firebaseVaccine.getVaccinationDate());
+                newVaccine.setSynced(true);
 
-                vaccineDAO.insertVaccine(firebaseVaccine);
-                System.out.println("⬇ Vaccine inserted from Firebase: " + firebaseVaccine.getVaccineName() +
-                        " [LastModified: " + firebaseVaccine.getLastModified() + "]");
-            } else {
-                // Compare timestamps to decide update
-                LocalDateTime firebaseModified = LocalDateTime.parse(firebaseVaccine.getLastModified());
-                LocalDateTime localModified = LocalDateTime.parse(localVaccine.getLastModified());
-
-                if (firebaseModified.isAfter(localModified)) {
-                    firebaseVaccine.setSynced(true);
-                    vaccineDAO.updateVaccine(firebaseVaccine);
-                    System.out.println("🔁 Vaccine updated from Firebase: " + firebaseVaccine.getVaccineName() +
-                            " [Firebase: " + firebaseModified + " vs Local: " + localModified + "]");
-                } else {
-                    System.out.println("⏭ Vaccine skipped (local is newer): " + firebaseVaccine.getVaccineName());
-                }
+                vaccineDAO.insertVaccine(newVaccine);
+                System.out.println("⬇ Vacuna insertada: " + newVaccine.getVaccineName());
             }
         }
-        /** Delete local vaccines that no longer exist in Firebase AND were previously synced */
+
         List<Vaccine> localVaccines = vaccineDAO.getVaccinesByAnimal(recordNumber);
         for (Vaccine localVaccine : localVaccines) {
-            if (!firebaseIds.contains(localVaccine.getId()) && localVaccine.isSynced()) {
+            if (!firebaseVaccineIds.contains(localVaccine.getId()) && localVaccine.isSynced()) {
                 vaccineDAO.deleteVaccine(localVaccine.getId());
-                System.out.println("Vaccine deleted locally: " + localVaccine.getVaccineName());
+                System.out.println("🗑 Vacuna eliminada: " + localVaccine.getVaccineName());
             }
         }
     }
 
     public void deleteVaccineAndSync(Vaccine vaccine) throws Exception {
-        // First try Firebase deletion, then local
         if (FirebaseConfig.isFirebaseAvailable()) {
             try {
                 Firestore db = FirestoreClient.getFirestore();
                 DocumentReference vaccineDoc = db.collection("animals")
                         .document(vaccine.getAnimalRecordNumber())
                         .collection("vaccines")
-                        .document(String.valueOf(vaccine.getId()));
+                        .document(vaccine.getId()); // Now using GUID directly
 
                 ApiFuture<WriteResult> deleteFuture = vaccineDoc.delete();
-                deleteFuture.get(); // Wait for Firebase deletion to complete
+                deleteFuture.get();
 
-                // Only delete locally if Firebase deletion succeeded
                 vaccineDAO.deleteVaccine(vaccine.getId());
             } catch (Exception e) {
                 System.out.println("Failed to delete from Firebase: " + e.getMessage());
                 throw e;
             }
         } else {
-            // If Firebase not available, only delete locally
             vaccineDAO.deleteVaccine(vaccine.getId());
+        }
+    }
+    private boolean shouldUpdateFromFirebase(Animal firebaseAnimal, Animal localAnimal) {
+        if (firebaseAnimal.getLastModified() == null || localAnimal.getLastModified() == null) {
+            return true;
+        }
+
+        try {
+            LocalDateTime firebaseModified = LocalDateTime.parse(firebaseAnimal.getLastModified());
+            LocalDateTime localModified = LocalDateTime.parse(localAnimal.getLastModified());
+            return firebaseModified.isAfter(localModified);
+        } catch (Exception e) {
+            return true;
         }
     }
 }

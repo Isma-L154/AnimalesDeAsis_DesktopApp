@@ -33,15 +33,11 @@ public class Animal {
         this.recordNumber = recordNumber;
     }
 
-
-    public static Animal createNew() {
-        return new Animal(UUID.randomUUID().toString());
-    }
+    public static Animal createNew() {return new Animal(UUID.randomUUID().toString());}
 
     public static Animal fromExistingRecord(String recordNumber) {
         return new Animal(recordNumber);
     }
-
 
     /**
      * Getters and Setters

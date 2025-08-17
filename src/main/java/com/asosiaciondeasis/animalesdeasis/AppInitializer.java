@@ -25,11 +25,13 @@ public class AppInitializer {
             //Initialize db for the first time
             SQLiteSetup.initializeDatabase();
 
+            //SQLite Connection
+            Connection conn = DatabaseConnection.getConnection();
+
             //Initialize Firebase
             firebaseEnabled = FirebaseConfig.initialize();
 
-            //SQLite Connection
-            Connection conn = DatabaseConnection.getConnection();
+
 
             // Only initialize sync service if Firebase is available
             if (firebaseEnabled) {

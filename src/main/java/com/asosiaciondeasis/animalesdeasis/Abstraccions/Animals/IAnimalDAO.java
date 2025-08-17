@@ -20,7 +20,7 @@ public interface IAnimalDAO {
 
     List<Animal> findByFilters(String species, String startDate, String endDate, Boolean showInactive) throws Exception;
 
-    boolean updateAnimal(Animal animal) throws Exception;
+    boolean updateAnimal(Animal animal, boolean timestamp) throws Exception;
 
     void deleteAnimal(String recordNumber) throws Exception;
 

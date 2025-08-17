@@ -150,11 +150,12 @@ public class CreateAnimalController implements IPortalAwareController {
     @FXML
     public void handleScanBarcode() {
         scannerUtil.startScanning(code -> {
+            // Store the scanned code for later use in save
             this.scannedChipNumber = code;
 
             Platform.runLater(() -> {
                 chipNumberField.setText(code);
-                NavigationHelper.showSuccessAlert("Exito", "Código escaneado: " + code);
+                // The success popup is now shown by BarcodeScannerUtil
             });
         });
     }
@@ -164,14 +165,20 @@ public class CreateAnimalController implements IPortalAwareController {
         if (!validateInputs()) return;
 
         Animal animal = Animal.createNew();
-        String chip = (scannedChipNumber != null && !scannedChipNumber.isBlank())
-                ? scannedChipNumber.trim()
-                : chipNumberField.getText().trim();
 
-        if (chip != null && !chip.isBlank()) {
-            animal.setChipNumber(chip);
+        // Handle barcode and chip number logic
+        if (scannedChipNumber != null && !scannedChipNumber.isBlank()) {
+            // Code was scanned - save as both barcode and chip number
+            animal.setBarcode(scannedChipNumber.trim());
+            animal.setChipNumber(scannedChipNumber.trim());
+        } else {
+            // Manual input - save only as chip number, barcode remains null
+            String manualChip = chipNumberField.getText().trim();
+            animal.setChipNumber(manualChip.isEmpty() ? null : manualChip);
+            animal.setBarcode(null);
         }
 
+        // Set animal properties
         animal.setAdmissionDate(DateUtils.convertToIsoFormat(admissionDatePicker.getValue()));
         animal.setCollectedBy(collectedByField.getText().trim());
 
@@ -179,6 +186,7 @@ public class CreateAnimalController implements IPortalAwareController {
         if (selectedPlace != null) {
             animal.setPlaceId(selectedPlace.getId());
         }
+
         animal.setReasonForRescue(rescueReasonArea.getText().trim());
         animal.setSpecies(speciesComboBox.getValue());
         animal.setApproximateAge(ageSpinner.getValue());
@@ -200,7 +208,7 @@ public class CreateAnimalController implements IPortalAwareController {
             NavigationHelper.showSuccessAlert("Exito", "Animal ingresado exitosamente.");
             NavigationHelper.goToAnimalModule(portalController);
         } else {
-            NavigationHelper.showErrorAlert("Error", null, "Ocurrió un error al ingresar el animal.");
+            NavigationHelper.showErrorAlert("Error", null, "Ocurrió un error al guardar el animal.");
         }
     }
 

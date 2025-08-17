@@ -42,9 +42,9 @@ public class StatisticsController implements Initializable {
     @FXML private CategoryAxis monthsAxis;
     @FXML private NumberAxis admissionsAxis;
     @FXML private PieChart adoptionPieChart;
-    @FXML private LineChart<String, Number> trendChart;
-    @FXML private CategoryAxis trendMonthsAxis;
-    @FXML private NumberAxis trendAxis;
+    @FXML private BarChart<Number, String> originsChart;
+    @FXML private CategoryAxis originsAxis;
+    @FXML private NumberAxis originsCountAxis;
     @FXML private Label statusLabel;
     @FXML private Label lastUpdateLabel;
 
@@ -60,6 +60,7 @@ public class StatisticsController implements Initializable {
 
     // Data storage
     private Map<String, Integer> monthlyData = new LinkedHashMap<>();
+    private Map<String, Integer> originsData = new LinkedHashMap<>();
     private int totalAdmissions;
     private double adoptionRate;
 
@@ -111,6 +112,7 @@ public class StatisticsController implements Initializable {
 
         Task<Void> loadDataTask = new Task<Void>() {
             private Map<String, Integer> taskMonthlyData;
+            private Map<String, Integer> taskOriginsData;
             private int taskTotalAdmissions;
             private double taskAdoptionRate;
 
@@ -120,9 +122,11 @@ public class StatisticsController implements Initializable {
                     taskMonthlyData = statisticsService.getMonthlyAdmissions(currentYear);
                     taskTotalAdmissions = statisticsService.getTotalAdmissions(currentYear);
                     taskAdoptionRate = statisticsService.getAdoptionRate(currentYear);
+                    taskOriginsData = statisticsService.getAnimalOrigins(currentYear);
 
                     Platform.runLater(() -> {
                         monthlyData = taskMonthlyData != null ? taskMonthlyData : new LinkedHashMap<>();
+                        originsData = taskOriginsData != null ? taskOriginsData : new LinkedHashMap<>();
                         totalAdmissions = taskTotalAdmissions;
                         adoptionRate = taskAdoptionRate;
 
@@ -290,14 +294,16 @@ public class StatisticsController implements Initializable {
             monthlyAdmissionsChart.setAnimated(true);
             monthlyAdmissionsChart.setLegendVisible(false);
 
-            // Configure trend chart
-            trendMonthsAxis.setLabel("Mes");
-            trendAxis.setLabel("Admisiones");
-            trendAxis.setTickUnit(1);
-            trendAxis.setMinorTickVisible(false);
-            trendChart.setTitle("");
-            trendChart.setAnimated(true);
-            trendChart.setLegendVisible(false);
+            // Configure origins chart
+            originsAxis.setLabel("Origen");
+            originsCountAxis.setLabel("Cantidad de Animales");
+            originsCountAxis.setTickUnit(1);
+            originsCountAxis.setMinorTickVisible(false);
+            originsCountAxis.setAutoRanging(false);
+            originsCountAxis.setForceZeroInRange(true);
+            originsChart.setTitle("");
+            originsChart.setAnimated(true);
+            originsChart.setLegendVisible(false);
 
             // Configure pie chart
             adoptionPieChart.setTitle("");
@@ -334,7 +340,7 @@ public class StatisticsController implements Initializable {
 
     private void updateCharts() {
         updateMonthlyChart();
-        updateTrendChart();
+        updateOriginsChart();
         updatePieChart();
     }
 
@@ -358,7 +364,7 @@ public class StatisticsController implements Initializable {
             }
 
             admissionsAxis.setLowerBound(0);
-            admissionsAxis.setUpperBound(Math.max(maxValue + 1, 5)); // Al menos hasta 5
+            admissionsAxis.setUpperBound(Math.max(maxValue + 1, 5));
 
             monthlyAdmissionsChart.getData().clear();
             monthlyAdmissionsChart.getData().add(series);
@@ -369,29 +375,32 @@ public class StatisticsController implements Initializable {
         }
     }
 
-    private void updateTrendChart() {
+    private void updateOriginsChart() {
         try {
-            XYChart.Series<String, Number> series = new XYChart.Series<>();
-            series.setName("Tendencia");
+            XYChart.Series<Number, String> series = new XYChart.Series<>();
+            series.setName("Origen");
 
-            String[] monthNames = {
-                    "Ene", "Feb", "Mar", "Abr", "May", "Jun",
-                    "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"
-            };
+            final int[] maxValue = {0};
 
-            // Asegurar que todos los meses están presentes
-            for (int i = 1; i <= 12; i++) {
-                String monthKey = String.format("%02d", i);
-                int value = monthlyData.getOrDefault(monthKey, 0);
-                String monthName = monthNames[i - 1];
-                series.getData().add(new XYChart.Data<>(monthName, value));
-            }
+            originsData.entrySet().stream()
+                    .limit(10)
+                    .forEach(entry -> {
+                        String origin = entry.getKey();
+                        Integer count = entry.getValue();
+                        maxValue[0] = Math.max(maxValue[0], count);
 
-            trendChart.getData().clear();
-            trendChart.getData().add(series);
+                        String displayName = origin.length() > 30 ? origin.substring(0, 30) + "..." : origin;
+                        series.getData().add(new XYChart.Data<>(count, displayName));
+                    });
+
+            originsCountAxis.setLowerBound(0);
+            originsCountAxis.setUpperBound(Math.max(maxValue[0] + 1, 5));
+
+            originsChart.getData().clear();
+            originsChart.getData().add(series);
 
         } catch (Exception e) {
-            updateStatus("Error al actualizar gráfico de tendencia: " + e.getMessage(), false);
+            updateStatus("Error al actualizar gráfico de orígenes: " + e.getMessage(), false);
             e.printStackTrace();
         }
     }

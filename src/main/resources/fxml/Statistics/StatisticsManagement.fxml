@@ -89,21 +89,21 @@
                     <PieChart fx:id="adoptionPieChart" animated="true" styleClass="adoption-pie" VBox.vgrow="ALWAYS" />
                 </VBox>
 
-                <!-- Trend Line Chart -->
+                <!--  Animal Origins Chart -->
                 <VBox styleClass="chart-container" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2">
                     <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="chart-header">
-                        <FontIcon iconLiteral="fas-chart-line" iconSize="18" styleClass="chart-icon" />
-                        <Label styleClass="chart-title" text="Tendencia de Admisiones" />
+                        <FontIcon iconLiteral="fas-map-marker-alt" iconSize="18" styleClass="chart-icon" />
+                        <Label styleClass="chart-title" text="Origen de los Animales" />
                     </HBox>
-                    <LineChart fx:id="trendChart" animated="true" legendVisible="false"
-                               styleClass="trend-chart" VBox.vgrow="ALWAYS">
+                    <BarChart fx:id="originsChart" animated="true" legendVisible="false"
+                              styleClass="origins-chart" VBox.vgrow="ALWAYS">
                         <xAxis>
-                            <CategoryAxis fx:id="trendMonthsAxis" styleClass="chart-axis" />
+                            <NumberAxis fx:id="originsCountAxis" styleClass="chart-axis" />
                         </xAxis>
                         <yAxis>
-                            <NumberAxis fx:id="trendAxis" styleClass="chart-axis" />
+                            <CategoryAxis fx:id="originsAxis" styleClass="chart-axis" />
                         </yAxis>
-                    </LineChart>
+                    </BarChart>
                 </VBox>
             </GridPane>
 

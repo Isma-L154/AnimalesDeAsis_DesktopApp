@@ -30,7 +30,7 @@ public class AnimalDAO implements IAnimalDAO {
     @Override
     public boolean insertAnimal(Animal animal) throws Exception {
         String sql;
-
+        //We have to separate the SQL query into two different queries, one with the last_modified field and another without it.
         if (animal.getLastModified() != null && !animal.getLastModified().trim().isEmpty()) {
             sql = """
             INSERT INTO animals (
@@ -182,7 +182,12 @@ public class AnimalDAO implements IAnimalDAO {
         return animals;
     }
 
-
+    /**
+     * The reason we have this method with a timestamp, It's because we want to update the last_modified field
+     * every time we update an animal, so we can keep track of when the last modification.
+     * But at the same time, when we pull the data from the database, we don't want to update the last_modified field
+     * because we are just reading the data, not modifying it. So we have this boolean parameter to do that
+     * */
     @Override
     public boolean updateAnimal(Animal animal, boolean timestamp) throws Exception {
         String timestampClause = timestamp ?

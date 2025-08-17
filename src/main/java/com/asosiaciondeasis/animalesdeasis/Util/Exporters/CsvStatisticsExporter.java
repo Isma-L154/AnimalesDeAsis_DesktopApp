@@ -19,18 +19,36 @@ import java.util.Map;
  * CsvStatisticsExporter is responsible for exporting statistics data to a CSV file.
  * It provides methods to export data for a specific year, either through a GUI file chooser
  * or directly to a specified file path.
+ *
+ * The exported CSV file is compatible with Excel, LibreOffice, Google Sheets, and any text editor.
+ * It includes comprehensive statistics including monthly admissions, adoption rates, and animal origins.
  */
 public class CsvStatisticsExporter {
 
     private final StatisticsDAO statisticsDAO;
 
+    /**
+     * Constructor that initializes the exporter with a StatisticsDAO instance.
+     *
+     * @param statisticsDAO The data access object used to retrieve statistics from the database
+     */
     public CsvStatisticsExporter(StatisticsDAO statisticsDAO) {
         this.statisticsDAO = statisticsDAO;
     }
 
     /**
-     * Exports statistics data to a CSV file for the specified year with a file chooser dialog.
-     * @return true if export was successful, false if cancelled by user
+     * Exports statistics data to a CSV file for the specified year using a file chooser dialog.
+     *
+     * This method:
+     * 1. Opens a file chooser dialog for the user to select save location
+     * 2. Sets default filename with year suffix
+     * 3. Ensures .csv extension is added if not provided
+     * 4. Calls exportToFile() to generate the actual CSV content
+     *
+     * @param year The year for which to export statistics
+     * @param ownerWindow The parent window for the file chooser dialog
+     * @return true if export was successful, false if canceled by user
+     * @throws Exception if there's an error during the export process
      */
     public boolean export(int year, Window ownerWindow) throws Exception {
         FileChooser fileChooser = new FileChooser();
@@ -57,12 +75,34 @@ public class CsvStatisticsExporter {
     }
 
     /**
-     * Method overload to use in non-GUI contexts, exports using a default file path
+     * Method overload to use in non-GUI contexts, exports using a default file path.
+     * This is a convenience method that calls the main export method with null parent window.
+     *
+     * @param year The year for which to export statistics
+     * @throws Exception if there's an error during the export process
      */
     public void export(int year) throws Exception {
         export(year, null);
     }
 
+    /**
+     * Core method that generates and writes the CSV file content.
+     *
+     * The CSV structure includes:
+     * 1. Header with compatibility information for users without Excel
+     * 2. Executive summary with key metrics (total admissions, adoption rate, monthly average)
+     * 3. Detailed monthly admissions breakdown with month names
+     * 4. Adoption analysis showing adopted vs non-adopted animals
+     * 5. Top 15 animal origins by location and province
+     * 6. Metadata section with report generation details
+     *
+     * Uses UTF-8 encoding to ensure proper character display across different systems.
+     * Handles comma escaping in location names to prevent CSV parsing issues.
+     *
+     * @param file The target file where CSV content will be written
+     * @param year The year for which to generate statistics
+     * @throws Exception if there's an I/O error during file writing
+     */
     private void exportToFile(File file, int year) throws Exception {
         try (PrintWriter writer = new PrintWriter(
                 new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
@@ -137,7 +177,26 @@ public class CsvStatisticsExporter {
             writer.println("=".repeat(60));
             writer.println();
 
+            writer.println("ORIGEN DE ANIMALES POR LUGAR");
+            writer.println("Lugar - Provincia,Cantidad");
 
+            Map<String, Integer> originsData = statisticsDAO.getAnimalOrigins(year);
+
+            if (!originsData.isEmpty()) {
+                originsData.entrySet().stream()
+                        .limit(15)
+                        .forEach(entry -> {
+                            String origin = entry.getKey().replace(",", " -");
+                            int count = entry.getValue();
+                            writer.println(origin + "," + count);
+                        });
+            } else {
+                writer.println("Sin datos disponibles,0");
+            }
+
+            writer.println();
+            writer.println("=".repeat(60));
+            writer.println();
 
             writer.println("METADATOS DEL REPORTE");
             writer.println("Campo,Valor");
@@ -154,6 +213,15 @@ public class CsvStatisticsExporter {
         }
     }
 
+    /**
+     * Converts a numeric month string to its full Spanish name.
+     *
+     * Uses Java's Month enum with Spanish locale to get proper month names.
+     * Handles invalid month numbers gracefully by returning a default message.
+     *
+     * @param monthNumber String representation of month number (1-12)
+     * @return Full Spanish month name or "Mes desconocido" if invalid
+     */
     private String monthNumberToName(String monthNumber) {
         try {
             int month = Integer.parseInt(monthNumber);
@@ -169,7 +237,13 @@ public class CsvStatisticsExporter {
     }
 
     /**
-     * Checks if there is data to export for the given year
+     * Validates if there is exportable data available for the specified year.
+     *
+     * This method is useful for UI components to determine whether to enable
+     * export functionality or show appropriate messages to users.
+     *
+     * @param year The year to check for available data
+     * @return true if there are admissions data for the year, false otherwise
      */
     public boolean hasDataToExport(int year) {
         try {

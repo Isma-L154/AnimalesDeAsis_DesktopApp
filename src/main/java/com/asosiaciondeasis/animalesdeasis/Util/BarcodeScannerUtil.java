@@ -25,6 +25,23 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * BarcodeScannerUtil provides barcode scanning functionality using the computer's webcam.
+ *
+ * This utility class integrates webcam capture with ZXing barcode decoding library
+ * to provide real-time barcode scanning capabilities in a JavaFX application.
+ *
+ * Features:
+ * - Opens webcam in a modal dialog window
+ * - Real-time camera preview with automatic barcode detection
+ * - Supports multiple barcode formats through ZXing's MultiFormatReader
+ * - Thread-safe operation with proper resource cleanup
+ * - Graceful error handling and user feedback
+ *
+ * The scanning process runs on separate threads to avoid blocking the UI:
+ * - Capture thread: Continuously captures frames from webcam
+ * - Decode thread: Processes captured frames for barcode detection
+ */
 public class BarcodeScannerUtil {
 
     private static final Logger LOGGER = Logger.getLogger(BarcodeScannerUtil.class.getName());
@@ -36,8 +53,21 @@ public class BarcodeScannerUtil {
     private Stage currentStage;
 
     /**
-     * Starts the barcode scanning process and opens the webcam dialog.
-     * @param callback Callback to handle the scanned code.
+     * Starts the barcode scanning process and opens a modal webcam dialog.
+     *
+     * This method:
+     * 1. Resets any previous scanning state
+     * 2. Initializes the webcam with optimal resolution
+     * 3. Creates and displays a modal scanning window
+     * 4. Starts background threads for camera capture and barcode decoding
+     * 5. Executes the provided callback when a barcode is successfully scanned
+     *
+     * The scanning continues until either:
+     * - A barcode is detected and decoded successfully
+     * - The user cancels the operation
+     * - An error occurs during the process
+     *
+     * @param callback Callback interface that handles the scanned barcode result
      */
     public synchronized void startScanning(ScanCallback callback) {
         // Reset state for new scanning session
@@ -115,7 +145,11 @@ public class BarcodeScannerUtil {
     }
 
     /**
-     * Resets the internal state for a new scanning session
+     * Resets the internal state for a new scanning session.
+     *
+     * This ensures that each scanning session starts with a clean state,
+     * preventing interference from previous scanning attempts.
+     * Called automatically before starting a new scan.
      */
     private void resetState() {
         stopScanning();
@@ -124,8 +158,16 @@ public class BarcodeScannerUtil {
     }
 
     /**
-     * Initializes the webcam and sets the best available resolution.
-     * @return true if the webcam was initialized successfully, false otherwise.
+     * Initializes the webcam and configures it with the best available resolution.
+     *
+     * Process:
+     * 1. Closes any existing webcam connection
+     * 2. Gets the default system webcam
+     * 3. Determines the highest resolution supported by webcam
+     * 4. Sets the webcam to use this optimal resolution
+     * 5. Opens the webcam connection
+     *
+     * @return true if the webcam was successfully initialized, false if an error occurred
      */
     private boolean initializeWebcam() {
         try {
@@ -160,9 +202,13 @@ public class BarcodeScannerUtil {
     }
 
     /**
-     * Returns the maximum resolution from the supported resolutions.
-     * @param supportedResolutions Array of supported resolutions.
-     * @return The highest available resolution.
+     * Determines the maximum resolution from an array of supported webcam resolutions.
+     *
+     * Compares the total pixel count (width × height) of each resolution
+     * to find the one with the highest quality for better barcode detection accuracy.
+     *
+     * @param supportedResolutions Array of Dimension objects representing available resolutions
+     * @return The Dimension object representing the highest available resolution
      */
     private Dimension getMaxResolution(Dimension[] supportedResolutions) {
         Dimension max = supportedResolutions[0];
@@ -175,8 +221,18 @@ public class BarcodeScannerUtil {
     }
 
     /**
-     * Creates and configures the JavaFX stage for barcode scanning.
-     * @return The configured Stage.
+     * Creates and configures the JavaFX modal dialog for barcode scanning.
+     *
+     * The dialog includes:
+     * - An ImageView for displaying the live camera feed
+     * - A cancel button for user to abort the scanning process
+     * - Proper window sizing and modality settings
+     * - Event handlers for window close operations
+     *
+     * The stage is configured as APPLICATION_MODAL to prevent interaction
+     * with other windows while scanning is in progress.
+     *
+     * @return The configured Stage ready to be displayed
      */
     private Stage createScannerStage() {
         ImageView imageView = new ImageView();
@@ -212,9 +268,20 @@ public class BarcodeScannerUtil {
     }
 
     /**
-     * Attempts to decode a barcode from the given BufferedImage.
-     * @param image The image to decode.
-     * @return The decoded barcode as a String, or null if not found.
+     * Attempts to decode a barcode from the provided BufferedImage.
+     *
+     * Uses ZXing's MultiFormatReader, which supports various barcode formats including
+     * - QR Code, Data Matrix, Aztec (2D formats)
+     * - Code 128, Code 39, EAN-13, UPC-A (1D formats)
+     * - And many other standard barcode formats
+     *
+     * The decoding process involves:
+     * 1. Converting the BufferedImage to a LuminanceSource
+     * 2. Creating a BinaryBitmap with hybrid binarization
+     * 3. Using MultiFormatReader to attempt barcode detection
+     *
+     * @param image The BufferedImage captured from the webcam to analyze
+     * @return The decoded barcode text as String, or null if no barcode was found
      */
     private String decodeBarcode(BufferedImage image) {
         try {
@@ -231,7 +298,19 @@ public class BarcodeScannerUtil {
     }
 
     /**
-     * Stops the scanning process, closes the webcam, and shuts down executors.
+     * Stops the scanning process and performs cleanup of all resources.
+     *
+     * This method ensures proper resource management by:
+     * 1. Setting the running flag too false to stop capture/decode loops
+     * 2. Closing the webcam connection safely
+     * 3. Shutting down executor services gracefully
+     * 4. Clearing executor references
+     *
+     * Called automatically when:
+     * - A barcode is successfully scanned
+     * - The user cancels the operation
+     * - The scanning window is closed
+     * - An error occurs during scanning
      */
     public synchronized void stopScanning() {
         running.set(false);
@@ -255,7 +334,18 @@ public class BarcodeScannerUtil {
     }
 
     /**
-     * Properly shuts down an executor service
+     * Properly shuts down an ExecutorService with timeout handling.
+     *
+     * Follows the recommended shutdown pattern:
+     * 1. Call shutdown() to stop accepting new tasks
+     * 2. Wait for existing tasks to complete (with timeout)
+     * 3. If tasks don't complete in time, force shutdown with shutdownNow()
+     * 4. Handle InterruptedException appropriately
+     *
+     * This prevents resource leaks and ensures threads are properly terminated.
+     *
+     * @param executor The ExecutorService to shut down
+     * @param name A descriptive name for logging purposes
      */
     private void shutdownExecutor(ExecutorService executor, String name) {
         if (executor != null && !executor.isShutdown()) {
@@ -279,8 +369,23 @@ public class BarcodeScannerUtil {
 
     /**
      * Callback interface for handling scanned barcode results.
+     *
+     * Implement this interface to define what should happen when a barcode
+     * is successfully scanned and decoded. The callback is executed on the
+     * JavaFX Application Thread, so it's safe to update UI components directly.
+     *
+     * Example usage:
+     * scanner.startScanning(code -> {
+     *     textField.setText(code);
+     *     // Additional processing...
+     * });
      */
     public interface ScanCallback {
+        /**
+         * Called when a barcode has been successfully scanned and decoded.
+         *
+         * @param code The decoded barcode content as a String
+         */
         void onCodeScanned(String code);
     }
 }

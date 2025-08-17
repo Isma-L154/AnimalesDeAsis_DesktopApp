@@ -21,7 +21,7 @@ public class VaccineDAO implements IVaccineDAO {
     @Override
     public void insertVaccine(Vaccine vaccine) throws Exception {
         String sql;
-
+        //We have to separate the SQL query into two different queries, one with the last_modified field and another without it.
         if (vaccine.getLastModified() != null && !vaccine.getLastModified().trim().isEmpty()) {
             sql = """
             INSERT INTO vaccines (id, animal_record_number, vaccine_name, vaccination_date, synced, last_modified)
@@ -81,13 +81,11 @@ public class VaccineDAO implements IVaccineDAO {
     }
 
     /**
-     * We have the Update in case there's a mistake in the name or the date, allowing the user
-     * to make corrections without having to delete and reinsert the record.
-     * <p>
-     * However, we are deliberately omitting traceability (e.g., edit history or audit logs)
-     * to keep the system lightweight and simple.
-     */
-
+     * The reason we have this method with a timestamp, It's because we want to update the last_modified field
+     * every time we update an animal, so we can keep track of when the last modification.
+     * But at the same time, when we pull the data from the database, we don't want to update the last_modified field
+     * because we are just reading the data, not modifying it. So we have this boolean parameter to do that
+     * */
     @Override
     public void updateVaccine(Vaccine vaccine, boolean timestamp) throws Exception {
         String timestampClause = timestamp ?

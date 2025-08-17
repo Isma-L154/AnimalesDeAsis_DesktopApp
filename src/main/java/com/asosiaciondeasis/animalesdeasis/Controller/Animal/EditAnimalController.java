@@ -141,8 +141,8 @@ public class EditAnimalController implements IPortalAwareController {
         } else {
             chipNumberField.setText("");
         }
-        rescueReasonArea.setText(animal.getReasonForRescue());
-        ailmentsArea.setText(animal.getAilments());
+        rescueReasonArea.setText(animal.getReasonForRescue() != null ? animal.getReasonForRescue() : "");
+        ailmentsArea.setText(animal.getAilments() != null ? animal.getAilments() : "");
 
         Place place = allPlaces.stream()
                 .filter(p -> Objects.equals(p.getId(), animal.getPlaceId()))

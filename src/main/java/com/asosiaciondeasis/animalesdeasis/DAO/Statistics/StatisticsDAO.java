@@ -44,6 +44,36 @@ public class StatisticsDAO implements IStatisticsDAO {
     }
 
     @Override
+    public Map<String, Integer> getAnimalOrigins(int year) throws Exception {
+        Map<String, Integer> result = new LinkedHashMap<>();
+        String sql = """
+                SELECT p.name AS place_name, pr.name AS province_name, COUNT(*) AS count
+                FROM animals a
+                JOIN places p ON a.place_id = p.id
+                JOIN provinces pr ON p.province_id = pr.id
+                WHERE a.active = 1 AND strftime('%Y', a.admission_date) = ?
+                GROUP BY p.name, pr.name 
+                ORDER BY count DESC
+            """;
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, String.valueOf(year));
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                String placeName = rs.getString("place_name");
+                String provinceName = rs.getString("province_name");
+                int count = rs.getInt("count");
+
+                String origin = placeName + ", " + provinceName;
+                result.put(origin, count);
+            }
+        } catch (SQLException e) {
+            throw new Exception("Error fetching animal origins", e);
+        }
+        return result;
+    }
+
+    @Override
     public int getTotalAdmissions(int year) throws Exception {
 
         String sql = """
@@ -91,4 +121,5 @@ public class StatisticsDAO implements IStatisticsDAO {
             throw new Exception("Error calculating adoption rate for year " + year, e);
         }
     }
+
 }

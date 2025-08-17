@@ -38,14 +38,13 @@ public class AnimalService implements IAnimalService {
     }
 
     @Override
-    public boolean updateAnimal(Animal animal) throws Exception {
-        animalDAO.updateAnimal(animal);
+    public boolean updateAnimal(Animal animal, boolean timestamp) throws Exception {
+        animalDAO.updateAnimal(animal, true);
         return true;
     }
 
     @Override
     public void deleteAnimal(String recordNumber) throws Exception {
-
         animalDAO.deleteAnimal(recordNumber);
     }
 

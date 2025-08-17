@@ -66,9 +66,10 @@
                             </HBox>
                             <Spinner fx:id="ageSpinner" maxWidth="Infinity" styleClass="custom-spinner"/>
                         </VBox>
-                        <VBox spacing="8" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="2">
-                            <CheckBox fx:id="adoptedCheckBox" text="Adoptado:" styleClass="custom-checkbox"/>
-                        </VBox>
+                        <HBox spacing="8" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="2">
+                            <Label text="Adoptado:" styleClass="field-label"/>
+                            <CheckBox fx:id="adoptedCheckBox" styleClass="custom-checkbox"/>
+                        </HBox>
                     </GridPane>
                 </VBox>
 

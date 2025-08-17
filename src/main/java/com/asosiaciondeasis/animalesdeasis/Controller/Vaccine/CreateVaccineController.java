@@ -75,17 +75,13 @@ public class CreateVaccineController implements Initializable{
     public void onSaveAction() {
         if (!validateForm()) return;
 
-        Vaccine newVaccine = new Vaccine();
+        Vaccine newVaccine = Vaccine.createNew();
 
-        String vaccineName = vaccineNameField.getText().trim();
-
-        //Set the date in ISO format, for the firebase and the database
-        LocalDate vaccinationDate = vaccinationDatePicker.getValue();
-        String isoDate = DateUtils.convertToIsoFormat(vaccinationDate);
 
         newVaccine.setAnimalRecordNumber(animalRecordNumber);
-        newVaccine.setVaccineName(vaccineName);
-        newVaccine.setVaccinationDate(isoDate);
+        newVaccine.setVaccineName(vaccineNameField.getText().trim());
+        newVaccine.setVaccinationDate(DateUtils.convertToIsoFormat(vaccinationDatePicker.getValue()));
+        newVaccine.setSynced(false);
 
         if (onVaccineCreated != null) {
             onVaccineCreated.accept(newVaccine);

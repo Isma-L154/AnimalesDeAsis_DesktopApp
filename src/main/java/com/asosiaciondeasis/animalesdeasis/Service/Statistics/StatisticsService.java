@@ -20,6 +20,11 @@ public class StatisticsService implements IStatisticsService {
     }
 
     @Override
+    public Map<String, Integer> getAnimalOrigins(int year) throws Exception {
+        return statisticsDAO.getAnimalOrigins(year);
+    }
+
+    @Override
     public int getTotalAdmissions(int year) throws Exception {
         return statisticsDAO.getTotalAdmissions(year);
     }

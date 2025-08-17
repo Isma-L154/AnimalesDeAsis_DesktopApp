@@ -5,7 +5,6 @@ import com.asosiaciondeasis.animalesdeasis.Config.ServiceFactory;
 import com.asosiaciondeasis.animalesdeasis.Controller.PortalController;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Model.Place;
-import com.asosiaciondeasis.animalesdeasis.Service.Animal.AnimalService;
 import com.asosiaciondeasis.animalesdeasis.Service.Place.PlaceService;
 import com.asosiaciondeasis.animalesdeasis.Util.BarcodeScannerUtil;
 import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
@@ -45,7 +44,7 @@ public class EditAnimalController implements IPortalAwareController {
     @FXML private Button scanChipButton;
     @FXML private StackPane rootPane;
 
-    private final String scannedChipNumber = null;
+    private String scannedChipNumber = null;
     private Animal currentAnimal;
     private PortalController portalController;
     private List<Place> allPlaces;
@@ -63,6 +62,19 @@ public class EditAnimalController implements IPortalAwareController {
         sexComboBox.setItems(FXCollections.observableArrayList("Macho", "Hembra"));
         SpinnerValueFactory<Integer> ageFactory = new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 50, 0);
         ageSpinner.setValueFactory(ageFactory);
+        rescueReasonArea.setTextFormatter(new TextFormatter<>(change -> {
+            if (change.getControlNewText().length() > 300) {
+                return null;
+            }
+            return change;
+        }));
+
+        ailmentsArea.setTextFormatter(new TextFormatter<>(change -> {
+            if (change.getControlNewText().length() > 500) {
+                return null;
+            }
+            return change;
+        }));
     }
 
     private void configureDatePickers() {
@@ -84,6 +96,18 @@ public class EditAnimalController implements IPortalAwareController {
         neuteringDatePicker.setConverter(converter);
         admissionDatePicker.setPromptText("dd-MM-yyyy");
         neuteringDatePicker.setPromptText("dd-MM-yyyy");
+
+        admissionDatePicker.setDayCellFactory(picker -> new DateCell() {
+            @Override
+            public void updateItem(LocalDate date, boolean empty) {
+                super.updateItem(date, empty);
+                if (date.isAfter(LocalDate.now())) {
+                    setDisable(true);
+                    setStyle("-fx-background-color: #ffcccc;");
+                    setTooltip(new Tooltip("No se pueden seleccionar fechas futuras"));
+                }
+            }
+        });
     }
 
     private void loadPlaces() {
@@ -117,10 +141,9 @@ public class EditAnimalController implements IPortalAwareController {
         } else {
             chipNumberField.setText("");
         }
-        rescueReasonArea.setText(animal.getReasonForRescue());
-        ailmentsArea.setText(animal.getAilments());
+        rescueReasonArea.setText(animal.getReasonForRescue() != null ? animal.getReasonForRescue() : "");
+        ailmentsArea.setText(animal.getAilments() != null ? animal.getAilments() : "");
 
-        //TODO Replace with a more robust way to handle places, also put an if to check if the place is null
         Place place = allPlaces.stream()
                 .filter(p -> Objects.equals(p.getId(), animal.getPlaceId()))
                 .findFirst()
@@ -130,13 +153,21 @@ public class EditAnimalController implements IPortalAwareController {
 
     @FXML
     public void handleScanBarcode() {
-        scannerUtil.startScanning(code -> Platform.runLater(() -> chipNumberField.setText(code)));
+        scannerUtil.startScanning(code -> {
+            // Store the scanned code for later use in update
+            this.scannedChipNumber = code;
+            Platform.runLater(() -> {
+                // Display the scanned code in the text field
+                chipNumberField.setText(code);
+            });
+        });
     }
 
     @FXML
     public void handleUpdate() throws Exception {
         if (!validateInputs()) return;
 
+        // Set basic animal properties
         currentAnimal.setName(nameField.getText().trim());
         currentAnimal.setSpecies(speciesComboBox.getValue());
         currentAnimal.setSex(sexComboBox.getValue());
@@ -144,18 +175,32 @@ public class EditAnimalController implements IPortalAwareController {
         currentAnimal.setCollectedBy(collectedByField.getText().trim());
         currentAnimal.setAdmissionDate(DateUtils.convertToIsoFormat(admissionDatePicker.getValue()));
         currentAnimal.setAdopted(adoptedCheckBox.isSelected());
+
         if (neuteringDatePicker.getValue() != null) {
             currentAnimal.setNeuteringDate(DateUtils.convertToIsoFormat(neuteringDatePicker.getValue()));
         } else {
             currentAnimal.setNeuteringDate(null);
         }
 
-        String chip = (scannedChipNumber != null && !scannedChipNumber.isBlank())
-                ? scannedChipNumber.trim()
-                : chipNumberField.getText();
+        // Handle barcode and chip number logic
+        String currentFieldValue = chipNumberField.getText().trim();
 
-        currentAnimal.setChipNumber(chip != null ? chip.trim() : null);
-        currentAnimal.setBarcode(null);
+        if (scannedChipNumber != null && !scannedChipNumber.isBlank()) {
+            // A new code was scanned during this edit session
+            currentAnimal.setBarcode(scannedChipNumber.trim());
+            currentAnimal.setChipNumber(scannedChipNumber.trim());
+        } else {
+            // Field was edited manually or not changed
+            currentAnimal.setChipNumber(currentFieldValue.isEmpty() ? null : currentFieldValue);
+
+            // Only clear barcode if the value was manually changed from the original
+            String originalValue = getOriginalChipValue(currentAnimal);
+            if (!currentFieldValue.equals(originalValue)) {
+                currentAnimal.setBarcode(null); // Manual edit, clear barcode
+            }
+            // If value unchanged, keep existing barcode
+        }
+
         currentAnimal.setReasonForRescue(rescueReasonArea.getText().trim());
         currentAnimal.setAilments(ailmentsArea.getText().trim());
 
@@ -163,8 +208,10 @@ public class EditAnimalController implements IPortalAwareController {
         if (selectedPlace != null) {
             currentAnimal.setPlaceId(selectedPlace.getId());
         }
+
         currentAnimal.setSynced(false);
-        boolean updated = ServiceFactory.getAnimalService().updateAnimal(currentAnimal);
+
+        boolean updated = ServiceFactory.getAnimalService().updateAnimal(currentAnimal, true);
         if (updated) {
             NavigationHelper.showSuccessAlert("Exito", "Animal actualizado exitosamente.");
             NavigationHelper.goToAnimalModule(portalController);
@@ -222,6 +269,18 @@ public class EditAnimalController implements IPortalAwareController {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Get the original chip value that was displayed when the form was loaded
+     */
+    private String getOriginalChipValue(Animal animal) {
+        if (animal.getChipNumber() != null && !animal.getChipNumber().isBlank()) {
+            return animal.getChipNumber();
+        } else if (animal.getBarcode() != null && !animal.getBarcode().isBlank()) {
+            return animal.getBarcode();
+        }
+        return "";
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.asosiaciondeasis.animalesdeasis.Controller;
 
 
 import com.asosiaciondeasis.animalesdeasis.Abstraccions.IPortalAwareController;
+import com.asosiaciondeasis.animalesdeasis.Controller.Animal.AnimalManagementController;
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -73,6 +74,14 @@ public class PortalController {
      */
     public void loadContent(String fxmlPath) {
         try {
+            if (contentPane.getChildren().size() > 0) {
+                Parent currentContent = (Parent) contentPane.getChildren().get(0);
+                Object currentController = currentContent.getUserData();
+                if (currentController instanceof AnimalManagementController) {
+                    ((AnimalManagementController) currentController).cleanup();
+                }
+            }
+
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             Parent content = loader.load();
 
@@ -80,6 +89,8 @@ public class PortalController {
             if (controller instanceof IPortalAwareController) {
                 ((IPortalAwareController) controller).setPortalController(this);
             }
+
+            content.setUserData(controller);
 
             StackPane.setAlignment(content, javafx.geometry.Pos.CENTER);
             contentPane.getChildren().setAll(content);

@@ -10,9 +10,9 @@ public interface IVaccineService {
 
     List<Vaccine> getVaccinesByAnimal(String animalRecordNumber) throws Exception;
 
-    void updateVaccine(Vaccine vaccine) throws Exception;
+    void updateVaccine(Vaccine vaccine, boolean timestamp) throws Exception;
 
-    void deleteVaccine(int id) throws Exception;
+    void deleteVaccine(String id) throws Exception;
 
-    Vaccine existsVaccine(int id) throws Exception;
+    Vaccine existsVaccine(String id) throws Exception;
 }

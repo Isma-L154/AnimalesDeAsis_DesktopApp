@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.asosiaciondeasis.animalesdeasis.Controller.SplashController"
+      alignment="CENTER" spacing="30" styleClass="splash-container"
+      stylesheets="@/css/Splash.css">
+
+    <padding>
+        <Insets top="50" bottom="50" left="50" right="50"/>
+    </padding>
+
+    <Label text="Animales de Asís" styleClass="splash-title"/>
+    <Label text="Inicializando aplicación..." styleClass="splash-message"/>
+
+    <ProgressIndicator fx:id="progressIndicator" prefWidth="60" prefHeight="60"/>
+
+    <Label fx:id="statusLabel" text="Conectando con Firebase..." styleClass="status-text"/>
+
+    <VBox alignment="CENTER" spacing="10">
+        <Label text="Por favor espere..." styleClass="wait-text"/>
+        <Label text="Este proceso puede tomar unos segundos" styleClass="wait-subtitle"/>
+    </VBox>
+</VBox>

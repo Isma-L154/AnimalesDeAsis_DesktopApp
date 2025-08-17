@@ -1,6 +1,6 @@
 package com.asosiaciondeasis.animalesdeasis;
 
-import com.asosiaciondeasis.animalesdeasis.Controller.WelcomeController;
+import com.asosiaciondeasis.animalesdeasis.Controller.SplashController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -17,31 +17,20 @@ public class Main extends Application {
     }
 
     @Override
-    public void init() {
-        AppInitializer.initializeApp();
-    }
-
-    @Override
     public void start(Stage stage) throws Exception {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/WelcomeView.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/SplashView.fxml"));
         Parent root = loader.load();
 
-        WelcomeController controller = loader.getController();
+        SplashController controller = loader.getController();
         controller.setStage(stage);
 
         Scene scene = new Scene(root);
-        stage.setTitle("Asociación de Asís");
+        stage.setTitle("Asociación de Asís - Sistema de Gestión");
         stage.setScene(scene);
         stage.setMaximized(true);
         stage.setResizable(true);
 
         stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/images/AdeAsisLogo.png"))));
-
-        scene.setOnMousePressed(e -> {
-            if (stage.isMaximized()) {
-                e.consume();
-            }
-        });
 
         stage.centerOnScreen();
         stage.show();

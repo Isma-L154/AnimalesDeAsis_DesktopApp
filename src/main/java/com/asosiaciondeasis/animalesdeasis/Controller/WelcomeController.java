@@ -28,6 +28,10 @@ public class WelcomeController implements Initializable {
     }
 
 
+    /**
+     * This method is called when the "Continue" button is clicked.
+     * It loads the PortalView.fxml and sets it as the current scene.
+     */
     @FXML
     public void handleContinue(ActionEvent event) {
         try {
@@ -36,41 +40,21 @@ public class WelcomeController implements Initializable {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/PortalView.fxml"));
             Scene scene = new Scene(loader.load());
 
+            stage.setMinWidth(1036);
+            stage.setMinHeight(798);
+
             stage.setScene(scene);
 
-            Platform.runLater(() -> {
-                if (wasMaximized) {
+            if (wasMaximized) {
+                Platform.runLater(() -> {
                     stage.setMaximized(false);
-
                     Platform.runLater(() -> {
-                        stage.setMinWidth(1036);
-                        stage.setMinHeight(798);
                         stage.setMaximized(true);
-
-
-                        Platform.runLater(() -> {
-                            double width = stage.getWidth();
-                            double height = stage.getHeight();
-
-                            stage.setWidth(width - 1);
-                            stage.setHeight(height - 1);
-
-                            Platform.runLater(() -> {
-                                stage.setWidth(width);
-                                stage.setHeight(height);
-
-                                // Forzar repaint final
-                                scene.getRoot().requestLayout();
-                                scene.getRoot().applyCss();
-                            });
-                        });
                     });
-                } else {
-                    stage.setMinWidth(1036);
-                    stage.setMinHeight(798);
-                    stage.centerOnScreen();
-                }
-            });
+                });
+            } else {
+                stage.centerOnScreen();
+            }
 
         } catch (IOException e) {
             e.printStackTrace();

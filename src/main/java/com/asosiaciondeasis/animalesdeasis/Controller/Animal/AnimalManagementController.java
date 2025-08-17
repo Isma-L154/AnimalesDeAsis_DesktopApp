@@ -4,8 +4,10 @@ import com.asosiaciondeasis.animalesdeasis.Abstraccions.IPortalAwareController;
 import com.asosiaciondeasis.animalesdeasis.Config.ServiceFactory;
 import com.asosiaciondeasis.animalesdeasis.Controller.PortalController;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
+import com.asosiaciondeasis.animalesdeasis.Service.SyncService;
 import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
+import com.asosiaciondeasis.animalesdeasis.Util.SyncEventManager;
 import javafx.animation.FadeTransition;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleStringProperty;
@@ -51,6 +53,7 @@ public class AnimalManagementController implements IPortalAwareController {
     private List<Animal> allAnimals;
     private List<Animal> filteredAnimals;
     private boolean filtersVisible = false;
+    private Runnable syncListener;
 
     @Override
     public void setPortalController(PortalController portalController) {
@@ -69,6 +72,7 @@ public class AnimalManagementController implements IPortalAwareController {
             setUpPagination(); // Load the first page of animals
             updateResultsCount();
             animalTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+            setupSyncListener();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -337,16 +341,28 @@ public class AnimalManagementController implements IPortalAwareController {
                 inactiveFilter.isSelected();
     }
 
+    /**
+     * We change this method to refresh the animal list when the filters are applied or cleared.
+     * This way, we ensure that the table is always updated with the latest data based on the filters.
+     * Also, when we delete or reactivate an animal, we call this method to refresh the list without pop-up messages.
+     * */
     private void refreshAnimalList() throws Exception {
         allAnimals = ServiceFactory.getAnimalService().getActiveAnimals();
 
         if (hasActiveFilters()) {
-            handleApplyFilters();
+            String species = getFilterValue(speciesFilter.getValue());
+            LocalDate startDate = startDateFilter.getValue();
+            LocalDate endDate = endDateFilter.getValue();
+            String startDateStr = startDate != null ? startDate.toString() : null;
+            String endDateStr = endDate != null ? endDate.toString() : null;
+            Boolean showInactive = inactiveFilter.isSelected();
+
+            filteredAnimals = ServiceFactory.getAnimalService().findByFilters(species, startDateStr, endDateStr, showInactive);
         } else {
             filteredAnimals = allAnimals;
-            setUpPagination();
-            updateResultsCount();
         }
+        setUpPagination();
+        updateResultsCount();
         animalTable.refresh();
     }
     /**
@@ -359,4 +375,17 @@ public class AnimalManagementController implements IPortalAwareController {
         speciesFilter.getItems().addAll("Todas", "Perro", "Gato");
         speciesFilter.setValue("Todas");
     }
+    private void setupSyncListener() {
+        syncListener = () -> {
+            try {
+                System.out.println("🔄 Sync completado - actualizando tabla automáticamente...");
+                refreshAnimalList();
+            } catch (Exception e) {
+                System.out.println("Error actualizando tabla después del sync: " + e.getMessage());
+            }
+        };
+
+        SyncEventManager.addListener(syncListener);
+    }
+    public void cleanup() {if (syncListener != null) {SyncEventManager.removeListener(syncListener);}}
 }

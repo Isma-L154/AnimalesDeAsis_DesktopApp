@@ -1,4 +1,3 @@
-
 .dashboard-scroll {
     -fx-background-color: #f8f9fa;
     -fx-background-radius: 0;
@@ -115,6 +114,28 @@
 .tiles-container {
     -fx-padding: 15 0;
 }
+.tile > .title-text {
+    -fx-font-size: 45px !important;
+    -fx-font-weight: bold !important;
+    -fx-fill: white !important;
+}
+
+.tile .title {
+    -fx-font-size: 45px !important;
+    -fx-font-weight: bold !important;
+    -fx-text-fill: white !important;
+}
+
+.tile > .text-flow > .text {
+    -fx-font-size: 20px !important;
+    -fx-font-weight: bold !important;
+}
+
+
+.tile .value {
+    -fx-font-size: 36px !important;
+    -fx-font-weight: 900 !important;
+}
 
 /* =================================
    CHARTS GRID
@@ -169,8 +190,8 @@
 }
 
 .monthly-chart .default-color0.chart-bar {
-    -fx-background-color: linear-gradient(to bottom, #3498db, #2980b9);
-        -fx-background-radius: 4 4 0 0;
+    -fx-background-color: linear-gradient(to bottom, #2980b9, #1f4e79);
+    -fx-background-radius: 4 4 0 0;
 }
 
 .monthly-chart .chart-vertical-grid-lines,
@@ -184,47 +205,42 @@
 }
 
 .adoption-pie .chart-pie-label {
-    -fx-fill: #495057;
-    -fx-font-size: 12px;
-    -fx-font-weight: 600;
+    -fx-fill: #2c3e50;
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
 }
 
-.trend-chart {
+.origins-chart {
     -fx-background-color: transparent;
 }
 
-.trend-chart .chart-plot-background {
+.origins-chart .chart-plot-background {
     -fx-background-color: #fafbfc;
     -fx-background-radius: 8;
 }
 
-.trend-chart .default-color0.chart-series-line {
-    -fx-stroke: #e74c3c;
-    -fx-stroke-width: 3px;
+.origins-chart .default-color0.chart-bar {
+    -fx-background-color: linear-gradient(to right, #8e44ad, #9b59b6);
+    -fx-background-radius: 0 4 4 0;
 }
 
-.trend-chart .default-color0.chart-line-symbol {
-    -fx-background-color: #e74c3c;
-    -fx-background-radius: 6px;
-    -fx-padding: 4px;
-}
-
-.trend-chart .chart-vertical-grid-lines,
-.trend-chart .chart-horizontal-grid-lines {
+.origins-chart .chart-vertical-grid-lines,
+.origins-chart .chart-horizontal-grid-lines {
     -fx-stroke: #dee2e6;
     -fx-stroke-width: 0.5;
 }
 
 /* Chart Axes */
 .chart-axis {
-    -fx-tick-label-font-size: 11px;
-    -fx-tick-label-fill: #6c757d;
-    -fx-tick-label-font-weight: 500;
+    -fx-tick-label-font-size: 13px;
+    -fx-tick-label-fill: #2c3e50;
+    -fx-tick-label-font-weight: 600;
 }
 
 .chart-axis .axis-label {
-    -fx-text-fill: #495057;
-    -fx-font-weight: 600;
+    -fx-text-fill: #2c3e50;
+    -fx-font-weight: 700;
+    -fx-font-size: 14px;
 }
 
 .chart-axis .axis-tick-mark {
@@ -267,7 +283,7 @@
 }
 
 .default-color1.chart-pie {
-    -fx-pie-color: #e74c3c;
+    -fx-pie-color: #c0392b;
 }
 
 /* =================================

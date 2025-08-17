@@ -7,6 +7,7 @@ import com.asosiaciondeasis.animalesdeasis.Controller.PortalController;
 import com.asosiaciondeasis.animalesdeasis.Controller.Vaccine.VaccineManagementController;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Model.Place;
+import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -14,6 +15,7 @@ import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class DetailAnimalController implements IPortalAwareController {
@@ -23,7 +25,6 @@ public class DetailAnimalController implements IPortalAwareController {
     @FXML private Label ageLabel;
     @FXML private Label sexLabel;
     @FXML private Label chipNumberLabel;
-    @FXML private Label barcodeLabel;
     @FXML private Label admissionDateLabel;
     @FXML private Label neuteringDateLabel;
     @FXML private Label collectedByLabel;
@@ -39,6 +40,16 @@ public class DetailAnimalController implements IPortalAwareController {
     public void setAnimalDetails(Animal animal, List<Place> allPlaces) {
         this.currentAnimal = animal;
         this.allPlaces = allPlaces;
+        String admissionDateForm = DateUtils.parseIsoToLocalDate(animal.getAdmissionDate()).format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        String neuteringDateForm = "Sin información";
+        if (animal.getNeuteringDate() != null) {
+            try {
+                neuteringDateForm = DateUtils.parseIsoToLocalDate(animal.getNeuteringDate())
+                        .format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            } catch (Exception e) {
+                neuteringDateForm = "Fecha inválida";
+            }
+        }
 
         nameLabel.setText(validate(animal.getName()));
         speciesLabel.setText(validate(animal.getSpecies()));
@@ -50,9 +61,8 @@ public class DetailAnimalController implements IPortalAwareController {
         }
         sexLabel.setText(validate(animal.getSex()));
         chipNumberLabel.setText(validate(animal.getChipNumber()));
-        barcodeLabel.setText(validate(animal.getBarcode()));
-        admissionDateLabel.setText(validate(animal.getAdmissionDate()));
-        neuteringDateLabel.setText(validate(animal.getNeuteringDate()));
+        admissionDateLabel.setText(validate(admissionDateForm));
+        neuteringDateLabel.setText(neuteringDateForm); //We don't validate here because it has its own logic up there
         collectedByLabel.setText(validate(animal.getCollectedBy()));
         rescueReasonLabel.setText(validate(animal.getReasonForRescue()));
         ailmentsLabel.setText(validate(animal.getAilments()));

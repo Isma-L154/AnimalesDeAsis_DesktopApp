@@ -66,21 +66,17 @@
                     <Label text="Número de Chip:" GridPane.rowIndex="6" GridPane.columnIndex="0" styleClass="detail-field-label" />
                     <Label fx:id="chipNumberLabel" GridPane.rowIndex="6" GridPane.columnIndex="1" styleClass="detail-field-value" />
 
-                    <!-- Barcode -->
-                    <Label text="Código de Barras:" GridPane.rowIndex="7" GridPane.columnIndex="0" styleClass="detail-field-label" />
-                    <Label fx:id="barcodeLabel" GridPane.rowIndex="7" GridPane.columnIndex="1" styleClass="detail-field-value" />
-
                     <!-- Collected By -->
-                    <Label text="Recogido por:" GridPane.rowIndex="8" GridPane.columnIndex="0" styleClass="detail-field-label" />
-                    <Label fx:id="collectedByLabel" GridPane.rowIndex="8" GridPane.columnIndex="1" styleClass="detail-field-value" />
+                    <Label text="Recogido por:" GridPane.rowIndex="7" GridPane.columnIndex="0" styleClass="detail-field-label" />
+                    <Label fx:id="collectedByLabel" GridPane.rowIndex="7" GridPane.columnIndex="1" styleClass="detail-field-value" />
 
                     <!-- Rescue Location -->
-                    <Label text="Lugar de Rescate:" GridPane.rowIndex="9" GridPane.columnIndex="0" styleClass="detail-field-label" />
-                    <Label fx:id="placeProvinceLabel" GridPane.rowIndex="9" GridPane.columnIndex="1" styleClass="detail-field-value" />
+                    <Label text="Lugar de Rescate:" GridPane.rowIndex="8" GridPane.columnIndex="0" styleClass="detail-field-label" />
+                    <Label fx:id="placeProvinceLabel" GridPane.rowIndex="8" GridPane.columnIndex="1" styleClass="detail-field-value" />
 
                     <!-- Rescue Reason -->
-                    <Label text="Razón de Rescate:" GridPane.rowIndex="10" GridPane.columnIndex="0" styleClass="detail-field-label-top" />
-                    <Label fx:id="rescueReasonLabel" wrapText="true" GridPane.rowIndex="10" GridPane.columnIndex="1"
+                    <Label text="Razón de Rescate:" GridPane.rowIndex="9" GridPane.columnIndex="0" styleClass="detail-field-label-top" />
+                    <Label fx:id="rescueReasonLabel" wrapText="true" GridPane.rowIndex="9" GridPane.columnIndex="1"
                            styleClass="detail-field-value-multiline, detail-multiline-field" />
 
                     <!-- Medical Conditions -->

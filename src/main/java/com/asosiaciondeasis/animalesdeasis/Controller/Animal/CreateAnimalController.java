@@ -187,12 +187,13 @@ public class CreateAnimalController implements IPortalAwareController {
             animal.setPlaceId(selectedPlace.getId());
         }
 
-        animal.setReasonForRescue(rescueReasonArea.getText().trim());
+
         animal.setSpecies(speciesComboBox.getValue());
         animal.setApproximateAge(ageSpinner.getValue());
         animal.setSex(sexComboBox.getValue());
         animal.setName(nameField.getText().trim());
-        animal.setAilments(ailmentsArea.getText().trim());
+        animal.setReasonForRescue(getTextAreaValue(rescueReasonArea));
+        animal.setAilments(getTextAreaValue(ailmentsArea));
 
         if (neuteringDatePicker.getValue() != null) {
             animal.setNeuteringDate(DateUtils.convertToIsoFormat(neuteringDatePicker.getValue()));
@@ -255,6 +256,10 @@ public class CreateAnimalController implements IPortalAwareController {
         }
 
         return true;
+    }
+    private String getTextAreaValue(TextArea textArea) {
+        String text = textArea.getText().trim();
+        return text.isEmpty() ? null : text;
     }
 
     @Override

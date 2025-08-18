@@ -217,6 +217,25 @@
     -fx-background-color: #4CAF50;
 }
 
+.scan-chip-button {
+    -fx-min-width: 35px;
+    -fx-max-width: 35px;
+    -fx-pref-width: 35px;
+    -fx-font-size: 12px;
+    -fx-background-color: #007acc;
+    -fx-text-fill: white;
+    -fx-background-radius: 4px;
+}
+
+.scan-chip-button:hover {
+    -fx-background-color: #005a9e;
+}
+
+.filter-field {
+    -fx-pref-width: 150px;
+}
+
+
 .results-count {
     -fx-font-size: 14px;
     -fx-font-weight: bold;

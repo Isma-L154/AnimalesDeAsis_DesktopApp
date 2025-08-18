@@ -136,7 +136,7 @@ public class AnimalDAO implements IAnimalDAO {
      * This method already receives the date in the correct format, in the Service(BL) package
      */
     @Override
-    public List<Animal> findByFilters(String species, String startDate, String endDate, Boolean showInactive) throws Exception {
+    public List<Animal> findByFilters(String species, String startDate, String endDate, String chipNumber ,Boolean showInactive) throws Exception {
         List<Animal> animals = new ArrayList<>();
         StringBuilder sql = new StringBuilder("SELECT * FROM animals WHERE 1=1");
 
@@ -155,8 +155,14 @@ public class AnimalDAO implements IAnimalDAO {
         if (startDate != null && endDate != null) {
             sql.append(" AND admission_date BETWEEN ? AND ?");
         }
+
+        if (chipNumber != null && !chipNumber.isBlank()) {
+            sql.append(" AND chip_number LIKE ?");
+        }
+
         sql.append(" ORDER BY admission_date DESC");
 
+        // Prepare the statement with the dynamic SQL
         try (PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
             int index = 1;
 
@@ -169,6 +175,9 @@ public class AnimalDAO implements IAnimalDAO {
                 pstmt.setString(index++, endDate);
             }
 
+            if (chipNumber != null && !chipNumber.isBlank()) {
+                pstmt.setString(index++, "%" + chipNumber + "%");
+            }
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
@@ -198,7 +207,7 @@ public class AnimalDAO implements IAnimalDAO {
         UPDATE animals
         SET chip_number = ?, barcode = ?, admission_date = ?, collected_by = ?, place_id = ?,
             reason_for_rescue = ?, species = ?, approximate_age = ?, sex = ?, name = ?,
-            ailments = ?, neutering_date = ?, adopted = ?, synced = ?""" + timestampClause + """
+            ailments = ?, neutering_date = ?, adopted = ?, active = ?,synced = ?""" + timestampClause + """
         WHERE record_number = ?
     """;
 
@@ -216,8 +225,9 @@ public class AnimalDAO implements IAnimalDAO {
             pstmt.setString(11, animal.getAilments());
             pstmt.setString(12, animal.getNeuteringDate());
             pstmt.setInt(13, animal.isAdopted() ? 1 : 0);
-            pstmt.setInt(14, animal.isSynced() ? 1 : 0);
-            pstmt.setString(15, animal.getRecordNumber());
+            pstmt.setInt(14, animal.isActive() ? 1 : 0);
+            pstmt.setInt(15, animal.isSynced() ? 1 : 0);
+            pstmt.setString(16, animal.getRecordNumber());
 
             int rowsAffected = pstmt.executeUpdate();
             if (rowsAffected == 0) {
@@ -311,4 +321,5 @@ public class AnimalDAO implements IAnimalDAO {
         animal.setLastModified(rs.getString("last_modified"));
         return animal;
     }
+
 }

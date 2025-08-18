@@ -33,8 +33,8 @@ public class AnimalService implements IAnimalService {
     }
 
     @Override
-    public List<Animal> findByFilters(String species, String startDate, String endDate, Boolean showInactive) throws Exception {
-        return animalDAO.findByFilters(species, startDate, endDate, showInactive);
+    public List<Animal> findByFilters(String species, String startDate, String endDate, String chipNumber ,Boolean showInactive) throws Exception {
+        return animalDAO.findByFilters(species, startDate, endDate, chipNumber ,showInactive);
     }
 
     @Override

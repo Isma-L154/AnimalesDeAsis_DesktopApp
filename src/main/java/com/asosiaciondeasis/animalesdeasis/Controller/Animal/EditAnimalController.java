@@ -62,6 +62,7 @@ public class EditAnimalController implements IPortalAwareController {
         sexComboBox.setItems(FXCollections.observableArrayList("Macho", "Hembra"));
         SpinnerValueFactory<Integer> ageFactory = new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 50, 0);
         ageSpinner.setValueFactory(ageFactory);
+
         rescueReasonArea.setTextFormatter(new TextFormatter<>(change -> {
             if (change.getControlNewText().length() > 300) {
                 return null;
@@ -141,8 +142,8 @@ public class EditAnimalController implements IPortalAwareController {
         } else {
             chipNumberField.setText("");
         }
-        rescueReasonArea.setText(animal.getReasonForRescue() != null ? animal.getReasonForRescue() : "");
-        ailmentsArea.setText(animal.getAilments() != null ? animal.getAilments() : "");
+        rescueReasonArea.setText(animal.getReasonForRescue() != null ? animal.getReasonForRescue() : null);
+        ailmentsArea.setText(animal.getAilments() != null ? animal.getAilments() : null);
 
         Place place = allPlaces.stream()
                 .filter(p -> Objects.equals(p.getId(), animal.getPlaceId()))
@@ -174,7 +175,14 @@ public class EditAnimalController implements IPortalAwareController {
         currentAnimal.setApproximateAge(ageSpinner.getValue());
         currentAnimal.setCollectedBy(collectedByField.getText().trim());
         currentAnimal.setAdmissionDate(DateUtils.convertToIsoFormat(admissionDatePicker.getValue()));
-        currentAnimal.setAdopted(adoptedCheckBox.isSelected());
+
+        if (adoptedCheckBox.isSelected()) {
+            currentAnimal.setAdopted(true);
+            currentAnimal.setActive(false);
+        } else {
+            currentAnimal.setAdopted(false);
+            currentAnimal.setActive(true);
+        }
 
         if (neuteringDatePicker.getValue() != null) {
             currentAnimal.setNeuteringDate(DateUtils.convertToIsoFormat(neuteringDatePicker.getValue()));
@@ -201,8 +209,8 @@ public class EditAnimalController implements IPortalAwareController {
             // If value unchanged, keep existing barcode
         }
 
-        currentAnimal.setReasonForRescue(rescueReasonArea.getText().trim());
-        currentAnimal.setAilments(ailmentsArea.getText().trim());
+        currentAnimal.setReasonForRescue(getTextAreaValue(rescueReasonArea));
+        currentAnimal.setAilments(getTextAreaValue(ailmentsArea));
 
         Place selectedPlace = getSelectedPlace();
         if (selectedPlace != null) {
@@ -269,6 +277,10 @@ public class EditAnimalController implements IPortalAwareController {
             return false;
         }
         return true;
+    }
+    private String getTextAreaValue(TextArea textArea) {
+        String text = textArea.getText();
+        return (text == null || text.trim().isEmpty()) ? null : text.trim();
     }
 
     /**

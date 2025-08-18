@@ -59,12 +59,11 @@ public class VaccineManagementController implements IPortalAwareController {
         vaccineNameColumn.setCellValueFactory(new PropertyValueFactory<>("vaccineName"));
 
         vaccinationDateColumn.setCellValueFactory(cellData -> {
-            LocalDate date = DateUtils.parseIsoToLocalDate(cellData.getValue().getVaccinationDate());
+            LocalDate date = DateUtils.utcStringToLocalDate(cellData.getValue().getVaccinationDate());
             String formattedDate = (date != null) ? date.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) : "N/A";
             return new SimpleStringProperty(formattedDate);
         });
 
-        // Solo mantener las columnas no redimensionables
         vaccineNameColumn.setResizable(false);
         vaccinationDateColumn.setResizable(false);
         actionsColumn.setResizable(false);
@@ -90,7 +89,7 @@ public class VaccineManagementController implements IPortalAwareController {
 
         if (!vaccines.isEmpty()) {
             LocalDate lastDate = vaccines.stream()
-                    .map(vaccine -> DateUtils.parseIsoToLocalDate(vaccine.getVaccinationDate()))
+                    .map(vaccine -> DateUtils.utcStringToLocalDate(vaccine.getVaccinationDate()))
                     .filter(date -> date != null)
                     .max(LocalDate::compareTo)
                     .orElse(null);

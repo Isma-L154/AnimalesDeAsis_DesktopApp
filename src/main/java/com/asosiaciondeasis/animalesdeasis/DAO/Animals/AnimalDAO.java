@@ -197,19 +197,29 @@ public class AnimalDAO implements IAnimalDAO {
      * But at the same time, when we pull the data from the database, we don't want to update the last_modified field
      * because we are just reading the data, not modifying it. So we have this boolean parameter to do that
      * */
+
     @Override
     public boolean updateAnimal(Animal animal, boolean timestamp) throws Exception {
-        String timestampClause = timestamp ?
-                ", last_modified = strftime('%Y-%m-%dT%H:%M:%S', 'now')" :
-                "";
-
-        String updateSql = """
-        UPDATE animals
-        SET chip_number = ?, barcode = ?, admission_date = ?, collected_by = ?, place_id = ?,
-            reason_for_rescue = ?, species = ?, approximate_age = ?, sex = ?, name = ?,
-            ailments = ?, neutering_date = ?, adopted = ?, active = ?,synced = ?""" + timestampClause + """
-        WHERE record_number = ?
-    """;
+        String updateSql;
+        if (timestamp) {
+            updateSql = """
+            UPDATE animals
+            SET chip_number = ?, barcode = ?, admission_date = ?, collected_by = ?, place_id = ?,
+                reason_for_rescue = ?, species = ?, approximate_age = ?, sex = ?, name = ?,
+                ailments = ?, neutering_date = ?, adopted = ?, active = ?, synced = ?,
+                last_modified = datetime('now', 'utc')
+            WHERE record_number = ?
+        """;
+        } else {
+            updateSql = """
+            UPDATE animals
+            SET chip_number = ?, barcode = ?, admission_date = ?, collected_by = ?, place_id = ?,
+                reason_for_rescue = ?, species = ?, approximate_age = ?, sex = ?, name = ?,
+                ailments = ?, neutering_date = ?, adopted = ?, active = ?, synced = ?,
+                last_modified = ?
+            WHERE record_number = ?
+        """;
+        }
 
         try (PreparedStatement pstmt = conn.prepareStatement(updateSql)) {
             pstmt.setString(1, animal.getChipNumber());
@@ -227,7 +237,13 @@ public class AnimalDAO implements IAnimalDAO {
             pstmt.setInt(13, animal.isAdopted() ? 1 : 0);
             pstmt.setInt(14, animal.isActive() ? 1 : 0);
             pstmt.setInt(15, animal.isSynced() ? 1 : 0);
-            pstmt.setString(16, animal.getRecordNumber());
+
+            if (timestamp) {
+                pstmt.setString(16, animal.getRecordNumber());
+            } else {
+                pstmt.setString(16, animal.getLastModified());
+                pstmt.setString(17, animal.getRecordNumber());
+            }
 
             int rowsAffected = pstmt.executeUpdate();
             if (rowsAffected == 0) {
@@ -249,7 +265,7 @@ public class AnimalDAO implements IAnimalDAO {
      */
     @Override
     public void deleteAnimal(String recordNumber) throws Exception {
-        String sql = "UPDATE animals SET active = 0, synced = 0, last_modified = strftime('%Y-%m-%dT%H:%M:%S', 'now') WHERE record_number = ?";
+        String sql = "UPDATE animals SET active = 0, synced = 0, last_modified = datetime('now', 'utc') WHERE record_number = ?";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, recordNumber);
@@ -267,7 +283,7 @@ public class AnimalDAO implements IAnimalDAO {
     @Override
     public void reactivateAnimal(String recordNumber) throws Exception {
 
-        String sql = "UPDATE animals SET active = 1, synced = 0, last_modified = strftime('%Y-%m-%dT%H:%M:%S', 'now') WHERE record_number = ?";
+        String sql = "UPDATE animals SET active = 1, synced = 0, last_modified = datetime('now', 'utc') WHERE record_number = ?";
         
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, recordNumber);

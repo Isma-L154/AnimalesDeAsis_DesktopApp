@@ -3,18 +3,19 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+<?import javafx.geometry.Insets?>
 <ScrollPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.asosiaciondeasis.animalesdeasis.Controller.Animal.DetailAnimalController"
             fitToWidth="true"
             styleClass="detail-scroll-pane"
             stylesheets="@/css/Animal/DetailAnimal.css">
-
+    <StackPane>
     <HBox alignment="CENTER">
         <VBox spacing="30" alignment="TOP_CENTER"
               styleClass="detail-main-container"
               maxWidth="800" prefWidth="700">
-
             <!-- Header Section -->
             <VBox alignment="CENTER" spacing="10" styleClass="detail-header">
                 <Label text="Detalles del Animal" styleClass="detail-title" />
@@ -93,5 +94,19 @@
             </HBox>
 
         </VBox>
-    </HBox>
+        </HBox>
+
+        <Button fx:id="downloadRecordBtn" onAction="#downloadRecord"
+                styleClass="btn-download-pdf" text="Descargar PDF"
+                StackPane.alignment="TOP_RIGHT">
+            <graphic>
+                <FontIcon iconLiteral="fas-download" iconSize="14"/>
+            </graphic>
+        <StackPane.margin>
+            <Insets top="20" right="20"/>
+        </StackPane.margin>
+        </Button>
+
+    </StackPane>
+
 </ScrollPane>

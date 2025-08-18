@@ -80,7 +80,7 @@ public class CreateVaccineController implements Initializable{
 
         newVaccine.setAnimalRecordNumber(animalRecordNumber);
         newVaccine.setVaccineName(vaccineNameField.getText().trim());
-        newVaccine.setVaccinationDate(DateUtils.convertToIsoFormat(vaccinationDatePicker.getValue()));
+        newVaccine.setVaccinationDate(DateUtils.localDateToUtcString(vaccinationDatePicker.getValue()));
         newVaccine.setSynced(false);
 
         if (onVaccineCreated != null) {

@@ -23,9 +23,9 @@ public class StatisticsDAO implements IStatisticsDAO {
     public Map<String, Integer> getMonthlyAdmissions(int year) throws Exception {
         Map<String, Integer> result = new LinkedHashMap<>();
         String sql = """
-                    SELECT strftime('%m', admission_date) AS month, COUNT(*) AS count
+                    SELECT strftime('%m', admission_date, 'utc') AS month, COUNT(*) AS count
                     FROM animals
-                    WHERE active = 1 AND strftime('%Y', admission_date) = ?
+                    WHERE strftime('%Y', admission_date, 'utc') = ?
                     GROUP BY month ORDER BY month
                 """;
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -51,7 +51,7 @@ public class StatisticsDAO implements IStatisticsDAO {
                 FROM animals a
                 JOIN places p ON a.place_id = p.id
                 JOIN provinces pr ON p.province_id = pr.id
-                WHERE a.active = 1 AND strftime('%Y', a.admission_date) = ?
+                WHERE strftime('%Y', a.admission_date, 'utc') = ?
                 GROUP BY p.name, pr.name 
                 ORDER BY count DESC
             """;
@@ -79,7 +79,7 @@ public class StatisticsDAO implements IStatisticsDAO {
         String sql = """
                     SELECT COUNT(*) AS total
                     FROM animals
-                    WHERE active = 1 AND strftime('%Y', admission_date) = ?
+                    WHERE strftime('%Y', admission_date, 'utc') = ?
                 """;
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -97,8 +97,8 @@ public class StatisticsDAO implements IStatisticsDAO {
 
     @Override
     public double getAdoptionRate(int year) throws Exception {
-        String totalSql = "SELECT COUNT(*) AS total FROM animals WHERE active = 1 AND strftime('%Y', admission_date) = ?";
-        String adoptedSql = "SELECT COUNT(*) AS adopted FROM animals WHERE active = 1 AND adopted = 1 AND strftime('%Y', admission_date) = ?";
+        String totalSql = "SELECT COUNT(*) AS total FROM animals WHERE strftime('%Y', admission_date, 'utc') = ?";
+        String adoptedSql = "SELECT COUNT(*) AS adopted FROM animals WHERE adopted = 1 AND strftime('%Y', admission_date, 'utc') = ?";
 
         try (
                 PreparedStatement totalStmt = conn.prepareStatement(totalSql);

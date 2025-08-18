@@ -14,6 +14,7 @@ import com.google.firebase.cloud.FirestoreClient;
 
 import java.sql.Connection;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -27,6 +28,7 @@ public class SyncService {
 
     private final AnimalDAO animalDAO;
     private final VaccineDAO vaccineDAO;
+    private static final DateTimeFormatter DB_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     /**
      * Constructor initializes DAOs with a DB connection obtained from DatabaseConnection.
@@ -192,14 +194,13 @@ public class SyncService {
             Vaccine localVaccine = vaccineDAO.existsVaccine(vaccineId);
 
             if (localVaccine == null) {
-                Vaccine newVaccine = Vaccine.fromExistingRecord(vaccineId);
-                newVaccine.setAnimalRecordNumber(recordNumber);
-                newVaccine.setVaccineName(firebaseVaccine.getVaccineName());
-                newVaccine.setVaccinationDate(firebaseVaccine.getVaccinationDate());
-                newVaccine.setSynced(true);
-
-                vaccineDAO.insertVaccine(newVaccine);
-                System.out.println("⬇ Vacuna insertada: " + newVaccine.getVaccineName());
+                firebaseVaccine.setSynced(true);
+                vaccineDAO.insertVaccine(firebaseVaccine);
+                System.out.println("⬇ Vacuna insertada: " + firebaseVaccine.getVaccineName());
+            } else if (shouldUpdateFromFirebaseVaccine(firebaseVaccine, localVaccine)) {
+                firebaseVaccine.setSynced(true);
+                vaccineDAO.updateVaccine(firebaseVaccine, false);
+                System.out.println("🔁 Vacuna actualizada: " + firebaseVaccine.getVaccineName());
             }
         }
 
@@ -256,22 +257,23 @@ public class SyncService {
      * - If timestamp parsing fails, defaults to updating (safe fallback)
      *
      * This prevents overwriting newer local changes with older Firebase data.
-     *
-     * @param firebaseAnimal The animal data from Firebase
-     * @param localAnimal The animal data from a local database
-     * @return true if local should be updated with Firebase data, false otherwise
      */
-    private boolean shouldUpdateFromFirebase(Animal firebaseAnimal, Animal localAnimal) {
-        if (firebaseAnimal.getLastModified() == null || localAnimal.getLastModified() == null) {
-            return true;
-        }
-
+    private boolean shouldUpdateFromFirebaseTimestamp(String fbTime, String localTime) {
+        if (fbTime == null || localTime == null) return true;
         try {
-            LocalDateTime firebaseModified = LocalDateTime.parse(firebaseAnimal.getLastModified());
-            LocalDateTime localModified = LocalDateTime.parse(localAnimal.getLastModified());
+            LocalDateTime firebaseModified = LocalDateTime.parse(fbTime, DB_FORMATTER);
+            LocalDateTime localModified = LocalDateTime.parse(localTime, DB_FORMATTER);
             return firebaseModified.isAfter(localModified);
         } catch (Exception e) {
             return true;
         }
+    }
+
+    private boolean shouldUpdateFromFirebase(Animal firebaseAnimal, Animal localAnimal) {
+        return shouldUpdateFromFirebaseTimestamp(firebaseAnimal.getLastModified(), localAnimal.getLastModified());
+    }
+
+    private boolean shouldUpdateFromFirebaseVaccine(Vaccine firebaseVaccine, Vaccine localVaccine) {
+        return shouldUpdateFromFirebaseTimestamp(firebaseVaccine.getLastModified(), localVaccine.getLastModified());
     }
 }

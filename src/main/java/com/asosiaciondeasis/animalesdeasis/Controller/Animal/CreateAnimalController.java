@@ -179,7 +179,7 @@ public class CreateAnimalController implements IPortalAwareController {
         }
 
         // Set animal properties
-        animal.setAdmissionDate(DateUtils.convertToIsoFormat(admissionDatePicker.getValue()));
+        animal.setAdmissionDate(DateUtils.localDateToUtcString(admissionDatePicker.getValue()));
         animal.setCollectedBy(collectedByField.getText().trim());
 
         Place selectedPlace = getSelectedPlace();
@@ -196,7 +196,7 @@ public class CreateAnimalController implements IPortalAwareController {
         animal.setAilments(getTextAreaValue(ailmentsArea));
 
         if (neuteringDatePicker.getValue() != null) {
-            animal.setNeuteringDate(DateUtils.convertToIsoFormat(neuteringDatePicker.getValue()));
+            animal.setNeuteringDate(DateUtils.localDateToUtcString(neuteringDatePicker.getValue()));
         } else {
             animal.setNeuteringDate(null);
         }

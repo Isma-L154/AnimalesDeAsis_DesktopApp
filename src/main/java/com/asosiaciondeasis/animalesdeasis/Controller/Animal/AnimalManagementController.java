@@ -92,9 +92,8 @@ public class AnimalManagementController implements IPortalAwareController {
         speciesColumn.setCellValueFactory(new PropertyValueFactory<>("species"));
 
         idAdmissionDate.setCellValueFactory(cellData -> {
-            String isoDate = cellData.getValue().getAdmissionDate(); //admissionDate is in ISO format (yyyy-MM-dd)
-            LocalDate parsedDate = LocalDate.parse(isoDate);
-            String formattedDate = parsedDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+            String utcDate = cellData.getValue().getAdmissionDate();
+            String formattedDate = DateUtils.formatUtcForDisplay(utcDate);
             return new SimpleStringProperty(formattedDate);
         });
 

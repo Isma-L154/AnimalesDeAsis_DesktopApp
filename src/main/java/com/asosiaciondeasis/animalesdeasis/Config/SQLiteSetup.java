@@ -80,7 +80,7 @@ public class SQLiteSetup {
                             adopted INTEGER NOT NULL DEFAULT 0, -- 0 = Not adopted, 1 = Adopted
                             active INTEGER NOT NULL DEFAULT 1, -- 1 = Active, 0 = Deleted (soft delete)
                             synced INTEGER NOT NULL DEFAULT 0, -- 0 = Not synced, 1 = Synced
-                            last_modified TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%S', 'now')),
+                            last_modified TEXT NOT NULL DEFAULT (datetime('now', 'utc')),
                             FOREIGN KEY (place_id) REFERENCES places(id) ON DELETE SET NULL
                         );
                         """;
@@ -92,7 +92,7 @@ public class SQLiteSetup {
                             vaccine_name TEXT NOT NULL,
                             vaccination_date TEXT,
                             synced INTEGER NOT NULL DEFAULT 0, -- 0 = Not synced, 1 = Synced
-                            last_modified TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%S', 'now')),
+                            last_modified TEXT NOT NULL DEFAULT (datetime('now', 'utc')),
                             FOREIGN KEY (animal_record_number) REFERENCES animals(record_number) ON DELETE CASCADE
                         );
                         """;

@@ -132,8 +132,8 @@ public class EditAnimalController implements IPortalAwareController {
         ageSpinner.getValueFactory().setValue(animal.getApproximateAge());
         collectedByField.setText(animal.getCollectedBy());
         adoptedCheckBox.setSelected(animal.isAdopted());
-        admissionDatePicker.setValue(DateUtils.parseIsoToLocalDate(animal.getAdmissionDate()));
-        neuteringDatePicker.setValue(DateUtils.parseIsoToLocalDate(animal.getNeuteringDate()));
+        admissionDatePicker.setValue(DateUtils.utcStringToLocalDate(animal.getAdmissionDate()));
+        neuteringDatePicker.setValue(DateUtils.utcStringToLocalDate(animal.getNeuteringDate()));
 
         if (animal.getChipNumber() != null && !animal.getChipNumber().isBlank()) {
             chipNumberField.setText(animal.getChipNumber());
@@ -174,7 +174,7 @@ public class EditAnimalController implements IPortalAwareController {
         currentAnimal.setSex(sexComboBox.getValue());
         currentAnimal.setApproximateAge(ageSpinner.getValue());
         currentAnimal.setCollectedBy(collectedByField.getText().trim());
-        currentAnimal.setAdmissionDate(DateUtils.convertToIsoFormat(admissionDatePicker.getValue()));
+        currentAnimal.setAdmissionDate(DateUtils.localDateToUtcString(admissionDatePicker.getValue()));
 
         if (adoptedCheckBox.isSelected()) {
             currentAnimal.setAdopted(true);
@@ -185,7 +185,7 @@ public class EditAnimalController implements IPortalAwareController {
         }
 
         if (neuteringDatePicker.getValue() != null) {
-            currentAnimal.setNeuteringDate(DateUtils.convertToIsoFormat(neuteringDatePicker.getValue()));
+            currentAnimal.setNeuteringDate(DateUtils.localDateToUtcString(neuteringDatePicker.getValue()));
         } else {
             currentAnimal.setNeuteringDate(null);
         }
@@ -237,14 +237,15 @@ public class EditAnimalController implements IPortalAwareController {
     }
 
     private boolean validateInputs() {
-        String name = nameField.getText().trim();
+        String name = safeTrim(nameField.getText().trim());
         String collectedBy = collectedByField.getText().trim();
 
-        Pattern noSpecialChars = Pattern.compile("^[a-zA-Z0-9\\s]+$");
-
-        if (!noSpecialChars.matcher(name).matches()) {
-            NavigationHelper.showErrorAlert("Error", null, "El nombre no debe contener caracteres especiales.");
-            return false;
+        if(!name.isEmpty()){
+            Pattern noSpecialChars = Pattern.compile("^[a-zA-Z0-9\\s]+$");
+            if (!noSpecialChars.matcher(name).matches()) {
+                NavigationHelper.showErrorAlert("Error", null, "El nombre no debe contener caracteres especiales.");
+                return false;
+            }
         }
 
         if (speciesComboBox.getValue() == null) {
@@ -282,7 +283,9 @@ public class EditAnimalController implements IPortalAwareController {
         String text = textArea.getText();
         return (text == null || text.trim().isEmpty()) ? null : text.trim();
     }
-
+    private String safeTrim(String value) {
+        return value == null ? "" : value.trim();
+    }
     /**
      * Get the original chip value that was displayed when the form was loaded
      */

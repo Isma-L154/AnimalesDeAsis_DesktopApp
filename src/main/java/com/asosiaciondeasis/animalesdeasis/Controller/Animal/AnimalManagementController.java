@@ -5,10 +5,12 @@ import com.asosiaciondeasis.animalesdeasis.Config.ServiceFactory;
 import com.asosiaciondeasis.animalesdeasis.Controller.PortalController;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Service.SyncService;
+import com.asosiaciondeasis.animalesdeasis.Util.BarcodeScannerUtil;
 import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
 import com.asosiaciondeasis.animalesdeasis.Util.SyncEventManager;
 import javafx.animation.FadeTransition;
+import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
@@ -48,7 +50,11 @@ public class AnimalManagementController implements IPortalAwareController {
     @FXML private Button applyFiltersBtn;
     @FXML private Button clearFiltersBtn;
     @FXML private Label resultsCountLabel;
+    @FXML private TextField chipNumberFilter;
+    @FXML private Button scanChipButton;
 
+    private final BarcodeScannerUtil scannerUtil = new BarcodeScannerUtil();
+    private String scannedChipNumber = null;
     private PortalController portalController;
     private List<Animal> allAnimals;
     private List<Animal> filteredAnimals;
@@ -86,9 +92,8 @@ public class AnimalManagementController implements IPortalAwareController {
         speciesColumn.setCellValueFactory(new PropertyValueFactory<>("species"));
 
         idAdmissionDate.setCellValueFactory(cellData -> {
-            String isoDate = cellData.getValue().getAdmissionDate(); //admissionDate is in ISO format (yyyy-MM-dd)
-            LocalDate parsedDate = LocalDate.parse(isoDate);
-            String formattedDate = parsedDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+            String utcDate = cellData.getValue().getAdmissionDate();
+            String formattedDate = DateUtils.formatUtcForDisplay(utcDate);
             return new SimpleStringProperty(formattedDate);
         });
 
@@ -145,6 +150,16 @@ public class AnimalManagementController implements IPortalAwareController {
     }
 
     @FXML
+    public void handleScanChip() {
+        scannerUtil.startScanning(code -> {
+            this.scannedChipNumber = code;
+            Platform.runLater(() -> {
+                chipNumberFilter.setText(code);
+            });
+        });
+    }
+
+    @FXML
     public void handleToggleFilters() {
         filtersVisible = !filtersVisible;
 
@@ -176,6 +191,13 @@ public class AnimalManagementController implements IPortalAwareController {
             LocalDate startDate = startDateFilter.getValue();
             LocalDate endDate = endDateFilter.getValue();
 
+            String chipNumber = null;
+            if (scannedChipNumber != null && !scannedChipNumber.trim().isEmpty()) {
+                chipNumber = scannedChipNumber.trim();
+            } else {
+                chipNumber = getFilterValue(chipNumberFilter.getText());
+            }
+
             // Fix: Convert LocalDate to String properly
             String startDateStr = startDate != null ? startDate.toString() : null;
             String endDateStr = endDate != null ? endDate.toString() : null;
@@ -190,7 +212,7 @@ public class AnimalManagementController implements IPortalAwareController {
                 return;
             }
 
-            filteredAnimals = ServiceFactory.getAnimalService().findByFilters(species, startDateStr, endDateStr, showInactive);
+            filteredAnimals = ServiceFactory.getAnimalService().findByFilters(species, startDateStr, endDateStr,chipNumber ,showInactive);
             setUpPagination();
             updateResultsCount();
 
@@ -213,7 +235,8 @@ public class AnimalManagementController implements IPortalAwareController {
         startDateFilter.setValue(null);
         endDateFilter.setValue(null);
         inactiveFilter.setSelected(false);
-
+        chipNumberFilter.clear();
+        scannedChipNumber = null;
 
         filteredAnimals = allAnimals;
         setUpPagination();
@@ -338,6 +361,8 @@ public class AnimalManagementController implements IPortalAwareController {
         return (speciesFilter.getValue() != null && !speciesFilter.getValue().isEmpty()) ||
                 startDateFilter.getValue() != null ||
                 endDateFilter.getValue() != null ||
+                (chipNumberFilter.getText() != null && !chipNumberFilter.getText().trim().isEmpty()) ||
+                (scannedChipNumber != null && !scannedChipNumber.trim().isEmpty()) ||
                 inactiveFilter.isSelected();
     }
 
@@ -353,11 +378,17 @@ public class AnimalManagementController implements IPortalAwareController {
             String species = getFilterValue(speciesFilter.getValue());
             LocalDate startDate = startDateFilter.getValue();
             LocalDate endDate = endDateFilter.getValue();
+            String chipNumber = null;
+            if (scannedChipNumber != null && !scannedChipNumber.trim().isEmpty()) {
+                chipNumber = scannedChipNumber.trim();
+            } else {
+                chipNumber = getFilterValue(chipNumberFilter.getText().trim());
+            }
             String startDateStr = startDate != null ? startDate.toString() : null;
             String endDateStr = endDate != null ? endDate.toString() : null;
             Boolean showInactive = inactiveFilter.isSelected();
 
-            filteredAnimals = ServiceFactory.getAnimalService().findByFilters(species, startDateStr, endDateStr, showInactive);
+            filteredAnimals = ServiceFactory.getAnimalService().findByFilters(species, startDateStr, endDateStr, chipNumber ,showInactive);
         } else {
             filteredAnimals = allAnimals;
         }

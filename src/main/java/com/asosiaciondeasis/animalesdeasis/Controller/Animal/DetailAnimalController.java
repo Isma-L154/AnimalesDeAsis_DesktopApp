@@ -7,16 +7,23 @@ import com.asosiaciondeasis.animalesdeasis.Controller.PortalController;
 import com.asosiaciondeasis.animalesdeasis.Controller.Vaccine.VaccineManagementController;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Model.Place;
+import com.asosiaciondeasis.animalesdeasis.Model.Vaccine;
 import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
+import com.asosiaciondeasis.animalesdeasis.Util.Exporters.PDFAnimalExporter;
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
+import javafx.application.Platform;
+import javafx.concurrent.Task;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.stage.Stage;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class DetailAnimalController implements IPortalAwareController {
 
@@ -32,6 +39,7 @@ public class DetailAnimalController implements IPortalAwareController {
     @FXML private Label rescueReasonLabel;
     @FXML private Label ailmentsLabel;
     @FXML private Button editButton;
+    @FXML private Button downloadRecordBtn;
 
     private List<Place> allPlaces;
     private Animal currentAnimal;
@@ -40,12 +48,11 @@ public class DetailAnimalController implements IPortalAwareController {
     public void setAnimalDetails(Animal animal, List<Place> allPlaces) {
         this.currentAnimal = animal;
         this.allPlaces = allPlaces;
-        String admissionDateForm = DateUtils.parseIsoToLocalDate(animal.getAdmissionDate()).format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        String admissionDateForm = DateUtils.utcStringToLocalDate(animal.getAdmissionDate()).format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
         String neuteringDateForm = "Sin información";
         if (animal.getNeuteringDate() != null) {
             try {
-                neuteringDateForm = DateUtils.parseIsoToLocalDate(animal.getNeuteringDate())
-                        .format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                neuteringDateForm = DateUtils.utcStringToLocalDate(animal.getNeuteringDate()).format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
             } catch (Exception e) {
                 neuteringDateForm = "Fecha inválida";
             }
@@ -78,6 +85,56 @@ public class DetailAnimalController implements IPortalAwareController {
             placeProvinceLabel.setText("Sin información");
         }
         updateEditButtonVisibility();
+    }
+
+    @FXML
+    private void downloadRecord() {
+        if (currentAnimal == null) {
+            NavigationHelper.showErrorAlert("Error", null, "No hay datos del animal para exportar.");
+            return;
+        }
+        downloadRecordBtn.setDisable(true);
+        downloadRecordBtn.setText("Generando...");
+
+        CompletableFuture.supplyAsync(() -> {
+                    try {
+                        // Get vaccines for this animal
+                        List<Vaccine> vaccines = ServiceFactory.getVaccineService()
+                                .getVaccinesByAnimal(currentAnimal.getRecordNumber());
+
+                        // Get place information
+                        Place place = allPlaces.stream()
+                                .filter(p -> p.getId() == currentAnimal.getPlaceId())
+                                .findFirst()
+                                .orElse(null);
+
+                        return new Object[]{vaccines, place}; // Retornamos los datos preparados
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .thenCompose(data -> {
+                    List<Vaccine> vaccines = (List<Vaccine>) data[0];
+                    Place place = (Place) data[1];
+
+
+                    PDFAnimalExporter exporter = new PDFAnimalExporter();
+                    return exporter.exportAnimalRecordWithDialog(currentAnimal, place, vaccines,
+                            (Stage) downloadRecordBtn.getScene().getWindow());
+                })
+                .whenComplete((filePath, throwable) -> {
+                    Platform.runLater(() -> {
+                        downloadRecordBtn.setDisable(false);
+                        downloadRecordBtn.setText("Descargar PDF");
+
+                        if (throwable != null) {
+                            NavigationHelper.showErrorAlert("Error", "Error al generar PDF",
+                                    throwable.getMessage() != null ? throwable.getMessage() : "Error desconocido");
+                        } else if (filePath != null) {
+                            NavigationHelper.showSuccessAlert("Éxito", "PDF generado correctamente en:\n" + filePath);
+                        }
+                    });
+                });
     }
 
     @FXML

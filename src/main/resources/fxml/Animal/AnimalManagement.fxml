@@ -14,7 +14,7 @@
                  <Button fx:id="CreateAnimal" text="➕ Agregar Animal" onAction="#handleCreateAnimal" styleClass="create-button"/>
             </HBox>
 
-    <!-- Sección de Filtros -->
+    <!--  Filters -->
     <VBox spacing="15" styleClass="filter-container">
         <HBox spacing="10" alignment="CENTER_LEFT">
             <Label text="🔍 Filtros:" styleClass="filter-label"/>
@@ -22,24 +22,36 @@
         </HBox>
 
         <HBox fx:id="filtersBox" spacing="20" alignment="TOP_LEFT" styleClass="filters-box" visible="false" managed="false">
-            <!-- Primera columna de filtros -->
+
             <VBox spacing="15" styleClass="filter-column">
-                <!-- Filtro por Especie -->
+                <!-- Species -->
                 <VBox spacing="5">
                     <Label text="Especie:" styleClass="filter-input-label"/>
                     <ComboBox fx:id="speciesFilter" promptText="Todas las especies" styleClass="filter-combo"/>
                 </VBox>
 
-                <!-- Filtro por Estado de Adopción -->
+                <VBox spacing="15" styleClass="filter-column">
+                    <VBox spacing="5">
+                        <Label text="Número de Chip:" styleClass="filter-input-label"/>
+                        <HBox spacing="8" alignment="CENTER_LEFT">
+                            <TextField fx:id="chipNumberFilter" promptText="Buscar por chip" styleClass="filter-field" HBox.hgrow="ALWAYS"/>
+                            <Button fx:id="scanChipButton" text="📷" onAction="#handleScanChip" styleClass="scan-chip-button"/>
+                        </HBox>
+                    </VBox>
+                </VBox>
+
+                <!-- Adopted -->
                 <VBox spacing="5">
                     <Label text="Mostrar animales inactivos:" styleClass="filter-input-label"/>
                     <CheckBox fx:id="inactiveFilter" text="Fuera del albergue" styleClass="filter-checkbox"/>
                 </VBox>
+
+
             </VBox>
 
-            <!-- Segunda columna de filtros -->
+            <!-- Second Filter Column-->
             <VBox spacing="15" styleClass="filter-column">
-                <!-- Filtro por Fechas -->
+                <!-- Dates -->
                 <VBox spacing="5">
                     <Label text="Rango de fechas:" styleClass="filter-input-label"/>
                     <HBox spacing="10" alignment="CENTER_LEFT">
@@ -54,7 +66,7 @@
                     </HBox>
                 </VBox>
 
-                <!-- Botones de Filtro -->
+                <!-- Filter Buttons-->
                 <VBox spacing="5">
                     <Label text="Acciones:" styleClass="filter-input-label"/>
                     <HBox spacing="10" alignment="CENTER_LEFT">
@@ -62,6 +74,7 @@
                         <Button fx:id="clearFiltersBtn" text="Limpiar" onAction="#handleClearFilters" styleClass="clear-filters-btn"/>
                     </HBox>
                 </VBox>
+
             </VBox>
         </HBox>
     </VBox>

@@ -70,7 +70,7 @@ public class EditVaccineController implements Initializable {
 
             // Convert the vaccination date from ISO format to LocalDate for the DatePicker
             if (vaccine.getVaccinationDate() != null && !vaccine.getVaccinationDate().isEmpty()) {
-                LocalDate date = DateUtils.parseIsoToLocalDate(vaccine.getVaccinationDate());
+                LocalDate date = DateUtils.utcStringToLocalDate(vaccine.getVaccinationDate());
                 vaccinationDatePicker.setValue(date);
             }
         }
@@ -83,10 +83,10 @@ public class EditVaccineController implements Initializable {
 
                 String vaccineName = vaccineNameField.getText().trim();
                 LocalDate selectedDate = vaccinationDatePicker.getValue();
-                String isoDate = DateUtils.convertToIsoFormat(selectedDate);
+                String utcDate = DateUtils.localDateToUtcString(selectedDate);
 
                 currentVaccine.setVaccineName(vaccineName);
-                currentVaccine.setVaccinationDate(isoDate);
+                currentVaccine.setVaccinationDate(utcDate);
                 currentVaccine.setSynced(false);
 
                 if (onVaccineUpdated != null) {

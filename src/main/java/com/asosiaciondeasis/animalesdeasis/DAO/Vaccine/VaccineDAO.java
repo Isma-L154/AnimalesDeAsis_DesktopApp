@@ -88,21 +88,32 @@ public class VaccineDAO implements IVaccineDAO {
      * */
     @Override
     public void updateVaccine(Vaccine vaccine, boolean timestamp) throws Exception {
-        String timestampClause = timestamp ?
-                ", last_modified = strftime('%Y-%m-%dT%H:%M:%S', 'now')" :
-                "";
-
-        String sql = """
-        UPDATE vaccines
-        SET vaccine_name = ?, vaccination_date = ?, synced = ?""" + timestampClause + """
-        WHERE id = ?
-    """;
+        String sql;
+        if (timestamp) {
+            sql = """
+            UPDATE vaccines
+            SET vaccine_name = ?, vaccination_date = ?, synced = ?, last_modified = datetime('now', 'utc')
+            WHERE id = ?
+        """;
+        } else {
+            sql = """
+            UPDATE vaccines
+            SET vaccine_name = ?, vaccination_date = ?, synced = ?, last_modified = ?
+            WHERE id = ?
+        """;
+        }
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, vaccine.getVaccineName());
             pstmt.setString(2, vaccine.getVaccinationDate());
             pstmt.setInt(3, vaccine.isSynced() ? 1 : 0);
-            pstmt.setString(4, vaccine.getId());
+
+            if (timestamp) {
+                pstmt.setString(4, vaccine.getId());
+            } else {
+                pstmt.setString(4, vaccine.getLastModified());
+                pstmt.setString(5, vaccine.getId());
+            }
 
             int rowsAffected = pstmt.executeUpdate();
             if (rowsAffected == 0) {

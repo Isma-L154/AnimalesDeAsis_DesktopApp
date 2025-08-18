@@ -11,7 +11,7 @@ public interface IAnimalService {
 
     Animal findByRecordNumber(String recordNumber) throws Exception;
 
-    List<Animal> findByFilters(String species, String startDate, String endDate, Boolean showInactive) throws Exception;
+    List<Animal> findByFilters(String species, String startDate, String endDate, String chipNumber ,Boolean showInactive) throws Exception;
 
     boolean updateAnimal(Animal animal, boolean timestamp) throws Exception;
 

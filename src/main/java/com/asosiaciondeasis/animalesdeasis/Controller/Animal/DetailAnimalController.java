@@ -11,16 +11,18 @@ import com.asosiaciondeasis.animalesdeasis.Model.Vaccine;
 import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
 import com.asosiaciondeasis.animalesdeasis.Util.Exporters.PDFAnimalExporter;
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
-import javafx.concurrent.Task;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.input.ClipboardContent;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
+import javafx.scene.input.Clipboard;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -40,6 +42,7 @@ public class DetailAnimalController implements IPortalAwareController {
     @FXML private Label ailmentsLabel;
     @FXML private Button editButton;
     @FXML private Button downloadRecordBtn;
+    @FXML private Button copyChipBtn;
 
     private List<Place> allPlaces;
     private Animal currentAnimal;
@@ -84,6 +87,7 @@ public class DetailAnimalController implements IPortalAwareController {
         } else {
             placeProvinceLabel.setText("Sin información");
         }
+        updateCopyChipNumber();
         updateEditButtonVisibility();
     }
 
@@ -190,6 +194,52 @@ public class DetailAnimalController implements IPortalAwareController {
             NavigationHelper.showErrorAlert("Error", "No se pudo verificar el estado del animal", e.getMessage());
         }
     }
+
+    @FXML
+    public void copyChipNumber() {
+        String chipNumber = chipNumberLabel.getText();
+
+        if (chipNumber == null || chipNumber.trim().isEmpty() || chipNumber.equals("Sin información")) {
+            NavigationHelper.showErrorAlert("Info", "No hay número de chip para copiar",
+                    "Este animal no tiene un número de chip registrado.");
+            return;
+        }
+
+        try {
+            Clipboard clipboard = Clipboard.getSystemClipboard();
+            ClipboardContent content = new ClipboardContent();
+            content.putString(chipNumber);
+            clipboard.setContent(content);
+
+            String originalText = copyChipBtn.getText();
+            copyChipBtn.setText("¡Copiado!");
+            copyChipBtn.setDisable(true);
+
+            PauseTransition pause = new PauseTransition(Duration.millis(1500));
+            pause.setOnFinished(e -> {
+                copyChipBtn.setText(originalText);
+                copyChipBtn.setDisable(false);
+            });
+            pause.play();
+
+        } catch (Exception e) {
+            NavigationHelper.showErrorAlert("Error", "Error al copiar",
+                    "No se pudo copiar el número de chip al portapapeles.");
+        }
+    }
+
+    private void updateCopyChipNumber() {
+        if (copyChipBtn != null) {
+            String chipNumber = chipNumberLabel.getText();
+            boolean hasValidChip = chipNumber != null &&
+                    !chipNumber.trim().isEmpty() &&
+                    !chipNumber.equals("Sin información");
+
+            copyChipBtn.setVisible(hasValidChip);
+            copyChipBtn.setManaged(hasValidChip);
+        }
+    }
+
     private String validate(String value) {
         return (value == null || value.isEmpty()) ? "Sin información" : value;
     }

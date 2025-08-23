@@ -88,7 +88,10 @@ public class AnimalManagementController implements IPortalAwareController {
     private void setUpTables() {
         // Initialize the table columns and pagination
 
-        nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+        nameColumn.setCellValueFactory(cellData -> {
+            String name = cellData.getValue().getName();
+            return new ReadOnlyStringWrapper((name == null || name.trim().isEmpty()) ? "N/A" : name);
+        });
         speciesColumn.setCellValueFactory(new PropertyValueFactory<>("species"));
 
         idAdmissionDate.setCellValueFactory(cellData -> {

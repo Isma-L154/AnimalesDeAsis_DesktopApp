@@ -65,7 +65,22 @@
 
                     <!-- Chip Number -->
                     <Label text="Número de Chip:" GridPane.rowIndex="6" GridPane.columnIndex="0" styleClass="detail-field-label" />
-                    <Label fx:id="chipNumberLabel" GridPane.rowIndex="6" GridPane.columnIndex="1" styleClass="detail-field-value" />
+                    <HBox GridPane.rowIndex="6" GridPane.columnIndex="1"
+                          spacing="5" alignment="CENTER" maxWidth="Infinity">
+                        <Label fx:id="chipNumberLabel" styleClass="detail-field-value" />
+                        <Button fx:id="copyChipBtn"
+                                onAction="#copyChipNumber"
+                                styleClass="copy-icon-button"
+                                prefWidth="20" prefHeight="20"
+                                visible="false">
+                            <graphic>
+                                <FontIcon iconLiteral="fas-copy" iconSize="12" />
+                            </graphic>
+                            <tooltip>
+                                <Tooltip text="Copiar número de chip" />
+                            </tooltip>
+                        </Button>
+                    </HBox>
 
                     <!-- Collected By -->
                     <Label text="Recogido por:" GridPane.rowIndex="7" GridPane.columnIndex="0" styleClass="detail-field-label" />

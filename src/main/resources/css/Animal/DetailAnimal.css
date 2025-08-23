@@ -157,6 +157,31 @@
     -fx-background-color: #95a5a6;
     -fx-opacity: 0.7;
 }
+
+.copy-icon-button {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+    -fx-padding: 2 2 2 2;
+    -fx-min-width: 20;
+    -fx-min-height: 20;
+    -fx-max-width: 20;
+    -fx-max-height: 20;
+}
+.copy-icon-button:hover {
+    -fx-background-color: #ecf0f1;
+    -fx-border-color: #3498db;
+}
+
+.copy-icon-button:pressed {
+    -fx-background-color: #d5dbdb;
+}
+
+.copy-icon-button:disabled {
+    -fx-opacity: 0.6;
+    -fx-cursor: default;
+}
+
 /* Responsive adjustments */
 .detail-multiline-field {
     -fx-pref-width: 300;

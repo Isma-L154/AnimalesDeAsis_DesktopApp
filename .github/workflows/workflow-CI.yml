@@ -23,7 +23,7 @@ jobs:
       with:
         distribution: liberica
         java-version: '17'
-        java-package: jdk
+        java-package: jdk+fx
         cache: maven
         
     - name: Build and test with Maven
@@ -43,7 +43,7 @@ jobs:
       with:
         distribution: liberica
         java-version: '17'
-        java-package: jdk
+        java-package: jdk+fx
         cache: maven
         
     - name: Build with Maven

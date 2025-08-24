@@ -85,7 +85,7 @@ jobs:
 
   # Job para publicar en Releases cuando hay un tag 
   release:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     permissions:
       contents: write
     if: github.event_name == 'release'
@@ -105,5 +105,7 @@ jobs:
     - name: Upload Release Assets
       uses: softprops/action-gh-release@v2
       with:
-        files: ./release-assets/*
+        files: |
+          ./release-assets/AnimalesDeAsis-exe-installer/*.exe
+          ./release-assets/AnimalesDeAsis-installer.zip
         fail_on_unmatched_files: false

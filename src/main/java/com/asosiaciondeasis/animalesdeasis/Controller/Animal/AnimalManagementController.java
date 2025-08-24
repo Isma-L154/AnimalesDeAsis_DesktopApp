@@ -66,6 +66,9 @@ public class AnimalManagementController implements IPortalAwareController {
         this.portalController = portalController;
     }
 
+    /**
+     * Loads and initializes the controller, setting up the animal table, filters, pagination, and sync listener.
+     */
     @FXML
     public void initialize() {
         try {
@@ -84,7 +87,10 @@ public class AnimalManagementController implements IPortalAwareController {
         }
     }
 
-
+    /**
+     * Configures the table columns for displaying animal data.
+     * Sets up value factories for each column, including formatting for names and dates.
+     */
     private void setUpTables() {
         // Initialize the table columns and pagination
 
@@ -110,6 +116,11 @@ public class AnimalManagementController implements IPortalAwareController {
         });
     }
 
+    /**
+     * Loads the animals for the specified page index and updates the table view.
+     *
+     * @param pageIndex The index of the page to load.
+     */
     private void loadAnimals(int pageIndex) {
         // Load animals for the specified page index
         int fromIndex = pageIndex * ROWS_PER_PAGE;
@@ -123,6 +134,10 @@ public class AnimalManagementController implements IPortalAwareController {
         }
     }
 
+    /**
+     * Sets up the pagination control for the animal table.
+     * Calculates the total number of pages and configures the page factory.
+     */
     private void setUpPagination() {
         int totalAnimals = filteredAnimals.size();
         int totalPages = (int) Math.ceil((double) totalAnimals / ROWS_PER_PAGE);
@@ -146,12 +161,15 @@ public class AnimalManagementController implements IPortalAwareController {
     }
 
     /**
-     * Filter section
+     * Updates the label that displays the total number of animals currently shown.
      */
     private void updateResultsCount() {
         resultsCountLabel.setText("Total: " + filteredAnimals.size() + " animales");
     }
 
+    /**
+     * Initiates the barcode scanner to scan a chip number and sets the result in the filter field.
+     */
     @FXML
     public void handleScanChip() {
         scannerUtil.startScanning(code -> {
@@ -162,6 +180,9 @@ public class AnimalManagementController implements IPortalAwareController {
         });
     }
 
+    /**
+     * Toggles the visibility of the filter section with a fade transition.
+     */
     @FXML
     public void handleToggleFilters() {
         filtersVisible = !filtersVisible;
@@ -187,6 +208,10 @@ public class AnimalManagementController implements IPortalAwareController {
         fadeTransition.play();
     }
 
+    /**
+     * Applies the selected filters to the animal list and updates the table and pagination.
+     * Shows an alert with the result of the filtering operation.
+     */
     @FXML
     public void handleApplyFilters() {
         try {
@@ -231,6 +256,10 @@ public class AnimalManagementController implements IPortalAwareController {
         }
     }
 
+    /**
+     * Clears all filter fields and resets the animal list to show all animals.
+     * Updates the table and pagination accordingly.
+     */
     @FXML
     public void handleClearFilters() {
 
@@ -248,6 +277,9 @@ public class AnimalManagementController implements IPortalAwareController {
         NavigationHelper.showInfoAlert("Filtros limpiados", "Se han eliminado todos los filtros. Mostrando todos los animales.");
     }
 
+    /**
+     * Loads the CreateAnimal view in the portal when the create button is pressed.
+     */
     @FXML
     public void handleCreateAnimal() {
         if (portalController != null) {
@@ -255,6 +287,10 @@ public class AnimalManagementController implements IPortalAwareController {
         }
     }
 
+    /**
+     * Adds action buttons (edit, delete, detail, reactivate) to each row in the actions column of the table.
+     * Configures the button actions for editing, deleting, viewing details, and reactivating animals.
+     */
     private void addActionButtons(){
         actionsColumn.setCellFactory(col -> new TableCell<>() {
             private final Button editBtn = createButton("Editar", "edit-btn", "Editar");
@@ -357,9 +393,21 @@ public class AnimalManagementController implements IPortalAwareController {
         });
     }
 
+    /**
+     * Returns the filter value if it is not null, empty, or "Todas"; otherwise returns null.
+     *
+     * @param value The filter value to check.
+     * @return The processed filter value or null.
+     */
     private String getFilterValue(String value) {
         return (value != null && !value.trim().isEmpty() && !"Todas".equals(value)) ? value : null;
     }
+
+    /**
+     * Checks if any filter is currently active.
+     *
+     * @return true if any filter is active, false otherwise.
+     */
     private boolean hasActiveFilters() {
         return (speciesFilter.getValue() != null && !speciesFilter.getValue().isEmpty()) ||
                 startDateFilter.getValue() != null ||
@@ -370,10 +418,11 @@ public class AnimalManagementController implements IPortalAwareController {
     }
 
     /**
-     * We change this method to refresh the animal list when the filters are applied or cleared.
-     * This way, we ensure that the table is always updated with the latest data based on the filters.
-     * Also, when we delete or reactivate an animal, we call this method to refresh the list without pop-up messages.
-     * */
+     * Refreshes the animal list based on the current filters and updates the table and pagination.
+     * Called after applying filters, clearing filters, deleting, or reactivating an animal.
+     *
+     * @throws Exception if there is an error retrieving animal data.
+     */
     private void refreshAnimalList() throws Exception {
         allAnimals = ServiceFactory.getAnimalService().getActiveAnimals();
 
@@ -399,9 +448,10 @@ public class AnimalManagementController implements IPortalAwareController {
         updateResultsCount();
         animalTable.refresh();
     }
+
     /**
-     * We are doing this to initialize the combo boxes with default values, because in the FXML file
-     * the system does not allow setting default values for ComboBoxes.
+     * Initializes the species filter ComboBox with default values.
+     * This is necessary because default values cannot be set in FXML for ComboBoxes.
      */
     private void initializeComboBoxes() {
 
@@ -409,6 +459,10 @@ public class AnimalManagementController implements IPortalAwareController {
         speciesFilter.getItems().addAll("Todas", "Perro", "Gato");
         speciesFilter.setValue("Todas");
     }
+
+    /**
+     * Sets up a listener for synchronization events to refresh the animal list automatically when a sync occurs.
+     */
     private void setupSyncListener() {
         syncListener = () -> {
             try {
@@ -421,5 +475,10 @@ public class AnimalManagementController implements IPortalAwareController {
 
         SyncEventManager.addListener(syncListener);
     }
+
+    /**
+     * Cleans up the sync listener when the controller is disposed.
+     * Removes the listener from the SyncEventManager.
+     */
     public void cleanup() {if (syncListener != null) {SyncEventManager.removeListener(syncListener);}}
 }

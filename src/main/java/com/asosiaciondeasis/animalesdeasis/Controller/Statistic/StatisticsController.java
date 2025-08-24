@@ -65,6 +65,13 @@ public class StatisticsController implements Initializable {
     private double adoptionRate;
 
     @Override
+    /**
+     * Initializes the controller, sets up services, year selection, tiles, and charts,
+     * and loads the initial data with a slight delay for UI readiness.
+     *
+     * @param url Not used.
+     * @param resourceBundle Not used.
+     */
     public void initialize(URL url, ResourceBundle resourceBundle) {
         initializeServices();
 
@@ -92,6 +99,10 @@ public class StatisticsController implements Initializable {
         }
     }
 
+    /**
+     * Handles the event when the year selection changes in the ComboBox.
+     * If a new year is selected, updates the current year and refreshes the data.
+     */
     @FXML
     private void onYearChanged() {
         Integer selectedYear = yearComboBox.getValue();
@@ -101,6 +112,11 @@ public class StatisticsController implements Initializable {
         }
     }
 
+    /**
+     * Refreshes all statistical data by fetching it from the service asynchronously.
+     * Updates the UI components (tiles, charts, labels) with the new data.
+     * Handles errors and disables/enables UI controls during the process.
+     */
     @FXML
     public void refreshData() {
         if (statisticsService == null) {
@@ -154,6 +170,10 @@ public class StatisticsController implements Initializable {
         loadThread.start();
     }
 
+    /**
+     * Exports the current statistics to a CSV file using the CsvStatisticsExporter.
+     * Handles UI state and error reporting during the export process.
+     */
     @FXML
     private void exportToCSV() {
         if (csvExporter == null) {
@@ -203,10 +223,17 @@ public class StatisticsController implements Initializable {
         exportThread.start();
     }
 
+    /**
+     * Loads the initial data for the current year.
+     * This is called once after the controller is initialized.
+     */
     private void loadInitialData() {
         refreshData();
     }
 
+    /**
+     * Sets up the year ComboBox with the last five years and selects the current year by default.
+     */
     private void setupYearComboBox() {
         ObservableList<Integer> years = FXCollections.observableArrayList();
         int currentYear = LocalDateTime.now().getYear();
@@ -220,6 +247,10 @@ public class StatisticsController implements Initializable {
         this.currentYear = currentYear;
     }
 
+    /**
+     * Configures and creates the TilesFX tiles for total admissions, adoption rate, and monthly average.
+     * Adds the tiles to the tiles container in the UI.
+     */
     private void setupTiles() {
         try {
             // Total Admissions Tile
@@ -282,6 +313,9 @@ public class StatisticsController implements Initializable {
         }
     }
 
+    /**
+     * Configures the charts (monthly admissions, origins, and adoption pie chart) with labels and properties.
+     */
     private void setupCharts() {
         try {
             // Configure monthly admissions chart
@@ -316,6 +350,9 @@ public class StatisticsController implements Initializable {
         }
     }
 
+    /**
+     * Updates the values displayed in the TilesFX tiles based on the latest data.
+     */
     private void updateTiles() {
         try {
             if (totalAdmissionsTile != null) {
@@ -338,12 +375,18 @@ public class StatisticsController implements Initializable {
         }
     }
 
+    /**
+     * Updates all charts (monthly admissions, origins, and adoption pie chart) with the latest data.
+     */
     private void updateCharts() {
         updateMonthlyChart();
         updateOriginsChart();
         updatePieChart();
     }
 
+    /**
+     * Updates the monthly admissions bar chart with the latest monthly data.
+     */
     private void updateMonthlyChart() {
         try {
             XYChart.Series<String, Number> series = new XYChart.Series<>();
@@ -375,6 +418,9 @@ public class StatisticsController implements Initializable {
         }
     }
 
+    /**
+     * Updates the origins bar chart with the latest origins data.
+     */
     private void updateOriginsChart() {
         try {
             XYChart.Series<Number, String> series = new XYChart.Series<>();
@@ -405,6 +451,9 @@ public class StatisticsController implements Initializable {
         }
     }
 
+    /**
+     * Updates the adoption pie chart with the latest adoption rate and admissions data.
+     */
     private void updatePieChart() {
         try {
             ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList();
@@ -431,12 +480,23 @@ public class StatisticsController implements Initializable {
         }
     }
 
+    /**
+     * Enables or disables the main UI controls (refresh, export, year selection).
+     *
+     * @param enabled true to enable controls, false to disable.
+     */
     private void setUIEnabled(boolean enabled) {
         if (refreshButton != null) refreshButton.setDisable(!enabled);
         if (exportButton != null) exportButton.setDisable(!enabled);
         if (yearComboBox != null) yearComboBox.setDisable(!enabled);
     }
 
+    /**
+     * Updates the status label with a message and color indicating success or error.
+     *
+     * @param message The status message to display.
+     * @param success true for success (green), false for error (red).
+     */
     private void updateStatus(String message, boolean success) {
         if (statusLabel != null) {
             statusLabel.setText(message);
@@ -446,6 +506,9 @@ public class StatisticsController implements Initializable {
         }
     }
 
+    /**
+     * Updates the label showing the last time the data was updated.
+     */
     private void updateLastUpdateTime() {
         if (lastUpdateLabel != null) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");

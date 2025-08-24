@@ -48,6 +48,15 @@ public class DetailAnimalController implements IPortalAwareController {
     private Animal currentAnimal;
     private PortalController portalController;
 
+    /**
+     * Sets the details of the animal to be displayed in the view.
+     * Populates all labels with the animal's information, including name, species, age, sex, chip number,
+     * admission and neutering dates, collected by, rescue reason, ailments, and place.
+     * Also updates the visibility of the copy chip button and edit button.
+     *
+     * @param animal     The Animal object whose details are to be shown.
+     * @param allPlaces  The list of all available places for lookup.
+     */
     public void setAnimalDetails(Animal animal, List<Place> allPlaces) {
         this.currentAnimal = animal;
         this.allPlaces = allPlaces;
@@ -91,6 +100,11 @@ public class DetailAnimalController implements IPortalAwareController {
         updateEditButtonVisibility();
     }
 
+    /**
+     * Handles the action to download the animal's record as a PDF file.
+     * Fetches vaccines and place information asynchronously, generates the PDF, and provides user feedback.
+     * Disables the download button during the process and restores it after completion.
+     */
     @FXML
     private void downloadRecord() {
         if (currentAnimal == null) {
@@ -141,6 +155,11 @@ public class DetailAnimalController implements IPortalAwareController {
                 });
     }
 
+    /**
+     * Navigates to the EditAnimal module, loading the edit form for the current animal.
+     * Passes the current animal and portal controller to the edit controller.
+     * Shows an error alert if the operation fails.
+     */
     @FXML
     public void goToEditModule() {
         if (portalController != null && currentAnimal != null) {
@@ -161,6 +180,11 @@ public class DetailAnimalController implements IPortalAwareController {
         }
     }
 
+    /**
+     * Navigates to the VaccineManagement module for the current animal.
+     * Loads the vaccine management view and passes the current animal and portal controller.
+     * Shows an error alert if the operation fails.
+     */
     @FXML
     public void goToVaccineManagement() {
         if (portalController != null && currentAnimal != null) {
@@ -181,6 +205,10 @@ public class DetailAnimalController implements IPortalAwareController {
         }
     }
 
+    /**
+     * Updates the visibility of the edit button based on the current animal's active status.
+     * The button is only visible and managed if the animal is active.
+     */
     private void updateEditButtonVisibility() {
         try {
             Animal currentAnimalFromDB = ServiceFactory.getAnimalService().findByRecordNumber(currentAnimal.getRecordNumber());
@@ -195,6 +223,11 @@ public class DetailAnimalController implements IPortalAwareController {
         }
     }
 
+    /**
+     * Copies the chip number of the animal to the system clipboard.
+     * Provides user feedback by temporarily changing the button text and disabling it.
+     * Shows an error alert if the chip number is not available or the copy operation fails.
+     */
     @FXML
     public void copyChipNumber() {
         String chipNumber = chipNumberLabel.getText();
@@ -228,6 +261,9 @@ public class DetailAnimalController implements IPortalAwareController {
         }
     }
 
+    /**
+     * Updates the visibility and management of the copy chip button based on the presence of a valid chip number.
+     */
     private void updateCopyChipNumber() {
         if (copyChipBtn != null) {
             String chipNumber = chipNumberLabel.getText();
@@ -240,6 +276,12 @@ public class DetailAnimalController implements IPortalAwareController {
         }
     }
 
+    /**
+     * Validates a string value, returning "Sin información" if the value is null or empty.
+     *
+     * @param value The string to validate.
+     * @return The original value if not null/empty, otherwise "Sin información".
+     */
     private String validate(String value) {
         return (value == null || value.isEmpty()) ? "Sin información" : value;
     }

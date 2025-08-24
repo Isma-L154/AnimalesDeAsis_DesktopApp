@@ -48,6 +48,10 @@ public class CreateAnimalController implements IPortalAwareController {
     private List<Place> allPlaces;
     private PortalController portalController;
 
+    /**
+     * Initializes the controller, configures form fields, loads places, sets up filtering, and configures date pickers.
+     * Called automatically after FXML injection.
+     */
     @FXML
     public void initialize() {
         configureFields();
@@ -56,6 +60,10 @@ public class CreateAnimalController implements IPortalAwareController {
         configureDatePickers();
     }
 
+    /**
+     * Configures ComboBoxes, Spinner, and TextArea formatters for the animal creation form.
+     * Sets up allowed values and input restrictions.
+     */
     private void configureFields() {
         speciesComboBox.setItems(FXCollections.observableArrayList("Perro", "Gato"));
         sexComboBox.setItems(FXCollections.observableArrayList("Macho", "Hembra"));
@@ -75,6 +83,10 @@ public class CreateAnimalController implements IPortalAwareController {
         }));
     }
 
+    /**
+     * Configures the DatePickers for admission and neutering dates.
+     * Sets formatting, disables future dates, and sets prompt texts.
+     */
     private void configureDatePickers() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
@@ -120,10 +132,17 @@ public class CreateAnimalController implements IPortalAwareController {
         admissionDatePicker.setValue(LocalDate.now());
     }
 
+    /**
+     * Loads all available places from the PlaceService for selection in the ComboBox.
+     */
     private void loadPlaces() {
         allPlaces = placeService.getAllPlaces();
     }
 
+    /**
+     * Sets up the place ComboBox with the names of all available places.
+     * Disables editing to restrict selection to known places.
+     */
     private void setupPlaceFiltering() {
         ObservableList<String> placeNames = FXCollections.observableArrayList();
         for (Place place : allPlaces) {
@@ -135,6 +154,11 @@ public class CreateAnimalController implements IPortalAwareController {
     }
 
 
+    /**
+     * Gets the selected Place object based on the current value of the place ComboBox.
+     *
+     * @return The selected Place, or null if none is selected.
+     */
     @FXML
     private Place getSelectedPlace() {
         String selectedName = placeComboBox.getValue();
@@ -147,6 +171,10 @@ public class CreateAnimalController implements IPortalAwareController {
                 .orElse(null);
     }
 
+    /**
+     * Initiates the barcode scanning process and sets the scanned code in the chip number field.
+     * Stores the scanned value for later use during save.
+     */
     @FXML
     public void handleScanBarcode() {
         scannerUtil.startScanning(code -> {
@@ -160,6 +188,13 @@ public class CreateAnimalController implements IPortalAwareController {
         });
     }
 
+    /**
+     * Handles the save action for creating a new animal.
+     * Validates inputs, constructs the Animal object, and attempts to save it using the AnimalService.
+     * Shows success or error alerts based on the result.
+     *
+     * @throws Exception if an error occurs during saving.
+     */
     @FXML
     public void handleSave() throws Exception {
         if (!validateInputs()) return;
@@ -213,6 +248,12 @@ public class CreateAnimalController implements IPortalAwareController {
         }
     }
 
+    /**
+     * Validates all required input fields in the animal creation form.
+     * Shows error alerts for any invalid or missing data.
+     *
+     * @return true if all inputs are valid, false otherwise.
+     */
     private boolean validateInputs() {
         String collectedBy = collectedByField.getText().trim();
         String name = nameField.getText().trim();
@@ -257,6 +298,12 @@ public class CreateAnimalController implements IPortalAwareController {
 
         return true;
     }
+    /**
+     * Returns the trimmed value of a TextArea, or null if empty.
+     *
+     * @param textArea The TextArea to extract text from.
+     * @return The trimmed text, or null if empty.
+     */
     private String getTextAreaValue(TextArea textArea) {
         String text = textArea.getText().trim();
         return text.isEmpty() ? null : text;
@@ -266,7 +313,6 @@ public class CreateAnimalController implements IPortalAwareController {
     public void setPortalController(PortalController controller) {
         this.portalController = controller;
     }
-
     public void goToAnimalModule() {
         NavigationHelper.goToAnimalModule(portalController);
     }

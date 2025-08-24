@@ -49,6 +49,10 @@ public class EditAnimalController implements IPortalAwareController {
     private PortalController portalController;
     private List<Place> allPlaces;
 
+    /**
+     * Initializes the controller, configures form fields, date pickers, loads places, and sets up place filtering.
+     * Called automatically after FXML injection.
+     */
     @FXML
     public void initialize() {
         configureFields();
@@ -57,6 +61,10 @@ public class EditAnimalController implements IPortalAwareController {
         setupPlaceFiltering();
     }
 
+    /**
+     * Configures ComboBoxes, Spinner, and TextArea formatters for the animal editing form.
+     * Sets up allowed values and input restrictions.
+     */
     private void configureFields() {
         speciesComboBox.setItems(FXCollections.observableArrayList("Perro", "Gato"));
         sexComboBox.setItems(FXCollections.observableArrayList("Macho", "Hembra"));
@@ -78,6 +86,10 @@ public class EditAnimalController implements IPortalAwareController {
         }));
     }
 
+    /**
+     * Configures the DatePickers for admission and neutering dates.
+     * Sets formatting, disables future dates, and sets prompt texts.
+     */
     private void configureDatePickers() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
@@ -111,10 +123,16 @@ public class EditAnimalController implements IPortalAwareController {
         });
     }
 
+    /**
+     * Loads all available places from the PlaceService for selection in the ComboBox.
+     */
     private void loadPlaces() {
         allPlaces = placeService.getAllPlaces();
     }
 
+    /**
+     * Sets up the place ComboBox with the names of all available places.
+     */
     private void setupPlaceFiltering() {
         ObservableList<String> placeNames = FXCollections.observableArrayList();
         for (Place place : allPlaces) {
@@ -123,6 +141,12 @@ public class EditAnimalController implements IPortalAwareController {
         placeComboBox.setItems(placeNames);
     }
 
+    /**
+     * Populates the form fields with the data of the animal to be edited.
+     * Sets all fields and ComboBoxes to reflect the current animal's properties.
+     *
+     * @param animal The Animal object whose data will be loaded into the form.
+     */
     public void setAnimalData(Animal animal) {
         this.currentAnimal = animal;
 
@@ -152,6 +176,10 @@ public class EditAnimalController implements IPortalAwareController {
         if (place != null) placeComboBox.setValue(place.getName());
     }
 
+    /**
+     * Initiates the barcode scanning process and sets the scanned code in the chip number field.
+     * Stores the scanned value for later use during update.
+     */
     @FXML
     public void handleScanBarcode() {
         scannerUtil.startScanning(code -> {
@@ -164,6 +192,13 @@ public class EditAnimalController implements IPortalAwareController {
         });
     }
 
+    /**
+     * Handles the update action for editing an animal.
+     * Validates inputs, updates the Animal object, and attempts to save changes using the AnimalService.
+     * Shows success or error alerts based on the result.
+     *
+     * @throws Exception if an error occurs during update.
+     */
     @FXML
     public void handleUpdate() throws Exception {
         if (!validateInputs()) return;
@@ -228,6 +263,11 @@ public class EditAnimalController implements IPortalAwareController {
         }
     }
 
+    /**
+     * Retrieves the selected Place object based on the current value of the place ComboBox.
+     *
+     * @return The selected Place, or null if none is selected.
+     */
     private Place getSelectedPlace() {
         String selectedName = placeComboBox.getValue();
         return allPlaces.stream()
@@ -236,6 +276,12 @@ public class EditAnimalController implements IPortalAwareController {
                 .orElse(null);
     }
 
+    /**
+     * Validates all required input fields in the animal editing form.
+     * Shows error alerts for any invalid or missing data.
+     *
+     * @return true if all inputs are valid, false otherwise.
+     */
     private boolean validateInputs() {
         String name = safeTrim(nameField.getText().trim());
         String collectedBy = collectedByField.getText().trim();
@@ -279,15 +325,33 @@ public class EditAnimalController implements IPortalAwareController {
         }
         return true;
     }
+
+    /**
+     * Returns the trimmed value of a TextArea, or null if empty.
+     *
+     * @param textArea The TextArea to extract text from.
+     * @return The trimmed text, or null if empty.
+     */
     private String getTextAreaValue(TextArea textArea) {
         String text = textArea.getText();
         return (text == null || text.trim().isEmpty()) ? null : text.trim();
     }
+
+    /**
+     * Returns a trimmed string value, or an empty string if the value is null.
+     *
+     * @param value The string to trim.
+     * @return The trimmed string, or empty string if null.
+     */
     private String safeTrim(String value) {
         return value == null ? "" : value.trim();
     }
+
     /**
-     * Get the original chip value that was displayed when the form was loaded
+     * Gets the original chip value (chip number or barcode) that was displayed when the form was loaded.
+     *
+     * @param animal The Animal object being edited.
+     * @return The original chip or barcode value, or empty string if none.
      */
     private String getOriginalChipValue(Animal animal) {
         if (animal.getChipNumber() != null && !animal.getChipNumber().isBlank()) {
@@ -298,13 +362,10 @@ public class EditAnimalController implements IPortalAwareController {
         return "";
     }
 
-    @Override
-    public void setPortalController(PortalController controller) {
+    @Override public void setPortalController(PortalController controller) {
         this.portalController = controller;
     }
-
-    @FXML
-    public void goToAnimalModule() {
+    @FXML public void goToAnimalModule() {
         NavigationHelper.goToAnimalModule(portalController);
     }
 }

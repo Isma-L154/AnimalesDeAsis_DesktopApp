@@ -41,6 +41,12 @@ public class VaccineManagementController implements IPortalAwareController {
     private PortalController portalController;
     private Animal currentAnimal;
 
+    /**
+     * Initializes the controller and sets up the vaccine table columns.
+     * Called automatically after the FXML fields are injected.
+     *
+     * @throws Exception if there is an error during initialization.
+     */
     @FXML
     public void initialize() throws Exception {
         // Initialize the vaccine table columns
@@ -48,6 +54,13 @@ public class VaccineManagementController implements IPortalAwareController {
 
     }
 
+    /**
+     * Sets the current animal for which vaccines are managed.
+     * Updates the animal info label, loads vaccines, and sets up action buttons.
+     *
+     * @param animal The Animal object to manage vaccines for.
+     * @throws Exception if there is an error loading vaccines.
+     */
     public void setCurrentAnimal(Animal animal) throws Exception {
         this.currentAnimal = animal;
         updateAnimalInfoLabel();
@@ -55,6 +68,9 @@ public class VaccineManagementController implements IPortalAwareController {
         loadVaccinesForAnimal();
     }
 
+    /**
+     * Configures the columns of the vaccine table, including formatting the date column.
+     */
     private void setupTableColumns() {
         vaccineNameColumn.setCellValueFactory(new PropertyValueFactory<>("vaccineName"));
 
@@ -69,11 +85,19 @@ public class VaccineManagementController implements IPortalAwareController {
         actionsColumn.setResizable(false);
     }
 
+    /**
+     * Updates the label displaying the current animal's name.
+     */
     private void updateAnimalInfoLabel() {
         if (animalInfoLabel != null && currentAnimal != null) {
             animalInfoLabel.setText("Animal: " + currentAnimal.getName());
         }
     }
+    /**
+     * Loads the list of vaccines for the current animal and updates the table and summary labels.
+     *
+     * @throws Exception if there is an error retrieving vaccines.
+     */
     private void loadVaccinesForAnimal() throws Exception {
         if (currentAnimal == null) return;
 
@@ -84,6 +108,11 @@ public class VaccineManagementController implements IPortalAwareController {
         updateSummary(vaccines);
     }
 
+    /**
+     * Updates the summary labels for total vaccines and the date of the last vaccine.
+     *
+     * @param vaccines The list of vaccines to summarize.
+     */
     private void updateSummary(List<Vaccine> vaccines) {
         totalVaccinesLabel.setText(String.valueOf(vaccines.size()));
 
@@ -104,6 +133,10 @@ public class VaccineManagementController implements IPortalAwareController {
         }
     }
 
+    /**
+     * Adds edit and delete action buttons to each row in the vaccine table.
+     * Configures the button actions for editing and deleting vaccines.
+     */
     private void addActionsButtons() {
         actionsColumn.setCellFactory(column -> new TableCell<Vaccine, Void>() {
             private final HBox buttonsContainer = new HBox(10);
@@ -152,6 +185,10 @@ public class VaccineManagementController implements IPortalAwareController {
         });
     }
 
+    /**
+     * Opens the window to create a new vaccine for the current animal.
+     * Handles the creation callback and updates the vaccine list upon success.
+     */
     @FXML
     public void onCreateNewVaccine() {
         try{
@@ -196,6 +233,12 @@ public class VaccineManagementController implements IPortalAwareController {
         }
     }
 
+    /**
+     * Opens the window to edit the selected vaccine.
+     * Handles the update callback and refreshes the vaccine list upon success.
+     *
+     * @param vaccine The Vaccine object to edit.
+     */
     private void onEditVaccine(Vaccine vaccine) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Vaccine/EditVaccine.fxml"));
@@ -239,6 +282,11 @@ public class VaccineManagementController implements IPortalAwareController {
         }
     }
 
+    /**
+     * Deletes the selected vaccine from both local storage and Firebase, then refreshes the vaccine list.
+     *
+     * @param vaccine The Vaccine object to delete.
+     */
     private void onDeleteVaccine(Vaccine vaccine) {
         try {
             // Delete it in Firebase and Local
@@ -257,6 +305,10 @@ public class VaccineManagementController implements IPortalAwareController {
         }
     }
 
+    /**
+     * Navigates back to the animal detail view for the current animal.
+     * Loads the detail view and sets the animal details.
+     */
     @FXML
     private void goBackDetail() {
         if (currentAnimal != null && portalController != null) {
@@ -276,6 +328,11 @@ public class VaccineManagementController implements IPortalAwareController {
         }
     }
 
+    /**
+     * Sets the portal controller reference for navigation purposes.
+     *
+     * @param controller The PortalController instance.
+     */
     @Override
     public void setPortalController(PortalController controller) {this.portalController = controller;}
 

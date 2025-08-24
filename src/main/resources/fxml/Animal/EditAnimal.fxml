@@ -22,6 +22,7 @@
                     <Label text="✏️" styleClass="icon-label"/>
                     <Label text="Editar Información del Animal" styleClass="form-title"/>
                     <Label text="Modifique los datos necesarios del animal registrado en el sistema" styleClass="form-subtitle"/>
+                    <Label text="Campos obligatorios *" style="-fx-text-fill: #cc3e39; -fx-font-weight: bold; -fx-font-size: 13px;" alignment="CENTER_LEFT" styleClass="required-info-label"/>
                     <Separator styleClass="title-separator"/>
                 </VBox>
 

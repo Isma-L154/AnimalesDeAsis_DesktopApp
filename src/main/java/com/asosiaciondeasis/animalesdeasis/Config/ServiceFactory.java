@@ -14,6 +14,11 @@ import com.asosiaciondeasis.animalesdeasis.Util.Exporters.CsvStatisticsExporter;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+/**
+ * Utility class designed to provide singleton-like access to various services and DAO (Data Access Object) instances throughout the application.
+ * It centralizes the creation of these objects, ensuring they all share the same database connection
+ */
+
 public class ServiceFactory {
 
     private static final Connection conn;

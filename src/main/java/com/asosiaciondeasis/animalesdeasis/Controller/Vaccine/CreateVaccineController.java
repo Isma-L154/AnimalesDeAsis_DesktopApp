@@ -27,11 +27,21 @@ public class CreateVaccineController implements Initializable{
     private String animalName;
     private Consumer<Vaccine> onVaccineCreated;
 
+    /**
+     * Initializes the controller and sets up the date picker format.
+     * Called automatically after FXML fields are injected.
+     *
+     * @param location The location used to resolve relative paths for the root object, or null if unknown.
+     * @param resources The resources used to localize the root object, or null if not localized.
+     */
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         setUpDatePickerFormat();
     }
 
+    /**
+     * Configures the DatePicker to use the "dd-MM-yyyy" format and sets the default value to today.
+     */
     private void setUpDatePickerFormat() {
         // DatePicker is going to be in format dd-MM-yyyy, in here we set the converter
         vaccinationDatePicker.setConverter(new StringConverter<LocalDate>() {
@@ -58,6 +68,12 @@ public class CreateVaccineController implements Initializable{
         vaccinationDatePicker.setValue(LocalDate.now());
     }
 
+    /**
+     * Sets the animal information (name and record number) to be displayed in the form.
+     *
+     * @param name The name of the animal.
+     * @param recordNumber The record number of the animal.
+     */
     public void setAnimalInfo(String name, String recordNumber) {
         this.animalName = name;
         this.animalRecordNumber = recordNumber;
@@ -65,12 +81,18 @@ public class CreateVaccineController implements Initializable{
     }
 
     /**
-     * Here we set the callback that will be called when a new vaccine is created
-     * */
+     * Sets the callback to be invoked when a new vaccine is created.
+     *
+     * @param callback The Consumer that will handle the created Vaccine object.
+     */
     public void setOnVaccineCreated(Consumer<Vaccine> callback) {
         this.onVaccineCreated = callback;
     }
 
+    /**
+     * Handles the save action when the user submits the form.
+     * Validates the form, creates a new Vaccine object, invokes the callback, and closes the window.
+     */
     @FXML
     public void onSaveAction() {
         if (!validateForm()) return;
@@ -94,6 +116,12 @@ public class CreateVaccineController implements Initializable{
     @FXML
     public void onCancelAction() {closeWindow();}
 
+    /**
+     * Validates the form fields for vaccine name and vaccination date.
+     * Shows an error alert if validation fails.
+     *
+     * @return true if the form is valid, false otherwise.
+     */
     private boolean validateForm() {
         StringBuilder errors = new StringBuilder();
 

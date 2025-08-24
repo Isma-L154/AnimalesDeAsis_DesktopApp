@@ -20,7 +20,6 @@ import java.util.function.Consumer;
 
 public class EditVaccineController implements Initializable {
 
-
     @FXML private TextField vaccineNameField;
     @FXML private Label animalInfoLabel;
     @FXML private DatePicker vaccinationDatePicker;
@@ -30,11 +29,21 @@ public class EditVaccineController implements Initializable {
     private Vaccine currentVaccine;
     private Consumer<Vaccine> onVaccineUpdated;
 
+    /**
+     * Initializes the controller and sets up the date picker format.
+     * Called automatically after FXML fields are injected.
+     *
+     * @param url The location used to resolve relative paths for the root object, or null if unknown.
+     * @param resourceBundle The resources used to localize the root object, or null if not localized.
+     */
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         setupDatePickerFormat();
     }
 
+    /**
+     * Configures the DatePicker to use the "dd-MM-yyyy" format and sets the prompt text.
+     */
     private void setupDatePickerFormat() {
 
         vaccinationDatePicker.setPromptText("dd-mm-yyyy");
@@ -54,15 +63,31 @@ public class EditVaccineController implements Initializable {
             }
         });
     }
+    /**
+     * Sets the callback to be invoked when a vaccine is updated.
+     *
+     * @param callback The Consumer that will handle the updated Vaccine object.
+     */
     public void setOnVaccineUpdated(Consumer<Vaccine> callback) {
         this.onVaccineUpdated = callback;
     }
 
+    /**
+     * Sets the animal information (name) to be displayed in the form.
+     *
+     * @param name The name of the animal.
+     */
     public void setAnimalInfo(String name) {
         this.animalName = name;
         animalInfoLabel.setText("Animal: " + name);
     }
 
+    /**
+     * Populates the form fields with the data of the vaccine to be edited.
+     * Sets the vaccine name and vaccination date in the form.
+     *
+     * @param vaccine The Vaccine object whose data will be loaded into the form.
+     */
     public void setVaccineData(Vaccine vaccine) {
         this.currentVaccine = vaccine;
         if (vaccine != null) {
@@ -76,6 +101,10 @@ public class EditVaccineController implements Initializable {
         }
     }
 
+    /**
+     * Handles the update action when the user submits the form.
+     * Validates the form, updates the Vaccine object, invokes the callback, and closes the window.
+     */
     @FXML
     private void onUpdateAction() {
         if (validateForm()) {
@@ -101,6 +130,12 @@ public class EditVaccineController implements Initializable {
         }
     }
 
+    /**
+     * Validates the form fields for vaccine name and vaccination date.
+     * Shows an error alert if validation fails.
+     *
+     * @return true if the form is valid, false otherwise.
+     */
     private boolean validateForm() {
         StringBuilder errors = new StringBuilder();
 
@@ -127,7 +162,6 @@ public class EditVaccineController implements Initializable {
 
     @FXML
     public void onCancelAction() {closeWindow();}
-
     private void closeWindow() {
         Stage stage = (Stage) animalInfoLabel.getScene().getWindow();
         stage.close();

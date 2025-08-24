@@ -8,104 +8,92 @@ on:
   release:
     types: [ created ]
 
-# Permisos globales para el workflow
 permissions:
   contents: write
 
 jobs:
-  # Job básico de CI 
+  # Job básico de CI en Linux
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Liberica Full JDK 17
-      uses: actions/setup-java@v4
-      with:
-        distribution: liberica
-        java-version: '17'
-        java-package: jdk+fx
-        cache: maven
-        
-    - name: Build and test with Maven
-      run: mvn -B clean package --file pom.xml
+      - uses: actions/checkout@v4
+      - name: Set up Liberica Full JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: liberica
+          java-version: '17'
+          java-package: jdk+fx
+          cache: maven
+      - name: Build and test with Maven
+        run: mvn -B clean package --file pom.xml
 
-  # Job para generar instaladores 
+  # Job para generar instaladores en Windows
   build-installers:
     runs-on: windows-latest
     needs: test
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    
     steps:
-    - uses: actions/checkout@v4
-      
-    - name: Set up Liberica Full JDK 17
-      uses: actions/setup-java@v4
-      with:
-        distribution: liberica
-        java-version: '17'
-        java-package: jdk+fx
-        cache: maven
-        
-    - name: Build with Maven
-      run: mvn -B clean package --file pom.xml -DskipTests
-      
-    - name: Create installer
-      run: mvn jpackage:jpackage
-      
-    - name: List generated files (debug)
-      run: |
-        echo "Contents of target/installer:"
-        if (Test-Path "target\installer") { dir target\installer } else { echo "No installer directory found" }
-        
-    - name: Upload EXE as artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: AnimalesDeAsis-exe-installer
-        path: target/installer/*.exe
-        retention-days: 90
-        if-no-files-found: warn
-        
-    - name: Create ZIP with installer
-      run: |
-        mkdir release-package
-        if (Test-Path "target\installer\*.exe") { 
-          copy target\installer\*.exe release-package\ 
-          powershell Compress-Archive -Path release-package\* -DestinationPath AnimalesDeAsis-installer.zip
-        } else { 
-          echo "No installer found to zip" 
-        }
-        
-    - name: Upload ZIP package as artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: AnimalesDeAsis-installer-zip
-        path: AnimalesDeAsis-installer.zip
-        retention-days: 90
-        if-no-files-found: warn
+      - uses: actions/checkout@v4
+      - name: Set up Liberica Full JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: liberica
+          java-version: '17'
+          java-package: jdk+fx
+          cache: maven
+      - name: Build with Maven
+        run: mvn -B clean package --file pom.xml -DskipTests
+      - name: Create installer
+        run: mvn jpackage:jpackage
+      - name: List generated files (debug)
+        run: |
+          Write-Host "Contents of target/installer:"
+          Get-ChildItem -Recurse target\installer | ForEach-Object { Write-Host $_.FullName }
+      - name: Upload EXE as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AnimalesDeAsis-exe-installer
+          path: target/installer/*.exe
+          retention-days: 90
+          if-no-files-found: warn
+      - name: Create ZIP with installer
+        run: |
+          mkdir release-package
+          if (Test-Path "target\installer\*.exe") { 
+            copy target\installer\*.exe release-package\ 
+            Compress-Archive -Path release-package\* -DestinationPath AnimalesDeAsis-installer.zip
+          } else { 
+            Write-Host "No installer found to zip" 
+          }
+      - name: Upload ZIP package as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AnimalesDeAsis-installer-zip
+          path: AnimalesDeAsis-installer.zip
+          retention-days: 90
+          if-no-files-found: warn
 
-  # Job para publicar en Releases cuando hay un tag 
+  # Job para publicar en Releases en Windows
   release:
     runs-on: windows-latest
+    needs: build-installers
     permissions:
       contents: write
     if: github.event_name == 'release'
-    
     steps:
-    - name: Download all artifacts
-      uses: actions/download-artifact@v4
-      with:
-        merge-multiple: true
-        path: ./release-assets/
-        
-    - name: List downloaded files (debug)
-      run: |
-        echo "Downloaded artifacts:"
-        find ./release-assets/ -type f -ls || echo "No files found"
-        
-    - name: Upload Release Assets
-      uses: softprops/action-gh-release@v2
-      with:
-        files: |
-          ./release-assets/AnimalesDeAsis-exe-installer/*.exe
-          ./release-assets/AnimalesDeAsis-installer.zip
-        fail_on_unmatched_files: false
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+          path: ./release-assets/
+      - name: List downloaded files (debug)
+        run: |
+          Write-Host "Downloaded artifacts:"
+          Get-ChildItem -Recurse ./release-assets | ForEach-Object { Write-Host $_.FullName }
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ./release-assets/AnimalesDeAsis-exe-installer/*.exe
+            ./release-assets/AnimalesDeAsis-installer.zip
+          fail_on_unmatched_files: false

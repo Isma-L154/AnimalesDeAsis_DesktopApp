@@ -76,7 +76,6 @@ jobs:
   # Job para publicar en Releases en Windows
   release:
     runs-on: windows-latest
-    needs: build-installers
     permissions:
       contents: write
     if: github.event_name == 'release'

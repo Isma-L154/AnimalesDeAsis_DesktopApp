@@ -93,6 +93,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ./release-assets/AnimalesDeAsis-exe-installer/*.exe
+            ./release-assets/*.exe
             ./release-assets/AnimalesDeAsis-installer.zip
           fail_on_unmatched_files: false

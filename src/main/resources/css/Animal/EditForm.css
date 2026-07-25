@@ -328,7 +328,7 @@
 }
 
 .scan-button {
-    -fx-background-color: #10b981;
+    -fx-background-color: #27ae60;
     -fx-text-fill: white;
     -fx-font-size: 13px;
     -fx-font-weight: 500;
@@ -337,7 +337,7 @@
     -fx-background-radius: 8px;
     -fx-cursor: hand;
     -fx-font-family: "Segoe UI", sans-serif;
-    -fx-effect: dropshadow(gaussian, rgba(16,185,129,0.3), 4, 0, 0, 1);
+    -fx-effect: dropshadow(gaussian, rgba(39,174,96,0.3), 4, 0, 0, 1);
     -fx-min-width: 110px;
     -fx-pref-width: 110px;
     -fx-min-height: 42px;
@@ -345,8 +345,8 @@
 }
 
 .scan-button:hover {
-    -fx-background-color: #059669;
-    -fx-effect: dropshadow(gaussian, rgba(16,185,129,0.4), 6, 0, 0, 2);
+    -fx-background-color: #229954;
+    -fx-effect: dropshadow(gaussian, rgba(39,174,96,0.4), 6, 0, 0, 2);
     -fx-scale-y: 1.02;
     -fx-scale-x: 1.02;
 }
@@ -400,21 +400,6 @@
 }
 
 /* Responsive para pantallas pequeñas */
-@media (max-width: 600px) {
-    .form-card {
-        -fx-padding: 20px;
-    }
-
-    .form-grid {
-        -fx-hgap: 16px;
-        -fx-vgap: 16px;
-    }
-
-    .form-title {
-        -fx-font-size: 24px;
-    }
-
-    .section-title {
-        -fx-font-size: 18px;
-    }
-}
+/* NOTE: JavaFX CSS has no @media support, so the responsive block that used to
+   live here never applied and was removed. Size adaptation is handled by the
+   layout instead. */

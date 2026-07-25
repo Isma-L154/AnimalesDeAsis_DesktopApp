@@ -1,7 +1,7 @@
 
 .animal-management-container {
     -fx-padding: 20px;
-    -fx-background-color: linear-gradient(to bottom, #f8f9ff, #ffffff);
+    -fx-background-color: linear-gradient(to bottom, #fdf8f2, #ffffff);
 }
 
 .section-title {
@@ -173,12 +173,12 @@
 }
 
 .search-field:focused {
-    -fx-border-color: #3498db;
-    -fx-effect: dropshadow(three-pass-box, rgba(52, 152, 219, 0.3), 4, 0, 0, 0);
+    -fx-border-color: #F2921D;
+    -fx-effect: dropshadow(three-pass-box, rgba(242,146,29, 0.3), 4, 0, 0, 0);
 }
 
 .search-btn {
-    -fx-background-color: linear-gradient(to bottom, #3498db, #2980b9);
+    -fx-background-color: linear-gradient(to bottom, #F2921D, #E67E22);
     -fx-text-fill: white;
     -fx-font-size: 14px;
     -fx-padding: 8 12;
@@ -189,13 +189,13 @@
 }
 
 .search-btn:hover {
-    -fx-background-color: linear-gradient(to bottom, #2980b9, #21618c);
+    -fx-background-color: linear-gradient(to bottom, #E67E22, #D68910);
     -fx-scale-x: 1.1;
     -fx-scale-y: 1.1;
 }
 
 .show-all-btn {
-    -fx-background-color: linear-gradient(to bottom, #9b59b6, #8e44ad);
+    -fx-background-color: linear-gradient(to bottom, #F2921D, #E67E22);
     -fx-text-fill: white;
     -fx-font-size: 12px;
     -fx-font-weight: bold;
@@ -205,7 +205,7 @@
 }
 
 .show-all-btn:hover {
-    -fx-background-color: linear-gradient(to bottom, #8e44ad, #7d3c98);
+    -fx-background-color: linear-gradient(to bottom, #E67E22, #D68910);
 }
 .filter-checkbox {
     -fx-font-size: 12px;
@@ -213,7 +213,7 @@
 }
 
 .filter-checkbox:selected .box {
-    -fx-background-color: #4CAF50;
+    -fx-background-color: #27ae60;
 }
 
 .scan-chip-button {
@@ -221,13 +221,14 @@
     -fx-max-width: 35px;
     -fx-pref-width: 35px;
     -fx-font-size: 12px;
-    -fx-background-color: #007acc;
+    -fx-background-color: #F2921D;
     -fx-text-fill: white;
     -fx-background-radius: 4px;
+    -fx-cursor: hand;
 }
 
 .scan-chip-button:hover {
-    -fx-background-color: #005a9e;
+    -fx-background-color: #E67E22;
 }
 
 .filter-field {
@@ -283,14 +284,31 @@
     -fx-border-width: 0 0 1 0;
 }
 
+/* Warm hover tint keeps the table in the brand palette (it used to be a bluish
+   tone that clashed with the orange/brown identity). */
 .animal-table .table-row-cell:hover {
-    -fx-background-color: #f8f9ff;
+    -fx-background-color: #fdf6ec;
     -fx-cursor: hand;
 }
 
+/* Selected row: warm fill plus an orange rail on the left so the active record
+   is unmistakable even at a glance. */
 .animal-table .table-row-cell:selected {
     -fx-background-color: linear-gradient(to right, #fef7e6, #fff3e0);
     -fx-text-fill: #593414;
+    -fx-border-color: #F2921D transparent #f1f2f6 transparent;
+    -fx-border-width: 0 0 1 4;
+}
+
+.animal-table .table-row-cell:selected .table-cell {
+    -fx-text-fill: #593414;
+    -fx-font-weight: bold;
+}
+
+/* Empty-state text, instead of the default tiny grey label. */
+.animal-table .placeholder .label {
+    -fx-text-fill: #7f8c8d;
+    -fx-font-size: 15px;
 }
 
 .animal-table .table-cell {
@@ -338,11 +356,11 @@
 }
 
 .detail-btn {
-    -fx-background-color: linear-gradient(to bottom, #0077B6, #005577);
+    -fx-background-color: linear-gradient(to bottom, #7a4a1d, #593414);
 }
 
 .detail-btn:hover {
-    -fx-background-color: linear-gradient(to bottom, #005577, #003d55);
+    -fx-background-color: linear-gradient(to bottom, #593414, #4a2a11);
     -fx-scale-x: 1.05;
     -fx-scale-y: 1.05;
 }

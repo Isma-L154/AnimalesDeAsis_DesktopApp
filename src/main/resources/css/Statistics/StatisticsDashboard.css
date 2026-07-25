@@ -26,7 +26,7 @@
 }
 
 .header-icon {
-    -fx-icon-color: #3498db;
+    -fx-icon-color: #F2921D;
 }
 
 .year-label {
@@ -46,7 +46,7 @@
 }
 
 .year-combo:focused {
-    -fx-border-color: #3498db;
+    -fx-border-color: #F2921D;
     -fx-background-color: #ffffff;
 }
 
@@ -59,26 +59,26 @@
    BUTTONS
    ================================= */
 .btn-refresh {
-    -fx-background-color: linear-gradient(to bottom, #3498db, #2980b9);
+    -fx-background-color: linear-gradient(to bottom, #F2921D, #E67E22);
     -fx-text-fill: white;
     -fx-background-radius: 10;
     -fx-padding: 12 18;
     -fx-font-size: 13px;
     -fx-font-weight: 600;
-    -fx-effect: dropshadow(gaussian, rgba(52,152,219,0.3), 6, 0, 0, 2);
+    -fx-effect: dropshadow(gaussian, rgba(242,146,29,0.3), 6, 0, 0, 2);
     -fx-cursor: hand;
     -fx-border-radius: 10;
 }
 
 .btn-refresh:hover {
-    -fx-background-color: linear-gradient(to bottom, #2980b9, #21618c);
-    -fx-effect: dropshadow(gaussian, rgba(52,152,219,0.4), 8, 0, 0, 3);
+    -fx-background-color: linear-gradient(to bottom, #E67E22, #D68910);
+    -fx-effect: dropshadow(gaussian, rgba(242,146,29,0.4), 8, 0, 0, 3);
     -fx-scale-y: 1.02;
     -fx-scale-x: 1.02;
 }
 
 .btn-refresh:pressed {
-    -fx-background-color: #21618c;
+    -fx-background-color: #D68910;
     -fx-scale-y: 0.98;
     -fx-scale-x: 0.98;
 }
@@ -190,7 +190,7 @@
 }
 
 .monthly-chart .default-color0.chart-bar {
-    -fx-background-color: linear-gradient(to bottom, #2980b9, #1f4e79);
+    -fx-background-color: linear-gradient(to bottom, #E67E22, #D68910);
     -fx-background-radius: 4 4 0 0;
 }
 
@@ -260,7 +260,7 @@
 }
 
 .status-icon {
-    -fx-icon-color: #17a2b8;
+    -fx-icon-color: #F2921D;
 }
 
 .status-text {
@@ -289,22 +289,6 @@
 /* =================================
    RESPONSIVE ADJUSTMENTS
    ================================= */
-@media (max-width: 1200px) {
-    .dashboard-title {
-        -fx-font-size: 26px;
-    }
-
-    .chart-title {
-        -fx-font-size: 16px;
-    }
-}
-
-@media (max-width: 800px) {
-    .header-section {
-        -fx-padding: 20 25;
-    }
-
-    .chart-container {
-        -fx-padding: 20;
-    }
-}
+/* NOTE: JavaFX CSS has no @media support, so the responsive block that used to
+   live here never applied and was removed. Size adaptation is handled by the
+   layout instead. */

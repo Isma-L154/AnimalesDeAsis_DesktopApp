@@ -7,8 +7,11 @@
 <StackPane xmlns="http://javafx.com/javafx"
            xmlns:fx="http://javafx.com/fxml"
            fx:controller="com.asosiaciondeasis.animalesdeasis.Controller.Animal.EditAnimalController"
-           stylesheets="@/css/theme.css, @/css/Animal/EditForm.css"
            styleClass="form-root">
+    <stylesheets>
+        <String fx:value="@/css/theme.css"/>
+        <String fx:value="@/css/Animal/EditForm.css"/>
+    </stylesheets>
 
     <ScrollPane styleClass="main-scroll" fitToWidth="true" vbarPolicy="AS_NEEDED" hbarPolicy="NEVER">
         <HBox alignment="CENTER">

@@ -12,9 +12,12 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>5.10.2</junit.version>
+        <mockito.version>5.11.0</mockito.version>
         <javafx.version>17.0.2</javafx.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
+        <!-- Single source of truth for the packaged application version. -->
+        <app.version>1.0.0</app.version>
     </properties>
 
     <dependencies>
@@ -152,10 +155,34 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
+        <finalName>${project.artifactId}-${app.version}</finalName>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -170,6 +197,12 @@
                 <version>3.13.0</version>
                 <configuration>
                     <release>17</release>
+                    <!--
+                      We use no annotation processors. Disabling processor discovery
+                      also avoids javac scanning transitive tilesfx (hansolo) jars whose
+                      manifest Class-Path is malformed, which breaks the classpath scan.
+                    -->
+                    <proc>none</proc>
                 </configuration>
             </plugin>
             <plugin>
@@ -196,52 +229,123 @@
                             <includeScope>runtime</includeScope>
                         </configuration>
                     </execution>
-                    <execution>
-                        <id>copy-main-jar</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>${project.groupId}</groupId>
-                                    <artifactId>${project.artifactId}</artifactId>
-                                    <version>${project.version}</version>
-                                    <type>jar</type>
-                                    <outputDirectory>${project.build.directory}/dependency</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
                 </executions>
             </plugin>
-
-            <plugin>
-                <groupId>org.panteleyev</groupId>
-                <artifactId>jpackage-maven-plugin</artifactId>
-                <version>1.6.5</version>
-                <configuration>
-                    <name>AnimalesDeAsis</name>
-                    <appVersion>1.0.0</appVersion>
-                    <vendor>Asociacion De Asis</vendor>
-                    <destination>target/installer</destination>
-                    <input>target/dependency</input>
-                    <mainClass>com.asosiaciondeasis.animalesdeasis.Main</mainClass>
-                    <mainJar>AnimalesDeAsis-1.0-SNAPSHOT.jar</mainJar>
-                    <runtimeImage>${java.home}</runtimeImage>
-                    <winDirChooser>true</winDirChooser>
-                    <winShortcut>true</winShortcut>
-                    <winMenu>true</winMenu>
-                    <winMenuGroup>Asociacion De Asis</winMenuGroup>
-                    <icon>src/main/resources/images/AdeAsisLogo.ico</icon>
-                    <type>EXE</type>
-                    <winConsole>false</winConsole>
-                    <javaOptions>
-                        <option>-Dfile.encoding=UTF-8</option>
-                    </javaOptions>
-                </configuration>
-            </plugin>
+            <!--
+              The application jar is written straight into target/dependency by the
+              maven-jar-plugin (see its <outputDirectory> above), next to the runtime
+              dependencies, so jpackage can point at a single input folder. No extra
+              copy step is needed.
+            -->
         </plugins>
     </build>
+
+    <!--
+      Native installers are produced with jpackage. Because the OpenJFX Maven
+      artifacts carry platform-specific native libraries, installers must be built
+      on each target OS (see the CI matrix). One profile per OS is auto-activated so
+      `mvn -Pinstaller package jpackage:jpackage` picks the right installer type and
+      icon format for the machine it runs on.
+    -->
+    <profiles>
+        <profile>
+            <id>windows</id>
+            <activation>
+                <os><family>windows</family></os>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.panteleyev</groupId>
+                        <artifactId>jpackage-maven-plugin</artifactId>
+                        <version>1.6.5</version>
+                        <configuration>
+                            <name>AnimalesDeAsis</name>
+                            <appVersion>${app.version}</appVersion>
+                            <vendor>Asociacion De Asis</vendor>
+                            <destination>target/installer</destination>
+                            <input>target/dependency</input>
+                            <mainClass>com.asosiaciondeasis.animalesdeasis.Main</mainClass>
+                            <mainJar>${project.build.finalName}.jar</mainJar>
+                            <runtimeImage>${java.home}</runtimeImage>
+                            <winDirChooser>true</winDirChooser>
+                            <winShortcut>true</winShortcut>
+                            <winMenu>true</winMenu>
+                            <winMenuGroup>Asociacion De Asis</winMenuGroup>
+                            <icon>src/main/resources/images/AdeAsisLogo.ico</icon>
+                            <type>EXE</type>
+                            <winConsole>false</winConsole>
+                            <javaOptions>
+                                <option>-Dfile.encoding=UTF-8</option>
+                            </javaOptions>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>mac</id>
+            <activation>
+                <os><family>mac</family></os>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.panteleyev</groupId>
+                        <artifactId>jpackage-maven-plugin</artifactId>
+                        <version>1.6.5</version>
+                        <configuration>
+                            <name>AnimalesDeAsis</name>
+                            <appVersion>${app.version}</appVersion>
+                            <vendor>Asociacion De Asis</vendor>
+                            <destination>target/installer</destination>
+                            <input>target/dependency</input>
+                            <mainClass>com.asosiaciondeasis.animalesdeasis.Main</mainClass>
+                            <mainJar>${project.build.finalName}.jar</mainJar>
+                            <runtimeImage>${java.home}</runtimeImage>
+                            <!-- macOS needs an .icns icon; omitted to use the default. -->
+                            <type>DMG</type>
+                            <javaOptions>
+                                <option>-Dfile.encoding=UTF-8</option>
+                            </javaOptions>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>linux</id>
+            <activation>
+                <os><family>unix</family><name>Linux</name></os>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.panteleyev</groupId>
+                        <artifactId>jpackage-maven-plugin</artifactId>
+                        <version>1.6.5</version>
+                        <configuration>
+                            <name>AnimalesDeAsis</name>
+                            <appVersion>${app.version}</appVersion>
+                            <vendor>Asociacion De Asis</vendor>
+                            <destination>target/installer</destination>
+                            <input>target/dependency</input>
+                            <mainClass>com.asosiaciondeasis.animalesdeasis.Main</mainClass>
+                            <mainJar>${project.build.finalName}.jar</mainJar>
+                            <runtimeImage>${java.home}</runtimeImage>
+                            <icon>src/main/resources/images/AdeAsisLogo.png</icon>
+                            <linuxShortcut>true</linuxShortcut>
+                            <linuxMenuGroup>Utility</linuxMenuGroup>
+                            <type>DEB</type>
+                            <javaOptions>
+                                <option>-Dfile.encoding=UTF-8</option>
+                            </javaOptions>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

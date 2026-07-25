@@ -75,9 +75,48 @@ The goal of this project is to provide a **comprehensive offline-first solution*
 
 ### 🔐 Firebase Sync Setup
 To enable **Firebase cloud synchronization**:
-1. Add your Firebase credentials file.
-2. Follow the steps inside **FirebaseCredentialsEncryptor** class.
-3. Restart the application.
+1. In the Firebase Console, generate a service-account private key (JSON).
+2. Encrypt it into `src/main/resources/FireConfig/firebase-credentials.enc`:
+   ```bash
+   java -cp target/classes \
+     com.asosiaciondeasis.animalesdeasis.Config.FirebaseCredentialsEncryptor path/to/service-account.json
+   ```
+3. Delete the plaintext JSON (it is already covered by `.gitignore`) and restart the app.
+
+> The encrypted bundle and any service-account JSON are **never committed**. If no
+> credentials are present the app simply runs in **offline-only** mode. See
+> [SECURITY.md](SECURITY.md) for the full credential-handling and key-rotation guide.
+
+---
+
+## 🛠️ Building, Testing & Packaging
+
+Requires **JDK 17** (a *Full* JDK that includes JavaFX, e.g. Liberica Full, is used in CI).
+
+```bash
+# Run the unit tests (JUnit 5 + Mockito)
+./mvnw test
+
+# Run the application
+./mvnw javafx:run
+
+# Build a native installer for the current OS (Windows .exe / macOS .dmg / Linux .deb)
+./mvnw clean package
+./mvnw jpackage:jpackage      # output in target/installer/
+```
+
+The application version is controlled by the `app.version` property in `pom.xml`.
+
+### 🚀 Continuous Integration & Releases
+GitHub Actions ([`.github/workflows/workflow-CI.yml`](.github/workflows/workflow-CI.yml)):
+- **Every push / PR to `main`** → compile and run the test suite.
+- **Pushing a `v*` tag** (e.g. `git tag v1.0.0 && git push origin v1.0.0`) → builds
+  native installers on Windows, macOS and Linux and publishes them to a GitHub Release.
+
+To let CI produce Firebase-enabled installers, add a repository secret
+`FIREBASE_CREDENTIALS_ENC` containing the base64 of the encrypted bundle (optional;
+without it, installers build in offline-only mode). See [SECURITY.md](SECURITY.md).
+
 ---
 
 ## 📦 Project Structure

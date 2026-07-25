@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.image.Image?>
 
-<AnchorPane fx:id="mainContainer" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.asosiaciondeasis.animalesdeasis.Controller.WelcomeController" stylesheets="@/css/Welcome.css" styleClass="main-container">
+<AnchorPane fx:id="mainContainer" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.asosiaciondeasis.animalesdeasis.Controller.WelcomeController" stylesheets="@/css/theme.css, @/css/Welcome.css" styleClass="main-container">
     <children>
         <VBox alignment="CENTER" spacing="20.0" AnchorPane.topAnchor="150.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
             <children>

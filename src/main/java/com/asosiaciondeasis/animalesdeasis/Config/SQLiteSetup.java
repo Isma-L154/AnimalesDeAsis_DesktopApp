@@ -42,79 +42,26 @@ public class SQLiteSetup {
             if (conn != null) {
                 System.out.println("✅ Database connected at: " + dbFile.getAbsolutePath());
 
-                Statement stmt = conn.createStatement();
+                // Enforce the schema's foreign keys (off by default in SQLite).
+                DatabaseConnection.applyPragmas(conn);
 
-                // --- Create tables with constraints ---
+                // Create tables + indexes (idempotent, shared with the test suite).
+                createSchema(conn);
 
-                String createProvinces = """
-                        CREATE TABLE IF NOT EXISTS provinces (
-                            id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            name TEXT NOT NULL UNIQUE
-                        );
-                        """;
-
-                String createPlaces = """
-                        CREATE TABLE IF NOT EXISTS places (
-                            id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            name TEXT NOT NULL,
-                            province_id INTEGER NOT NULL,
-                            FOREIGN KEY (province_id) REFERENCES provinces(id) ON DELETE CASCADE
-                        );
-                        """;
-
-                String createAnimals = """
-                        CREATE TABLE IF NOT EXISTS animals (
-                            record_number TEXT PRIMARY KEY, -- UUID
-                            chip_number TEXT UNIQUE,
-                            barcode TEXT UNIQUE,
-                            admission_date TEXT NOT NULL, -- Format: DD-MM-YYYY
-                            collected_by TEXT,
-                            place_id INTEGER NOT NULL,
-                            reason_for_rescue TEXT,
-                            species TEXT NOT NULL CHECK (species IN ('Perro', 'Gato')),
-                            approximate_age INTEGER,
-                            sex TEXT CHECK (sex IN ('Macho', 'Hembra')),
-                            name TEXT,
-                            ailments TEXT,
-                            neutering_date TEXT,
-                            adopted INTEGER NOT NULL DEFAULT 0, -- 0 = Not adopted, 1 = Adopted
-                            active INTEGER NOT NULL DEFAULT 1, -- 1 = Active, 0 = Deleted (soft delete)
-                            synced INTEGER NOT NULL DEFAULT 0, -- 0 = Not synced, 1 = Synced
-                            last_modified TEXT NOT NULL DEFAULT (datetime('now', 'utc')),
-                            FOREIGN KEY (place_id) REFERENCES places(id) ON DELETE SET NULL
-                        );
-                        """;
-
-                String createVaccines = """
-                        CREATE TABLE IF NOT EXISTS vaccines (
-                            id TEXT PRIMARY KEY,
-                            animal_record_number TEXT NOT NULL,
-                            vaccine_name TEXT NOT NULL,
-                            vaccination_date TEXT,
-                            synced INTEGER NOT NULL DEFAULT 0, -- 0 = Not synced, 1 = Synced
-                            last_modified TEXT NOT NULL DEFAULT (datetime('now', 'utc')),
-                            FOREIGN KEY (animal_record_number) REFERENCES animals(record_number) ON DELETE CASCADE
-                        );
-                        """;
-
-                // Execute all statements that create the tables if they don't exist
-                stmt.execute(createProvinces);
-                stmt.execute(createPlaces);
-                stmt.execute(createAnimals);
-                stmt.execute(createVaccines);
-
-                /**
-                 * Check if the province table is empty, if not, we call the API to import the info of the GEO of CR
-                 * */
-                ResultSet rs = stmt.executeQuery("SELECT COUNT(*) AS count FROM provinces");
-                if (rs.next() && rs.getInt("count") == 0) {
-                    System.out.println("Provinces table empty, importing data from API...");
-                    DataImporter.populateProvincesAndPlaces(conn); //Call the method we have on DAO
-                    System.out.println("✅ Data imported successfully.");
-                } else {
-                    System.out.println("✅ Provinces table already populated.");
+                try (Statement stmt = conn.createStatement()) {
+                    /*
+                     * Check if the province table is empty; if so, call the API to import the
+                     * geographic data (provinces/places) of Costa Rica.
+                     */
+                    ResultSet rs = stmt.executeQuery("SELECT COUNT(*) AS count FROM provinces");
+                    if (rs.next() && rs.getInt("count") == 0) {
+                        System.out.println("Provinces table empty, importing data from API...");
+                        DataImporter.populateProvincesAndPlaces(conn);
+                        System.out.println("✅ Data imported successfully.");
+                    } else {
+                        System.out.println("✅ Provinces table already populated.");
+                    }
                 }
-                stmt.close();
                 conn.close();
 
                 System.out.println("✅ Tables created or verified successfully.");
@@ -123,6 +70,82 @@ public class SQLiteSetup {
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Error initializing the database.");
+        }
+    }
+
+    /**
+     * Creates every table and index the application needs, if they do not already
+     * exist. Extracted so both the production bootstrap and the test suite build an
+     * identical schema from a single source of truth.
+     *
+     * @param conn an open connection (with {@code foreign_keys} already enabled)
+     */
+    public static void createSchema(Connection conn) throws java.sql.SQLException {
+        String createProvinces = """
+                CREATE TABLE IF NOT EXISTS provinces (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL UNIQUE
+                );
+                """;
+
+        String createPlaces = """
+                CREATE TABLE IF NOT EXISTS places (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    province_id INTEGER NOT NULL,
+                    FOREIGN KEY (province_id) REFERENCES provinces(id) ON DELETE CASCADE
+                );
+                """;
+
+        String createAnimals = """
+                CREATE TABLE IF NOT EXISTS animals (
+                    record_number TEXT PRIMARY KEY, -- UUID
+                    chip_number TEXT UNIQUE,
+                    barcode TEXT UNIQUE,
+                    admission_date TEXT NOT NULL, -- Format: DD-MM-YYYY
+                    collected_by TEXT,
+                    place_id INTEGER NOT NULL,
+                    reason_for_rescue TEXT,
+                    species TEXT NOT NULL CHECK (species IN ('Perro', 'Gato')),
+                    approximate_age INTEGER,
+                    sex TEXT CHECK (sex IN ('Macho', 'Hembra')),
+                    name TEXT,
+                    ailments TEXT,
+                    neutering_date TEXT,
+                    adopted INTEGER NOT NULL DEFAULT 0, -- 0 = Not adopted, 1 = Adopted
+                    active INTEGER NOT NULL DEFAULT 1, -- 1 = Active, 0 = Deleted (soft delete)
+                    synced INTEGER NOT NULL DEFAULT 0, -- 0 = Not synced, 1 = Synced
+                    last_modified TEXT NOT NULL DEFAULT (datetime('now', 'utc')),
+                    FOREIGN KEY (place_id) REFERENCES places(id) ON DELETE RESTRICT
+                );
+                """;
+
+        String createVaccines = """
+                CREATE TABLE IF NOT EXISTS vaccines (
+                    id TEXT PRIMARY KEY,
+                    animal_record_number TEXT NOT NULL,
+                    vaccine_name TEXT NOT NULL,
+                    vaccination_date TEXT,
+                    synced INTEGER NOT NULL DEFAULT 0, -- 0 = Not synced, 1 = Synced
+                    last_modified TEXT NOT NULL DEFAULT (datetime('now', 'utc')),
+                    FOREIGN KEY (animal_record_number) REFERENCES animals(record_number) ON DELETE CASCADE
+                );
+                """;
+
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute(createProvinces);
+            stmt.execute(createPlaces);
+            stmt.execute(createAnimals);
+            stmt.execute(createVaccines);
+
+            // --- Indexes for the hot query paths (sync filters, listings, joins) ---
+            stmt.execute("CREATE INDEX IF NOT EXISTS idx_animals_synced ON animals(synced)");
+            stmt.execute("CREATE INDEX IF NOT EXISTS idx_animals_active ON animals(active)");
+            stmt.execute("CREATE INDEX IF NOT EXISTS idx_animals_admission_date ON animals(admission_date)");
+            stmt.execute("CREATE INDEX IF NOT EXISTS idx_animals_place_id ON animals(place_id)");
+            stmt.execute("CREATE INDEX IF NOT EXISTS idx_vaccines_animal ON vaccines(animal_record_number)");
+            stmt.execute("CREATE INDEX IF NOT EXISTS idx_vaccines_synced ON vaccines(synced)");
+            stmt.execute("CREATE INDEX IF NOT EXISTS idx_places_province ON places(province_id)");
         }
     }
 }

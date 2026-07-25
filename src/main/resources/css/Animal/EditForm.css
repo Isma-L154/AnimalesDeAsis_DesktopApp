@@ -371,7 +371,6 @@
 .update-button,
 .cancel-button,
 .scan-button {
-    -fx-transition: all 0.2s ease;
 }
 
 .field-with-button {

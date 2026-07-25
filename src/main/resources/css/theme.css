@@ -1,0 +1,57 @@
+/*
+ * ============================================================================
+ *  Asociación de Asís — Design tokens (single source of truth)
+ * ============================================================================
+ *
+ *  These are JavaFX "looked-up colors": once a stylesheet declares them on
+ *  `.root`, any rule in a scene that also imports this file can reference them
+ *  by name (e.g. `-fx-background-color: -brand-primary;`) instead of hardcoding
+ *  hex values. Centralizing the palette here means a rebrand is a one-file edit.
+ *
+ *  HOW TO USE: add this file first in a view's stylesheet list, e.g.
+ *      stylesheets="@/css/theme.css, @/css/Animal/AnimalManagement.css"
+ *  then replace hardcoded hex in the view CSS with the tokens below.
+ *
+ *  Brand palette (from the logo): warm orange primary + brown text accents.
+ *  Green is reserved for positive/confirming actions, red for destructive ones.
+ */
+
+.root {
+    /* --- Brand --- */
+    -brand-primary:        #F2921D;   /* main accent: primary buttons, active items */
+    -brand-primary-dark:   #E67E22;   /* gradient bottom / hover */
+    -brand-primary-darker: #D68910;   /* pressed */
+    -brand-accent:         #F24E29;   /* strong hover / attention */
+    -brand-text:           #593414;   /* headings and brand-colored labels */
+
+    /* --- Semantic --- */
+    -success:              #27ae60;
+    -success-dark:         #229954;
+    -danger:               #e74c3c;
+    -danger-dark:          #c0392b;
+    -warning:              #f39c12;
+
+    /* --- Neutrals (body text, borders, surfaces) --- */
+    -text-strong:          #2c2c2c;
+    -text-muted:           #666666;
+    -surface:              #ffffff;
+    -surface-alt:          #f8f9fa;
+    -border-subtle:        #e2e8f0;
+
+    /* Consistent, accessible focus ring color across all controls. */
+    -focus-ring:           -brand-primary;
+}
+
+/*
+ * Accessible focus indicator. A visible focus ring is important for keyboard
+ * navigation; JavaFX's default is faint. Scoped to common controls only so it
+ * does not fight per-view styling.
+ */
+.button:focused,
+.text-field:focused,
+.text-area:focused,
+.combo-box:focused,
+.date-picker:focused,
+.check-box:focused {
+    -fx-effect: dropshadow(gaussian, -focus-ring, 6, 0.3, 0, 0);
+}

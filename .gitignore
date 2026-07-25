@@ -41,3 +41,13 @@ hs_err_pid*
 
 # ==== Mobile Tools for Java ====
 .mtj.tmp/
+
+# ==== Secrets / Firebase credentials ====
+# Never commit service-account keys or the encrypted bundle. They are injected
+# at build time from a secret (see SECURITY.md).
+**/FireConfig/firebase-credentials.enc
+*-firebase-adminsdk*.json
+service-account*.json
+google-services.json
+.env
+.env.local

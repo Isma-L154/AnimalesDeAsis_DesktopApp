@@ -9,7 +9,7 @@
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.asosiaciondeasis.animalesdeasis.Controller.PortalController"
             fx:id="mainPortal"
-            stylesheets="@/css/Portal.css"
+            stylesheets="@/css/theme.css, @/css/Portal.css"
             styleClass="mainPortal">
 
     <top>

@@ -8,7 +8,11 @@
             fx:controller="com.asosiaciondeasis.animalesdeasis.Controller.Vaccine.VaccineManagementController"
             fitToWidth="true"
             styleClass="vaccine-scroll-pane"
-            stylesheets="@/css/Vaccine/VaccineManagement.css">
+            >
+    <stylesheets>
+        <String fx:value="@/css/theme.css"/>
+        <String fx:value="@/css/Vaccine/VaccineManagement.css"/>
+    </stylesheets>
 
     <HBox alignment="CENTER">
         <VBox spacing="25" alignment="TOP_CENTER"

@@ -8,7 +8,11 @@
       fx:controller="com.asosiaciondeasis.animalesdeasis.Controller.Vaccine.EditVaccineController"
       spacing="20" alignment="CENTER"
       styleClass="vaccine-edit-container"
-      stylesheets="@/css/theme.css, @/css/Vaccine/EditForm.css">
+      >
+    <stylesheets>
+        <String fx:value="@/css/theme.css"/>
+        <String fx:value="@/css/Vaccine/EditForm.css"/>
+    </stylesheets>
 
     <!-- Header -->
     <VBox alignment="CENTER" spacing="10" styleClass="vaccine-edit-header">

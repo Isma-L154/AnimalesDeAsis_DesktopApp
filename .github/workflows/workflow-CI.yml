@@ -42,11 +42,16 @@ jobs:
           if-no-files-found: ignore
 
   # ---------------------------------------------------------------------------
-  # 2. Native installers, one per OS. Only on tags or manual runs (skips PRs).
+  # 2. Native installers, one per OS. Runs on pushes to main (-> rolling
+  #    "latest" prerelease), on v* tags (-> stable release) and manual runs.
+  #    Skipped on pull requests.
   # ---------------------------------------------------------------------------
   build-installers:
     needs: test
-    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    if: >
+      github.ref == 'refs/heads/main'
+      || startsWith(github.ref, 'refs/tags/v')
+      || github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false
       matrix:
@@ -72,14 +77,15 @@ jobs:
           java-package: jdk+fx
           cache: maven
 
-      # Derive the app version from the tag (v1.2.3 -> 1.2.3); fall back to 1.0.0.
+      # Version: from the tag (v1.2.3 -> 1.2.3) for releases, or a unique dev
+      # version (1.0.<run_number>) for rolling "latest" builds off main.
       - name: Resolve version
         id: ver
         shell: bash
         run: |
           REF="${GITHUB_REF_NAME}"
-          if [[ "$REF" == v* ]]; then echo "value=${REF#v}" >> "$GITHUB_OUTPUT";
-          else echo "value=1.0.0" >> "$GITHUB_OUTPUT"; fi
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then echo "value=${REF#v}" >> "$GITHUB_OUTPUT";
+          else echo "value=1.0.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"; fi
 
       # Inject the encrypted Firebase bundle from a secret (kept out of git).
       # If the secret is absent the app still builds and runs in offline-only mode.
@@ -113,11 +119,15 @@ jobs:
           if-no-files-found: warn
 
   # ---------------------------------------------------------------------------
-  # 3. Publish all installers to a GitHub Release when a tag is pushed.
+  # 3. Publish installers to a GitHub Release.
+  #    - v* tag  -> a permanent, versioned release.
+  #    - main    -> a rolling "latest" prerelease that always holds the newest
+  #                 build (previous one is replaced), so testers just grab the
+  #                 latest .exe without waiting for a formal version.
   # ---------------------------------------------------------------------------
   release:
     needs: build-installers
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -127,11 +137,38 @@ jobs:
         with:
           merge-multiple: true
           path: ./release-assets/
+
       - name: List assets
         run: find ./release-assets -type f
+
+      - name: Resolve release parameters
+        id: rel
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+            echo "title=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=latest" >> "$GITHUB_OUTPUT"
+            echo "title=Latest dev build" >> "$GITHUB_OUTPUT"
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # For the rolling build, delete the previous "latest" release + tag so the
+      # new one is recreated pointing at the current commit.
+      - name: Reset rolling 'latest' release
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release delete latest --yes --cleanup-tag -R "$GITHUB_REPOSITORY" || true
+
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.rel.outputs.tag }}
+          name: ${{ steps.rel.outputs.title }}
+          prerelease: ${{ steps.rel.outputs.prerelease }}
+          target_commitish: ${{ github.sha }}
           generate_release_notes: true
           files: |
             ./release-assets/*.exe

@@ -22,7 +22,6 @@
     -fx-cursor: hand;
     -fx-effect: dropshadow(three-pass-box, rgba(242, 146, 29, 0.4), 6, 0, 0, 2);
     -fx-border-radius: 25;
-    -fx-transition: all 0.2s ease;
 }
 
 .create-button:hover {
@@ -316,7 +315,6 @@
     -fx-text-fill: white;
     -fx-font-size: 11px;
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 3, 0, 0, 1);
-    -fx-transition: all 0.2s ease;
 }
 
 .edit-btn {

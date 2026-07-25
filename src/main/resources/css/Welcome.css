@@ -18,12 +18,11 @@
     -fx-alignment: center;
 }
 .dog-image {
+    /* A soft drop shadow lifts the hero image off the white background.
+       (The previous rule declared this shadow and then cancelled it with
+       `-fx-effect: none`, so no shadow ever rendered.) */
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 5);
     -fx-opacity: 1.0;
-    -fx-translate-y: 0;
-    -fx-scale-x: 1.0;
-    -fx-scale-y: 1.0;
-    -fx-effect: none;
 }
 
 .slogan-label {
@@ -32,7 +31,6 @@
         -fx-font-weight: normal;
         -fx-text-fill: #666666;
         -fx-font-style: italic;
-        -fx-letter-spacing: 4px;
 }
 
 .continue-button {
@@ -45,7 +43,6 @@
         -fx-cursor: hand;
         -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 6, 0.3, 0, 2);
         -fx-border-color: transparent;
-        -fx-transition: all 0.3s ease-in-out;
 }
 .continue-button:hover {
     -fx-background-color: #F28322;

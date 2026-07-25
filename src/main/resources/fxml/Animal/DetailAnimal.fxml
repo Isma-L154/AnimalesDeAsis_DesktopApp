@@ -10,7 +10,7 @@
             fx:controller="com.asosiaciondeasis.animalesdeasis.Controller.Animal.DetailAnimalController"
             fitToWidth="true"
             styleClass="detail-scroll-pane"
-            stylesheets="@/css/Animal/DetailAnimal.css">
+            stylesheets="@/css/theme.css, @/css/Animal/DetailAnimal.css">
     <StackPane>
     <HBox alignment="CENTER">
         <VBox spacing="30" alignment="TOP_CENTER"

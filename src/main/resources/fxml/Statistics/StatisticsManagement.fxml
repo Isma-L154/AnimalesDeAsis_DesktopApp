@@ -21,7 +21,7 @@
 <ScrollPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.asosiaciondeasis.animalesdeasis.Controller.Statistic.StatisticsController"
-            stylesheets="@/css/Statistics/StatisticsDashboard.css"
+            stylesheets="@/css/theme.css, @/css/Statistics/StatisticsDashboard.css"
             styleClass="dashboard-scroll" fitToWidth="true">
     <content>
         <VBox spacing="25.0" styleClass="dashboard-container">

@@ -164,7 +164,6 @@
     -fx-text-fill: white;
     -fx-font-size: 11px;
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 3, 0, 0, 1);
-    -fx-transition: all 0.2s ease;
     -fx-min-width: 65px;
     -fx-pref-width: 65px;
     -fx-min-height: 28px;

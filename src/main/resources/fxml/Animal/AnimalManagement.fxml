@@ -6,7 +6,7 @@
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.asosiaciondeasis.animalesdeasis.Controller.Animal.AnimalManagementController"
-      stylesheets="@/css/Animal/AnimalManagement.css"
+      stylesheets="@/css/theme.css, @/css/Animal/AnimalManagement.css"
       spacing="20" alignment="TOP_CENTER" styleClass="animal-management-container">
 
             <HBox spacing="20" alignment="CENTER_LEFT" styleClass="toolbar">

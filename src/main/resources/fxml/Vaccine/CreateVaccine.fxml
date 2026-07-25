@@ -9,7 +9,11 @@
             fx:controller="com.asosiaciondeasis.animalesdeasis.Controller.Vaccine.CreateVaccineController"
             spacing="20" alignment="CENTER"
             styleClass="vaccine-create-container"
-            stylesheets="@/css/theme.css, @/css/Vaccine/CreateForm.css">
+            >
+    <stylesheets>
+        <String fx:value="@/css/theme.css"/>
+        <String fx:value="@/css/Vaccine/CreateForm.css"/>
+    </stylesheets>
 
     <!-- Header -->
     <VBox alignment="CENTER" spacing="10" styleClass="vaccine-create-header">

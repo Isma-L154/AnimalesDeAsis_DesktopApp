@@ -24,7 +24,7 @@
 }
 
 .detail-separator {
-    -fx-background-color: #3498db;
+    -fx-background-color: #F2921D;
     -fx-pref-height: 3;
     -fx-background-radius: 2;
 }
@@ -119,12 +119,12 @@
 }
 
 .detail-edit-button {
-    -fx-background-color: #3498db;
+    -fx-background-color: #F2921D;
     -fx-text-fill: white;
 }
 
 .detail-edit-button:hover {
-    -fx-background-color: #2980b9;
+    -fx-background-color: #E67E22;
     -fx-opacity: 0.9;
 }
 
@@ -170,7 +170,7 @@
 }
 .copy-icon-button:hover {
     -fx-background-color: #ecf0f1;
-    -fx-border-color: #3498db;
+    -fx-border-color: #F2921D;
 }
 
 .copy-icon-button:pressed {

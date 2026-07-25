@@ -67,9 +67,9 @@
 }
 
 .vaccine-edit-textfield:focused {
-    -fx-border-color: #3498db;
+    -fx-border-color: #F2921D;
     -fx-background-color: #f8f9fa;
-    -fx-effect: dropshadow(gaussian, rgba(52, 152, 219, 0.3), 5, 0, 0, 0);
+    -fx-effect: dropshadow(gaussian, rgba(242,146,29, 0.3), 5, 0, 0, 0);
 }
 
 .vaccine-edit-textfield:hover {
@@ -93,9 +93,9 @@
 }
 
 .vaccine-edit-datepicker:focused .text-field {
-    -fx-border-color: #3498db;
+    -fx-border-color: #F2921D;
     -fx-background-color: #f8f9fa;
-    -fx-effect: dropshadow(gaussian, rgba(52, 152, 219, 0.3), 5, 0, 0, 0);
+    -fx-effect: dropshadow(gaussian, rgba(242,146,29, 0.3), 5, 0, 0, 0);
 }
 
 .vaccine-edit-datepicker:hover .text-field {
@@ -177,26 +177,8 @@
     -fx-effect: none;
 }
 
-/* Responsive adjustments */
-@media (max-width: 600px) {
-    .vaccine-edit-container {
-        -fx-min-width: 320px;
-        -fx-max-width: 380px;
-        -fx-padding: 20px;
-    }
-
-    .vaccine-edit-textfield, .vaccine-edit-datepicker {
-        -fx-pref-width: 220px;
-    }
-
-    .vaccine-edit-buttons {
-        -fx-spacing: 10px;
-    }
-
-    .vaccine-edit-button-base {
-        -fx-pref-width: 80px;
-    }
-}
+/* NOTE: JavaFX CSS has no @media support; the responsive block that used to live
+   here never applied and was removed. */
 
 /* Focus and validation styles */
 .vaccine-edit-textfield.error {

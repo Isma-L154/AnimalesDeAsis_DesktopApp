@@ -56,8 +56,8 @@
 }
 
 .vaccine-create-textfield:focused {
-    -fx-border-color: #3498db;
-    -fx-effect: dropshadow(gaussian, rgba(52, 152, 219, 0.3), 5, 0, 0, 0);
+    -fx-border-color: #F2921D;
+    -fx-effect: dropshadow(gaussian, rgba(242,146,29, 0.3), 5, 0, 0, 0);
 }
 
 .vaccine-create-datepicker {
@@ -71,8 +71,8 @@
 }
 
 .vaccine-create-datepicker:focused {
-    -fx-border-color: #3498db;
-    -fx-effect: dropshadow(gaussian, rgba(52, 152, 219, 0.3), 5, 0, 0, 0);
+    -fx-border-color: #F2921D;
+    -fx-effect: dropshadow(gaussian, rgba(242,146,29, 0.3), 5, 0, 0, 0);
 }
 
 /* Button Styles */

@@ -1,24 +1,32 @@
+/* ===========================================================================
+   Welcome / landing screen
+   Uses the shared brand tokens from theme.css (loaded first by the FXML).
+   =========================================================================== */
 
 .main-container {
-    -fx-background-color: #ffffff;
+    -fx-background-color: linear-gradient(to bottom, #ffffff, #fffaf3);
     -fx-min-width: 1036px;
     -fx-min-height: 798px;
 }
+
 .text-container {
     -fx-alignment: CENTER;
-    -fx-spacing: 15px;
-    -fx-padding: 20px;
+    -fx-spacing: 18px;
+    -fx-padding: 24px;
 }
 
+/* The title now shares the app's UI typeface (the rest of the app uses Segoe UI)
+   and the brand brown, instead of an unrelated 80px serif. */
 .title-label {
-    -fx-font-family: "Times New Roman", "Georgia", serif;
-    -fx-font-size: 80px;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", "Helvetica Neue", sans-serif;
+    -fx-font-size: 64px;
     -fx-font-weight: bold;
-    -fx-text-fill: #2c2c2c;
+    -fx-text-fill: #593414;
     -fx-alignment: center;
 }
+
 .dog-image {
-    /* A soft drop shadow lifts the hero image off the white background.
+    /* A soft drop shadow lifts the hero image off the light background.
        (The previous rule declared this shadow and then cancelled it with
        `-fx-effect: none`, so no shadow ever rendered.) */
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 5);
@@ -26,26 +34,36 @@
 }
 
 .slogan-label {
-    -fx-font-family: "Arial", "Helvetica", sans-serif;
-        -fx-font-size: 22px;
-        -fx-font-weight: normal;
-        -fx-text-fill: #666666;
-        -fx-font-style: italic;
+    -fx-font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+    -fx-font-size: 22px;
+    -fx-font-weight: normal;
+    -fx-text-fill: #7a6a5a;
+    -fx-font-style: italic;
 }
 
 .continue-button {
+    -fx-font-family: "Segoe UI", sans-serif;
     -fx-font-size: 18px;
-        -fx-font-weight: bold;
-        -fx-padding: 12px 24px;
-        -fx-background-radius: 30px;
-        -fx-text-fill: white;
-        -fx-background-color: #F2921D;
-        -fx-cursor: hand;
-        -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 6, 0.3, 0, 2);
-        -fx-border-color: transparent;
+    -fx-font-weight: bold;
+    -fx-padding: 14px 36px;
+    -fx-background-radius: 30px;
+    -fx-text-fill: white;
+    -fx-background-color: linear-gradient(to bottom, #F2921D, #E67E22);
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(242,146,29,0.35), 8, 0.2, 0, 3);
+    -fx-border-color: transparent;
 }
+
 .continue-button:hover {
-    -fx-background-color: #F28322;
-        -fx-scale-x: 1.05;
-        -fx-scale-y: 1.05;
+    -fx-background-color: linear-gradient(to bottom, #E67E22, #D68910);
+    -fx-effect: dropshadow(gaussian, rgba(242,146,29,0.5), 12, 0.3, 0, 4);
+    -fx-scale-x: 1.04;
+    -fx-scale-y: 1.04;
+}
+
+/* Pressed state gives tactile feedback that was missing before. */
+.continue-button:pressed {
+    -fx-background-color: #D68910;
+    -fx-scale-x: 0.99;
+    -fx-scale-y: 0.99;
 }

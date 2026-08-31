@@ -8,8 +8,9 @@ on:
     branches: [ "main" ]
   workflow_dispatch: {}   # allow manual runs
 
-permissions:
-  contents: write
+# Least privilege by default: no job gets a token that can write to the
+# repository unless it declares that it needs one. Only `release` does.
+permissions: {}
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -21,10 +22,12 @@ jobs:
   # ---------------------------------------------------------------------------
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Set up Liberica Full JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
         with:
           distribution: liberica
           java-version: '17'
@@ -34,7 +37,7 @@ jobs:
         run: mvn -B clean test --file pom.xml
       - name: Publish test report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: surefire-reports
           path: target/surefire-reports/
@@ -66,11 +69,13 @@ jobs:
             artifact: AnimalesDeAsis-linux
             pattern: target/installer/*.deb
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Set up Liberica Full JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
         with:
           distribution: liberica
           java-version: '17'
@@ -79,13 +84,26 @@ jobs:
 
       # Version: from the tag (v1.2.3 -> 1.2.3) for releases, or a unique dev
       # version (1.0.<run_number>) for rolling "latest" builds off main.
+      # jpackage will only accept a strictly numeric version: on Windows it maps
+      # to a Windows Installer ProductVersion, on macOS to CFBundleVersion. A tag
+      # like v1.0.0-rc1 strips to "1.0.0-rc1", which is rejected — but only at the
+      # jpackage step, after a full build has already run on three platforms, and
+      # with a message that does not mention the tag. Validate up front so a bad
+      # tag fails in seconds with a message that says what to do about it.
       - name: Resolve version
         id: ver
         shell: bash
         run: |
           REF="${GITHUB_REF_NAME}"
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then echo "value=${REF#v}" >> "$GITHUB_OUTPUT";
-          else echo "value=1.0.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"; fi
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then VALUE="${REF#v}";
+          else VALUE="1.0.${GITHUB_RUN_NUMBER}"; fi
+
+          if [[ ! "$VALUE" =~ ^[0-9]+(\.[0-9]+){0,2}$ ]]; then
+            echo "::error::Tag '${REF}' resolves to version '${VALUE}', which jpackage will reject."
+            echo "::error::Release tags must be strictly numeric: v1.2.3, v1.2 or v1 — no suffixes such as -rc1 or -beta."
+            exit 1
+          fi
+          echo "value=${VALUE}" >> "$GITHUB_OUTPUT"
 
       # Inject the encrypted Firebase bundle from a secret (kept out of git).
       # If the secret is absent the app still builds and runs in offline-only mode.
@@ -111,7 +129,7 @@ jobs:
         run: mvn -B jpackage:jpackage -Dapp.version=${{ steps.ver.outputs.value }} --file pom.xml
 
       - name: Upload installer
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ${{ matrix.artifact }}
           path: ${{ matrix.pattern }}
@@ -131,9 +149,15 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      # download-artifact reads from the current run via the runner's own token
+      # and should not need this. Granted anyway: unlike the other jobs, this one
+      # never runs on a pull request, so the assumption cannot be tested before
+      # it reaches main — and a wrong assumption here breaks publishing. A
+      # read-only scope is a cheap hedge against an untestable guess.
+      actions: read
     steps:
       - name: Download all installers
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           merge-multiple: true
           path: ./release-assets/
@@ -163,7 +187,7 @@ jobs:
         run: gh release delete latest --yes --cleanup-tag -R "$GITHUB_REPOSITORY" || true
 
       - name: Publish release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           tag_name: ${{ steps.rel.outputs.tag }}
           name: ${{ steps.rel.outputs.title }}

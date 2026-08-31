@@ -1,0 +1,43 @@
+version: 2
+
+updates:
+  # ---------------------------------------------------------------------------
+  # Java dependencies. The app ships as a native installer, so a vulnerable
+  # transitive dependency travels to every machine in the association and stays
+  # there until someone reinstalls — there is no server to patch centrally.
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: maven
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "Deps"
+    groups:
+      # One pull request per family instead of one per artifact: JavaFX and
+      # Ikonli publish every module in lockstep, so splitting them produces
+      # pull requests that cannot pass CI on their own.
+      javafx:
+        patterns:
+          - "org.openjfx:*"
+      ikonli:
+        patterns:
+          - "org.kordamp.ikonli:*"
+      test-tooling:
+        patterns:
+          - "org.junit.jupiter:*"
+          - "org.mockito:*"
+
+  # ---------------------------------------------------------------------------
+  # GitHub Actions. Pinned to commit SHAs in the workflows, which is what makes
+  # the supply chain auditable but also what makes them invisible to a human
+  # reader — Dependabot is what keeps the pins from silently rotting.
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: "CI"

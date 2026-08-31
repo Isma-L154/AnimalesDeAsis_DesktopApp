@@ -1,67 +1,122 @@
 # Security Policy
 
+## Reporting a vulnerability
+
+Open a private security advisory on the repository, or email the maintainer.
+Please do not file a public issue.
+
+---
+
 ## Firebase credentials
 
-This desktop app talks to Cloud Firestore through the **Firebase Admin SDK**, which
-requires a service-account key. That key grants full read/write access to the
-Firestore database, so it must never be exposed.
+This application talks to Cloud Firestore through the **Firebase Admin SDK**,
+which needs a service-account key. The Admin SDK **bypasses Firestore security
+rules entirely**, so that key grants unrestricted read and write over the whole
+database — including deleting it.
 
-### How credentials are handled
+### ⚠️ The existing key must be treated as public
 
-- The service-account JSON is **AES-encrypted** into `firebase-credentials.enc`.
-- The decryption passphrase is resolved at runtime, **not** hardcoded in source:
-  1. environment variable `ANIMALESDEASIS_CRED_KEY`
-  2. JVM system property `-Danimalesdeasis.cred.key=...`
-  3. a legacy fallback constant kept only so bundles encrypted before this change
-     still open (do **not** ship a public build that depends on it).
-- Neither the plaintext JSON nor `firebase-credentials.enc` is tracked in git
-  (see `.gitignore`). The encrypted bundle is injected at build time from a CI
-  secret.
+Every service-account key ever shipped with this application should be assumed
+compromised. This is not a precaution; it follows from what is in the repository:
 
-> ⚠️ **Inherent limitation.** Because this is a desktop app, whatever key is used
-> to decrypt the bundle must ultimately ship with the binary. Encryption raises
-> the bar but does not make the credential unextractable from a distributed
-> installer. The only way to fully remove client-side admin credentials is to put
-> a backend (or Firebase client SDK + security rules) between the app and
-> Firestore. That is out of scope here but recommended for a public release.
+- Two decryption keys have existed as constants in source, and both remain in the
+  public git history: an `AES/ECB` key from the original scheme, and the
+  `AES/CBC` fallback that replaced it.
+- The fallback was **silent**. When no passphrase was configured, the application
+  used the constant without saying anything.
+- No passphrase was ever configured for a distributed build. The release workflow
+  injects the encrypted bundle but no passphrase, and a passphrase would in any
+  case have to be present on each user's machine rather than on the build agent.
 
-### If a key was ever committed — rotate it
+So every published installer decrypted its bundle with a key printed in a public
+repository. Anyone who downloaded a release could read the service account.
 
-1. **Firebase Console → Project Settings → Service accounts → Generate new private
-   key.** Download the new JSON.
-2. In **Service accounts → Manage service account permissions** (Google Cloud IAM),
-   **delete/disable the old key** that leaked.
-3. Re-encrypt the new JSON (see below) and update the CI secret.
-4. Consider tightening Firestore security rules.
+**Re-encrypting is not enough.** The credential itself has to be revoked, because
+it may already have been taken.
+
+### Rotating — do all four steps
+
+1. **Issue a new key.** Firebase Console → Project Settings → Service accounts →
+   *Generate new private key*.
+2. **Revoke the old one.** Google Cloud Console → IAM & Admin → Service Accounts →
+   the account → *Keys* → delete the previous key. Until this is done, the
+   exposed credential still works, and steps 1 and 3 change nothing.
+3. **Re-encrypt** the new JSON (below) and update the `FIREBASE_CREDENTIALS_ENC`
+   repository secret.
+4. **Distribute the passphrase** to each machine that synchronises, as the
+   environment variable `ANIMALESDEASIS_CRED_KEY`. Without this the application
+   runs local-only — visibly, and by design.
+
+Also worth doing while you are there: review the Firestore security rules. They
+do not restrain the Admin SDK, but they are what protects the database from
+everything else.
 
 ### Re-encrypting the bundle
 
-1. Choose a strong passphrase and export it:
-   ```bash
-   export ANIMALESDEASIS_CRED_KEY='<long-random-passphrase>'
-   ```
-2. Point `FirebaseCredentialsEncryptor.INPUT_FILE` at the downloaded JSON,
-   uncomment its `main()`, and run it. It writes `firebase-credentials.enc` using
-   the same passphrase resolution as the app.
-3. Copy the `.enc` into `src/main/resources/FireConfig/` **locally only**, delete
-   the plaintext JSON, and re-comment `main()`.
+```bash
+# A long random passphrase. There is no default: the tool refuses without one.
+export ANIMALESDEASIS_CRED_KEY='...'          # bash
+$env:ANIMALESDEASIS_CRED_KEY = '...'          # PowerShell
 
-### CI / release secrets
+mvn -q compile
+java -cp target/classes \
+  com.asosiaciondeasis.animalesdeasis.Config.FirebaseCredentialsEncryptor \
+  path/to/new-service-account.json
 
-The GitHub Actions workflow needs two secrets to produce a working release:
+rm path/to/new-service-account.json           # the copy on disk is the risk
+```
 
-| Secret                     | Contents                                              |
-| -------------------------- | ----------------------------------------------------- |
-| `FIREBASE_CREDENTIALS_ENC` | base64 of `firebase-credentials.enc`                  |
-| `ANIMALESDEASIS_CRED_KEY`  | the passphrase used to encrypt that bundle            |
+Then update the repository secret:
 
-Create `FIREBASE_CREDENTIALS_ENC` with:
 ```bash
 base64 -w0 src/main/resources/FireConfig/firebase-credentials.enc   # Linux
 base64 -i  src/main/resources/FireConfig/firebase-credentials.enc   # macOS
 ```
 
-## Reporting a vulnerability
+Exit codes are stable, so this can be scripted: `0` success, `1` encryption
+failed (usually no passphrase), `2` bad arguments.
 
-Please open a private security advisory on the repository or email the maintainer
-rather than filing a public issue.
+### How the bundle is protected now
+
+| | Before | Now |
+|---|---|---|
+| Cipher | AES-128-CBC, no integrity check | **AES-256-GCM**, authenticated |
+| Key derivation | one unsalted SHA-256 pass | **PBKDF2-HMAC-SHA256**, random salt, 210,000 iterations |
+| Missing passphrase | silently used a compiled-in constant | **fails, and says so** |
+| Old bundle | would be misread as current | **identified**, with instructions |
+
+Authentication is not a detail. Under CBC a wrong key produced garbage that only
+sometimes failed to unpad, so "wrong key" and "corrupted file" were
+indistinguishable — the test asserting a wrong key must fail was itself flaky
+0.48% of the time. GCM rejects both, every time.
+
+Neither the plaintext JSON nor `firebase-credentials.enc` is tracked in git; the
+history was checked and neither has ever been committed. The bundle is injected
+at build time from a repository secret.
+
+### The limit none of this removes
+
+This is a desktop application, so whatever opens the bundle has to reach the
+machine running it. Encryption raises the cost of extraction. It cannot make a
+credential unextractable from software you hand to people.
+
+The only way to remove client-side admin credentials is to stop shipping them:
+
+- **Firebase client SDK plus security rules.** The application authenticates as a
+  user, and the rules — which the Admin SDK ignores — become the thing that
+  actually constrains access.
+- **A small backend between the application and Firestore**, holding the
+  credential server-side.
+
+Either is a larger change than a rotation, and neither is a reason to delay one.
+
+### CI secrets
+
+| Secret | Contents |
+|---|---|
+| `FIREBASE_CREDENTIALS_ENC` | base64 of `firebase-credentials.enc` |
+
+Only one. A passphrase secret would not help: it is needed where the application
+*runs*, not where it is built. That mismatch is what made the silent fallback
+load-bearing, and it is why removing the fallback means local-only builds until
+step 4 above is done on each machine.

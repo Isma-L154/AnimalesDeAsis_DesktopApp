@@ -7,8 +7,12 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SQLiteSetup {
+    private static final Logger log = LoggerFactory.getLogger(SQLiteSetup.class);
+
 
     /**
      * Initializes the SQLite database by creating the necessary folder, database file,
@@ -27,7 +31,7 @@ public class SQLiteSetup {
             // Create the directory if it doesn't exist
             if (!dir.exists()) {
                 dir.mkdirs();
-                System.out.println("Directory created: " + dir.getAbsolutePath());
+                log.info("Directory created: "+ dir.getAbsolutePath());
             }
 
             // Define the database file inside the directory
@@ -40,7 +44,7 @@ public class SQLiteSetup {
             Connection conn = DriverManager.getConnection(url);
 
             if (conn != null) {
-                System.out.println("✅ Database connected at: " + dbFile.getAbsolutePath());
+                log.info("Database connected at: " + dbFile.getAbsolutePath());
 
                 // Enforce the schema's foreign keys (off by default in SQLite).
                 DatabaseConnection.applyPragmas(conn);
@@ -55,21 +59,23 @@ public class SQLiteSetup {
                      */
                     ResultSet rs = stmt.executeQuery("SELECT COUNT(*) AS count FROM provinces");
                     if (rs.next() && rs.getInt("count") == 0) {
-                        System.out.println("Provinces table empty, importing data from API...");
+                        log.info("Provinces table empty, importing data from API...");
                         DataImporter.populateProvincesAndPlaces(conn);
-                        System.out.println("✅ Data imported successfully.");
+                        log.info("Data imported successfully.");
                     } else {
-                        System.out.println("✅ Provinces table already populated.");
+                        log.info("Provinces table already populated.");
                     }
                 }
                 conn.close();
 
-                System.out.println("✅ Tables created or verified successfully.");
+                log.info("Tables created or verified successfully.");
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Error initializing the database.");
+            // The cause travels with the exception rather than being logged here.
+            // Logging and rethrowing records one failure twice, and the previous
+            // throw discarded the cause entirely.
+            throw new RuntimeException("Error initializing the database.", e);
         }
     }
 

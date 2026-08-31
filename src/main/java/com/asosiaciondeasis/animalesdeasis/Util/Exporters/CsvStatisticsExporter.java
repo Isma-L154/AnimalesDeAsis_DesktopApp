@@ -14,6 +14,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * CsvStatisticsExporter is responsible for exporting statistics data to a CSV file.
@@ -24,6 +26,8 @@ import java.util.Map;
  * It includes comprehensive statistics including monthly admissions, adoption rates, and animal origins.
  */
 public class CsvStatisticsExporter {
+    private static final Logger log = LoggerFactory.getLogger(CsvStatisticsExporter.class);
+
 
     private final StatisticsDAO statisticsDAO;
 
@@ -62,7 +66,7 @@ public class CsvStatisticsExporter {
         File selectedFile = fileChooser.showSaveDialog(ownerWindow);
 
         if (selectedFile == null) {
-            System.out.println("Exportación cancelada por el usuario.");
+            log.info("Exportación cancelada por el usuario.");
             return false;
         }
 

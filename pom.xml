@@ -93,6 +93,17 @@
             <version>0.3.12</version>
         </dependency>
 
+        <!-- Logging.
+             slf4j-api already arrives with firebase-admin; what was missing was a
+             binding, which is why every run began with "SLF4J: No SLF4J providers
+             were found" and why the application's own output went to a console
+             nobody sees once it is packaged with jpackage. -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.5.13</version>
+        </dependency>
+
         <!-- PDF Generation -->
 
             <dependency>

@@ -2,6 +2,8 @@ package com.asosiaciondeasis.animalesdeasis.Util;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Application-wide registry of callbacks to run when a synchronisation finishes.
@@ -23,6 +25,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * navigation, and there are never more than a handful.</p>
  */
 public final class SyncEventManager {
+    private static final Logger log = LoggerFactory.getLogger(SyncEventManager.class);
+
 
     private static final List<Runnable> listeners = new CopyOnWriteArrayList<>();
 
@@ -64,7 +68,7 @@ public final class SyncEventManager {
             try {
                 listener.run();
             } catch (Exception e) {
-                System.out.println("Error notifying sync listener: " + e.getMessage());
+                log.info("Error notifying sync listener: "+ e.getMessage());
             }
         }
     }

@@ -27,8 +27,12 @@ import javafx.scene.Parent;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class VaccineManagementController implements IPortalAwareController {
+    private static final Logger log = LoggerFactory.getLogger(VaccineManagementController.class);
+
 
     @FXML private Label animalInfoLabel;
     @FXML private TableView<Vaccine> vaccineTable;
@@ -224,7 +228,7 @@ public class VaccineManagementController implements IPortalAwareController {
                 Image icon = new Image(getClass().getResourceAsStream("/images/AdeAsisLogo.png"));
                 stage.getIcons().add(icon);
             } catch (Exception e) {
-                System.out.println("No se pudo cargar el icono del modal: " + e.getMessage());
+                log.info("No se pudo cargar el icono del modal: "+ e.getMessage());
             }
 
             stage.showAndWait();
@@ -273,7 +277,7 @@ public class VaccineManagementController implements IPortalAwareController {
                 Image icon = new Image(getClass().getResourceAsStream("/images/AdeAsisLogo.png"));
                 stage.getIcons().add(icon);
             } catch (Exception e) {
-                System.out.println("No se pudo cargar el icono del modal: " + e.getMessage());
+                log.info("No se pudo cargar el icono del modal: "+ e.getMessage());
             }
 
             stage.showAndWait();

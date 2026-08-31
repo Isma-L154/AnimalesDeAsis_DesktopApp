@@ -1,0 +1,12 @@
+# Default owner for everything in the repository.
+* @Isma-L154
+
+# Anything that decides what runs in CI, what gets published, or how the
+# repository is protected. Called out separately so a change here is never a
+# quiet line in a large diff.
+/.github/ @Isma-L154
+
+# Credential handling. The encrypted Firebase bundle is decrypted here; a change
+# to these files can expose the association's whole database.
+/src/main/java/com/asosiaciondeasis/animalesdeasis/Config/CredentialsManager.java @Isma-L154
+/src/main/java/com/asosiaciondeasis/animalesdeasis/Config/FirebaseCredentialsEncryptor.java @Isma-L154

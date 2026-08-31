@@ -112,30 +112,13 @@
    TILES CONTAINER
    ================================= */
 .tiles-container {
-    -fx-padding: 15 0;
-}
-.tile > .title-text {
-    -fx-font-size: 45px !important;
-    -fx-font-weight: bold !important;
-    -fx-fill: white !important;
+    -fx-padding: 4 0 0 0;
 }
 
-.tile .title {
-    -fx-font-size: 45px !important;
-    -fx-font-weight: bold !important;
-    -fx-text-fill: white !important;
-}
-
-.tile > .text-flow > .text {
-    -fx-font-size: 20px !important;
-    -fx-font-weight: bold !important;
-}
-
-
-.tile .value {
-    -fx-font-size: 36px !important;
-    -fx-font-weight: 900 !important;
-}
+/* The .tile rules that used to live here styled TilesFX, which is gone. They
+   were a wall of !important fighting a library that painted its own colours in
+   Java where no stylesheet could reach them. The cards are the shared KpiCard
+   now, styled from theme.css like everything else. */
 
 /* =================================
    CHARTS GRID
@@ -154,10 +137,10 @@
     -fx-border-width: 1;
 }
 
+/* No scale on hover. Growing a panel this large by one percent shifts every
+   axis label under the pointer, which reads as the chart flinching. */
 .chart-container:hover {
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 15, 0, 0, 6);
-    -fx-scale-y: 1.01;
-    -fx-scale-x: 1.01;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.12), 14, 0, 0, 5);
 }
 
 .chart-header {
@@ -205,9 +188,9 @@
 }
 
 .adoption-pie .chart-pie-label {
-    -fx-fill: -flat-900;
-    -fx-font-size: 14px;
-    -fx-font-weight: 700;
+    -fx-fill: -text-muted;
+    -fx-font-size: 11.5px;
+    -fx-font-weight: normal;
 }
 
 .origins-chart {
@@ -219,8 +202,11 @@
     -fx-background-radius: 8;
 }
 
+/* Brand orange, like every other bar in the application. This was a purple
+   gradient that matched nothing else on the screen - a leftover from the
+   TilesFX-era palette of three unrelated colours. */
 .origins-chart .default-color0.chart-bar {
-    -fx-background-color: linear-gradient(to right, -chart-purple, -chart-purple-light);
+    -fx-background-color: linear-gradient(to right, -brand-primary, -brand-primary-dark);
     -fx-background-radius: 0 4 4 0;
 }
 
@@ -292,3 +278,93 @@
 /* NOTE: JavaFX CSS has no @media support, so the responsive block that used to
    live here never applied and was removed. Size adaptation is handled by the
    layout instead. */
+
+
+/* =================================
+   CHART INTERNALS
+   =================================
+   Charts came with the JavaFX defaults: a hard grey plot border, heavy grid
+   lines and a full saturated blue for every bar, none of which belonged to this
+   application. */
+
+.chart-plot-background {
+    -fx-background-color: transparent;
+}
+
+.chart-vertical-grid-lines,
+.chart-horizontal-grid-lines {
+    -fx-stroke: -slate-200;
+    -fx-stroke-dash-array: 2 4;
+}
+
+.chart-vertical-zero-line,
+.chart-horizontal-zero-line {
+    -fx-stroke: -slate-300;
+}
+
+.axis {
+    -fx-tick-label-fill: -text-muted;
+    -fx-tick-label-font-size: 11px;
+}
+
+.axis-label {
+    -fx-text-fill: -text-muted;
+    -fx-font-size: 11px;
+}
+
+/* Two slices, and they mean opposite things: adopted is the good outcome, still
+   in the shelter is the neutral one. Brand orange and a muted neutral, rather
+   than the default palette's two arbitrary blues. */
+.adoption-pie .data0.chart-pie,
+.adoption-pie .default-color0.chart-pie {
+    -fx-pie-color: -success;
+}
+
+.adoption-pie .data1.chart-pie,
+.adoption-pie .default-color1.chart-pie {
+    -fx-pie-color: -brand-primary;
+}
+
+.chart-pie {
+    -fx-border-color: -surface;
+    -fx-border-width: 2;
+}
+
+.chart-legend {
+    -fx-background-color: transparent;
+    -fx-padding: 6 0 0 0;
+}
+
+.chart-legend-item {
+    -fx-text-fill: -text-muted;
+    -fx-font-size: 11px;
+}
+
+/* =================================
+   EMPTY STATES
+   =================================
+   What stands in for a chart when its year has no records. The dashboard had
+   none: an empty year drew three sets of axes around nothing, and the pie chart
+   drew a full circle labelled "Sin datos". */
+
+.empty-state {
+    -fx-padding: 30 20;
+    -fx-alignment: CENTER;
+}
+
+.empty-icon {
+    -fx-icon-color: -slate-300;
+    -fx-icon-size: 34;
+}
+
+.empty-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -text-strong;
+}
+
+.empty-detail {
+    -fx-font-size: 11.5px;
+    -fx-text-fill: -text-muted;
+    -fx-text-alignment: CENTER;
+}

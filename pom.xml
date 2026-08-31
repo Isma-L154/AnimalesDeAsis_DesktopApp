@@ -127,11 +127,6 @@
             <artifactId>ikonli-javafx</artifactId>
             <version>12.4.0</version>
         </dependency>
-        <dependency>
-            <groupId>eu.hansolo</groupId>
-            <artifactId>tilesfx</artifactId>
-            <version>21.0.9</version>
-        </dependency>
 
         <!-- Tests -->
         <dependency>
@@ -191,11 +186,11 @@
                          here silently overrides maven.compiler.source/target, which is
                          exactly what it was doing. -->
                     <release>${maven.compiler.target}</release>
-                    <!--
-                      We use no annotation processors. Disabling processor discovery
-                      also avoids javac scanning transitive tilesfx (hansolo) jars whose
-                      manifest Class-Path is malformed, which breaks the classpath scan.
-                    -->
+                    <!-- No annotation processors are used, and turning discovery
+                         off keeps javac from scanning the classpath for them. It
+                         was originally added because tilesfx pulled in jars with
+                         malformed Class-Path manifests; tilesfx is gone, and this
+                         stays because it is correct on its own terms. -->
                     <proc>none</proc>
                 </configuration>
             </plugin>

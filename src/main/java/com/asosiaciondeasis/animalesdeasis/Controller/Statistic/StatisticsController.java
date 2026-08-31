@@ -3,8 +3,9 @@ package com.asosiaciondeasis.animalesdeasis.Controller.Statistic;
 import com.asosiaciondeasis.animalesdeasis.Config.ServiceFactory;
 import com.asosiaciondeasis.animalesdeasis.Service.Statistics.StatisticsService;
 import com.asosiaciondeasis.animalesdeasis.Util.Exporters.CsvStatisticsExporter;
-import com.asosiaciondeasis.animalesdeasis.Util.Helpers.BrandPalette;
 
+import com.asosiaciondeasis.animalesdeasis.Util.Helpers.EmptyState;
+import com.asosiaciondeasis.animalesdeasis.Util.Helpers.KpiCard;
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -19,11 +20,10 @@ import javafx.scene.chart.*;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 
-import eu.hansolo.tilesfx.Tile;
-import eu.hansolo.tilesfx.TileBuilder;
-import javafx.scene.paint.Color;
 import javafx.stage.Window;
 import javafx.util.Duration;
 
@@ -42,7 +42,7 @@ public class StatisticsController implements Initializable {
     @FXML private ComboBox<Integer> yearComboBox;
     @FXML private Button refreshButton;
     @FXML private Button exportButton;
-    @FXML private FlowPane tilesContainer;
+    @FXML private HBox tilesContainer;
     @FXML private BarChart<String, Number> monthlyAdmissionsChart;
     @FXML private CategoryAxis monthsAxis;
     @FXML private NumberAxis admissionsAxis;
@@ -53,10 +53,10 @@ public class StatisticsController implements Initializable {
     @FXML private Label statusLabel;
     @FXML private Label lastUpdateLabel;
 
-    // TilesFX Tiles
-    private Tile totalAdmissionsTile;
-    private Tile adoptionRateTile;
-    private Tile monthlyAverageTile;
+    /** Empty states standing in for each chart when its year has no records. */
+    private VBox monthlyEmpty;
+    private VBox originsEmpty;
+    private VBox pieEmpty;
 
     // Services
     private StatisticsService statisticsService;
@@ -256,66 +256,13 @@ public class StatisticsController implements Initializable {
      * Configures and creates the TilesFX tiles for total admissions, adoption rate, and monthly average.
      * Adds the tiles to the tiles container in the UI.
      */
+    /**
+     * Nothing to build up front: the cards are rebuilt from the current figures
+     * each time data arrives, which is cheaper than it sounds and removes the
+     * "created empty, mutated later" split that TilesFX required.
+     */
     private void setupTiles() {
-        try {
-            // Total Admissions Tile
-            totalAdmissionsTile = TileBuilder.create()
-                    .skinType(Tile.SkinType.NUMBER)
-                    .prefSize(250, 150)
-                    .title("Total de Admisiones")
-                    .textColor(Color.WHITE)
-                    .backgroundColor(BrandPalette.CHART_BLUE)
-                    .foregroundColor(Color.WHITE)
-                    .value(0)
-                    .decimals(0)
-                    .animated(true)
-                    .textSize(Tile.TextSize.BIGGER)
-                    .build();
-
-
-            // Adoption Rate Tile
-            adoptionRateTile = TileBuilder.create()
-                    .skinType(Tile.SkinType.PERCENTAGE)
-                    .prefSize(250, 150)
-                    .title("Tasa de Adopción")
-                    .textColor(Color.WHITE)
-                    .backgroundColor(BrandPalette.SUCCESS)
-                    .foregroundColor(Color.WHITE)
-                    .unitColor(Color.WHITE)
-                    .barColor(Color.WHITESMOKE)
-                    .thresholdColor(Color.WHITE)
-                    .value(0)
-                    .decimals(1)
-                    .animated(true)
-                    .textSize(Tile.TextSize.BIGGER)
-                    .build();
-
-            // Monthly Average Tile
-            monthlyAverageTile = TileBuilder.create()
-                    .skinType(Tile.SkinType.NUMBER)
-                    .prefSize(250, 150)
-                    .title("Promedio Mensual")
-                    .textColor(Color.WHITE)
-                    .backgroundColor(BrandPalette.WARNING)
-                    .foregroundColor(Color.WHITE)
-                    .value(0)
-                    .decimals(1)
-                    .animated(true)
-                    .textSize(Tile.TextSize.BIGGER)
-                    .build();
-
-
-            // Add tiles to container
-            tilesContainer.getChildren().addAll(
-                    totalAdmissionsTile,
-                    adoptionRateTile,
-                    monthlyAverageTile
-            );
-
-        } catch (Exception e) {
-            updateStatus("Error al configurar tiles: " + e.getMessage(), false);
-            log.error("Unexpected error", e);
-        }
+        updateTiles();
     }
 
     /**
@@ -323,61 +270,104 @@ public class StatisticsController implements Initializable {
      */
     private void setupCharts() {
         try {
-            // Configure monthly admissions chart
             monthsAxis.setLabel("Mes");
-            admissionsAxis.setLabel("Número de Admisiones");
+            // Three-letter months. Twelve full Spanish names - "Septiembre",
+            // "Noviembre", "Diciembre" - do not fit across this axis and were
+            // drawn on top of one another in a heap at the left edge. Rotating
+            // them would keep them legible but cost vertical space on a chart
+            // that has little; abbreviating costs nothing, because the axis is
+            // labelled "Mes" and the order is obvious.
+            monthsAxis.setTickLabelRotation(0);
+            monthsAxis.setTickLabelGap(4);
+
+            admissionsAxis.setLabel("Admisiones");
             admissionsAxis.setTickUnit(1);
             admissionsAxis.setMinorTickVisible(false);
             admissionsAxis.setAutoRanging(false);
+            admissionsAxis.setForceZeroInRange(true);
             monthlyAdmissionsChart.setTitle("");
-            monthlyAdmissionsChart.setAnimated(true);
             monthlyAdmissionsChart.setLegendVisible(false);
+            // Bars sized so twelve of them read as a series rather than as twelve
+            // separate blocks with gaps wider than the data.
+            monthlyAdmissionsChart.setBarGap(2);
+            monthlyAdmissionsChart.setCategoryGap(8);
 
-            // Configure origins chart
-            originsAxis.setLabel("Origen");
-            originsCountAxis.setLabel("Cantidad de Animales");
+            originsAxis.setLabel("");
+            originsCountAxis.setLabel("Cantidad de animales");
             originsCountAxis.setTickUnit(1);
             originsCountAxis.setMinorTickVisible(false);
             originsCountAxis.setAutoRanging(false);
             originsCountAxis.setForceZeroInRange(true);
             originsChart.setTitle("");
-            originsChart.setAnimated(true);
             originsChart.setLegendVisible(false);
+            originsChart.setBarGap(2);
+            originsChart.setCategoryGap(10);
 
-            // Configure pie chart
             adoptionPieChart.setTitle("");
-            adoptionPieChart.setAnimated(true);
             adoptionPieChart.setLegendVisible(true);
+            adoptionPieChart.setLabelsVisible(true);
+
+            installEmptyStates();
 
         } catch (Exception e) {
             updateStatus("Error al configurar gráficos: " + e.getMessage(), false);
-            log.error("Unexpected error", e);
+            log.error("No se pudieron configurar los gráficos", e);
         }
+    }
+
+    /**
+     * Puts each chart in a stack with the message that replaces it when its year
+     * has no records.
+     *
+     * <p>Selecting an empty year used to draw three sets of axes around nothing,
+     * and the pie chart went further: it inserted a slice called "Sin datos" with
+     * a value of 1, producing a full green circle. That reads as a result — one
+     * category, a hundred percent of it — rather than as an absence.</p>
+     */
+    private void installEmptyStates() {
+        monthlyEmpty = EmptyState.create("fas-chart-bar", "Sin admisiones este año",
+                "Cuando se registren animales con fecha de ingreso en " + currentYear
+                        + ", aparecerán acá mes a mes.");
+        originsEmpty = EmptyState.create("fas-map-marker-alt", "Sin lugares registrados",
+                "El origen se toma del lugar de rescate de cada animal.");
+        pieEmpty = EmptyState.create("fas-chart-pie", "Sin adopciones que mostrar",
+                "La proporción aparece cuando hay animales admitidos en el año.");
+
+        replaceWithStack(monthlyAdmissionsChart, monthlyEmpty);
+        replaceWithStack(originsChart, originsEmpty);
+        replaceWithStack(adoptionPieChart, pieEmpty);
+    }
+
+    /** Swaps a chart for a stack holding the chart and its empty state. */
+    private void replaceWithStack(Node chart, Node empty) {
+        if (!(chart.getParent() instanceof VBox parent)) {
+            return;
+        }
+        int index = parent.getChildren().indexOf(chart);
+        if (index < 0) {
+            return;
+        }
+        parent.getChildren().remove(index);
+        parent.getChildren().add(index, EmptyState.wrap(chart, empty));
     }
 
     /**
      * Updates the values displayed in the TilesFX tiles based on the latest data.
      */
     private void updateTiles() {
-        try {
-            if (totalAdmissionsTile != null) {
-                totalAdmissionsTile.setValue(totalAdmissions);
-            }
+        double monthlyAverage = monthlyData.isEmpty() ? 0
+                : monthlyData.values().stream().mapToInt(Integer::intValue).average().orElse(0.0);
 
-            if (adoptionRateTile != null) {
-                adoptionRateTile.setValue(adoptionRate);
-            }
-
-            if (monthlyAverageTile != null) {
-                double monthlyAverage = monthlyData.isEmpty() ? 0 :
-                        monthlyData.values().stream().mapToInt(Integer::intValue).average().orElse(0.0);
-                monthlyAverageTile.setValue(monthlyAverage);
-            }
-
-        } catch (Exception e) {
-            updateStatus("Error al actualizar tiles: " + e.getMessage(), false);
-            log.error("Unexpected error", e);
-        }
+        tilesContainer.getChildren().setAll(
+                KpiCard.create("fas-clipboard-list", "Total de admisiones",
+                        String.valueOf(totalAdmissions),
+                        "en " + currentYear, false),
+                KpiCard.create("fas-heart", "Tasa de adopción",
+                        String.format("%.1f%%", adoptionRate),
+                        totalAdmissions == 0 ? "sin datos para calcularla" : "de los admitidos", false),
+                KpiCard.create("fas-calendar-alt", "Promedio mensual",
+                        String.format("%.1f", monthlyAverage),
+                        "admisiones por mes", false));
     }
 
     /**
@@ -397,25 +387,33 @@ public class StatisticsController implements Initializable {
             XYChart.Series<String, Number> series = new XYChart.Series<>();
             series.setName("Admisiones");
 
+            // Abbreviated. Twelve full names did not fit and were drawn on top of
+            // one another in a heap at the left edge of the axis.
             String[] monthNames = {
-                    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-                    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+                    "Ene", "Feb", "Mar", "Abr", "May", "Jun",
+                    "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"
             };
 
             int maxValue = 0;
+            int total = 0;
             for (int i = 1; i <= 12; i++) {
                 String monthKey = String.format("%02d", i);
                 int value = monthlyData.getOrDefault(monthKey, 0);
                 maxValue = Math.max(maxValue, value);
-                String monthName = monthNames[i - 1];
-                series.getData().add(new XYChart.Data<>(monthName, value));
+                total += value;
+                series.getData().add(new XYChart.Data<>(monthNames[i - 1], value));
             }
 
+            // Headroom of one above the tallest bar, and never a scale so short
+            // that a single admission fills the chart.
             admissionsAxis.setLowerBound(0);
-            admissionsAxis.setUpperBound(Math.max(maxValue + 1, 5));
+            admissionsAxis.setUpperBound(Math.max(maxValue + 1, 4));
+            admissionsAxis.setTickUnit(Math.max(1, (maxValue + 1) / 5));
 
             monthlyAdmissionsChart.getData().clear();
             monthlyAdmissionsChart.getData().add(series);
+
+            EmptyState.toggle(monthlyAdmissionsChart, monthlyEmpty, total > 0);
 
         } catch (Exception e) {
             updateStatus("Error al actualizar gráfico mensual: " + e.getMessage(), false);
@@ -445,10 +443,13 @@ public class StatisticsController implements Initializable {
                     });
 
             originsCountAxis.setLowerBound(0);
-            originsCountAxis.setUpperBound(Math.max(maxValue[0] + 1, 5));
+            originsCountAxis.setUpperBound(Math.max(maxValue[0] + 1, 4));
+            originsCountAxis.setTickUnit(Math.max(1, (maxValue[0] + 1) / 5));
 
             originsChart.getData().clear();
             originsChart.getData().add(series);
+
+            EmptyState.toggle(originsChart, originsEmpty, !series.getData().isEmpty());
 
         } catch (Exception e) {
             updateStatus("Error al actualizar gráfico de orígenes: " + e.getMessage(), false);
@@ -471,13 +472,14 @@ public class StatisticsController implements Initializable {
                     pieChartData.add(new PieChart.Data("Adoptados (" + adopted + ")", adopted));
                 }
                 if (notAdopted > 0) {
-                    pieChartData.add(new PieChart.Data("No Adoptados (" + notAdopted + ")", notAdopted));
+                    pieChartData.add(new PieChart.Data("En el albergue (" + notAdopted + ")", notAdopted));
                 }
-            } else {
-                pieChartData.add(new PieChart.Data("Sin datos", 1));
             }
-
+            // No placeholder slice. A "Sin datos" wedge of value 1 drew a full
+            // circle, which reads as a complete result rather than an absence.
             adoptionPieChart.setData(pieChartData);
+
+            EmptyState.toggle(adoptionPieChart, pieEmpty, !pieChartData.isEmpty());
 
         } catch (Exception e) {
             updateStatus("Error al actualizar gráfico circular: " + e.getMessage(), false);

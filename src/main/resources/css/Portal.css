@@ -1,5 +1,5 @@
 .mainPortal {
-    -fx-background-color: #ffffff;
+    -fx-background-color: -surface;
         -fx-min-width: 1036px;
         -fx-min-height: 798px;
         -fx-max-width: Infinity;
@@ -27,7 +27,7 @@
 
 .toggle-button {
     -fx-background-color: transparent;
-    -fx-text-fill: #593414;
+    -fx-text-fill: -brand-text;
     -fx-font-size: 24px;
     -fx-font-weight: bold;
     -fx-cursor: hand;
@@ -38,14 +38,14 @@
 }
 
 .toggle-button:hover {
-    -fx-text-fill: #F2921D;
+    -fx-text-fill: -brand-primary;
     -fx-background-color: transparent;
     -fx-border-width: 0;
 }
 
 
 .sidebar {
-    -fx-background-color: #F2921D;
+    -fx-background-color: -brand-primary;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 8, 0.5, 2, 0);
     -fx-pref-width: 220px;
     -fx-padding: 60 20 20 20;

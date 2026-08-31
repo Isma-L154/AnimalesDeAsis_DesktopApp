@@ -3,6 +3,7 @@ package com.asosiaciondeasis.animalesdeasis.Controller.Statistic;
 import com.asosiaciondeasis.animalesdeasis.Config.ServiceFactory;
 import com.asosiaciondeasis.animalesdeasis.Service.Statistics.StatisticsService;
 import com.asosiaciondeasis.animalesdeasis.Util.Exporters.CsvStatisticsExporter;
+import com.asosiaciondeasis.animalesdeasis.Util.Helpers.BrandPalette;
 
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
 import javafx.animation.KeyFrame;
@@ -259,7 +260,7 @@ public class StatisticsController implements Initializable {
                     .prefSize(250, 150)
                     .title("Total de Admisiones")
                     .textColor(Color.WHITE)
-                    .backgroundColor(Color.web("#3498db"))
+                    .backgroundColor(BrandPalette.CHART_BLUE)
                     .foregroundColor(Color.WHITE)
                     .value(0)
                     .decimals(0)
@@ -274,7 +275,7 @@ public class StatisticsController implements Initializable {
                     .prefSize(250, 150)
                     .title("Tasa de Adopción")
                     .textColor(Color.WHITE)
-                    .backgroundColor(Color.web("#27ae60"))
+                    .backgroundColor(BrandPalette.SUCCESS)
                     .foregroundColor(Color.WHITE)
                     .unitColor(Color.WHITE)
                     .barColor(Color.WHITESMOKE)
@@ -291,7 +292,7 @@ public class StatisticsController implements Initializable {
                     .prefSize(250, 150)
                     .title("Promedio Mensual")
                     .textColor(Color.WHITE)
-                    .backgroundColor(Color.web("#f39c12"))
+                    .backgroundColor(BrandPalette.WARNING)
                     .foregroundColor(Color.WHITE)
                     .value(0)
                     .decimals(1)
@@ -500,9 +501,11 @@ public class StatisticsController implements Initializable {
     private void updateStatus(String message, boolean success) {
         if (statusLabel != null) {
             statusLabel.setText(message);
-            statusLabel.setStyle(success ?
-                    "-fx-text-fill: #27ae60;" :
-                    "-fx-text-fill: #e74c3c;");
+            // Style classes rather than setStyle: an inline style wins over any
+            // stylesheet rule, so the old version could not be re-themed and had
+            // to repeat the palette in Java.
+            statusLabel.getStyleClass().removeAll("status-success", "status-error");
+            statusLabel.getStyleClass().add(success ? "status-success" : "status-error");
         }
     }
 

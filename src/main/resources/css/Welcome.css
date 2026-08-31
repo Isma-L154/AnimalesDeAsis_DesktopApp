@@ -1,13 +1,13 @@
 /* ===========================================================================
    Welcome / landing screen
    Two-column hero using the brand tokens from theme.css (loaded first).
-   Brand: orange #F2921D, brown #593414.
+   Brand: orange -brand-primary, brown -brand-text.
    =========================================================================== */
 
 .main-container {
     /* Soft warm wash instead of flat white: gives the hero depth without
        competing with the artwork. */
-    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, #fffdfa, #fdf1e0);
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, -surface, -brand-tint);
     -fx-min-width: 1036px;
     -fx-min-height: 798px;
 }
@@ -26,13 +26,13 @@
     -fx-font-family: "Segoe UI Semibold", "Segoe UI", "Helvetica Neue", sans-serif;
     -fx-font-size: 56px;
     -fx-font-weight: bold;
-    -fx-text-fill: #593414;
+    -fx-text-fill: -brand-text;
     -fx-text-alignment: center;
 }
 
 /* Short brand-colored rule under the title, a cleaner separator than spacing. */
 .title-rule {
-    -fx-background-color: linear-gradient(to right, #F2921D, #E67E22);
+    -fx-background-color: linear-gradient(to right, -brand-primary, -brand-primary-dark);
     -fx-min-height: 5px;
     -fx-max-height: 5px;
     -fx-min-width: 84px;
@@ -44,14 +44,14 @@
     -fx-font-family: "Segoe UI", "Helvetica Neue", sans-serif;
     -fx-font-size: 22px;
     -fx-font-style: italic;
-    -fx-text-fill: #8a6d4f;
+    -fx-text-fill: -brand-text-soft;
     -fx-text-alignment: center;
 }
 
 .hero-description {
     -fx-font-family: "Segoe UI", sans-serif;
     -fx-font-size: 15px;
-    -fx-text-fill: #7a6a5a;
+    -fx-text-fill: -brand-text-muted;
     -fx-line-spacing: 3px;
     -fx-text-alignment: center;
 }
@@ -65,21 +65,21 @@
     -fx-padding: 15px 40px;
     -fx-background-radius: 30px;
     -fx-text-fill: white;
-    -fx-background-color: linear-gradient(to bottom, #F2921D, #E67E22);
+    -fx-background-color: linear-gradient(to bottom, -brand-primary, -brand-primary-dark);
     -fx-cursor: hand;
     -fx-effect: dropshadow(gaussian, rgba(242,146,29,0.4), 10, 0.2, 0, 4);
     -fx-border-color: transparent;
 }
 
 .continue-button:hover {
-    -fx-background-color: linear-gradient(to bottom, #E67E22, #D68910);
+    -fx-background-color: linear-gradient(to bottom, -brand-primary-dark, -brand-primary-darker);
     -fx-effect: dropshadow(gaussian, rgba(242,146,29,0.55), 14, 0.3, 0, 5);
     -fx-scale-x: 1.03;
     -fx-scale-y: 1.03;
 }
 
 .continue-button:pressed {
-    -fx-background-color: #D68910;
+    -fx-background-color: -brand-primary-darker;
     -fx-scale-x: 0.99;
     -fx-scale-y: 0.99;
 }
@@ -94,20 +94,20 @@
     -fx-background-radius: 24px;
     -fx-border-radius: 24px;
     -fx-background-color: rgba(255,255,255,0.75);
-    -fx-text-fill: #593414;
-    -fx-border-color: #e7d3b8;
+    -fx-text-fill: -brand-text;
+    -fx-border-color: -brand-sand;
     -fx-border-width: 1.5px;
     -fx-cursor: hand;
 }
 
 .quick-button:hover {
     -fx-background-color: white;
-    -fx-border-color: #F2921D;
-    -fx-text-fill: #C1660F;
+    -fx-border-color: -brand-primary;
+    -fx-text-fill: -brand-primary-deep;
 }
 
 .quick-button:pressed {
-    -fx-background-color: #fdf1e0;
+    -fx-background-color: -brand-tint;
     -fx-scale-x: 0.98;
     -fx-scale-y: 0.98;
 }
@@ -122,17 +122,17 @@
     -fx-background-radius: 20px;
     /* Neutral placeholder shown while the probe runs. */
     -fx-background-color: rgba(0,0,0,0.05);
-    -fx-text-fill: #7a6a5a;
+    -fx-text-fill: -brand-text-muted;
 }
 
 .status-badge.status-online {
-    -fx-background-color: #e8f6ed;
-    -fx-text-fill: #1e8449;
+    -fx-background-color: -success-tint;
+    -fx-text-fill: -success-darker;
 }
 
 .status-badge.status-offline {
-    -fx-background-color: #fdf0e6;
-    -fx-text-fill: #b0641a;
+    -fx-background-color: -brand-tint;
+    -fx-text-fill: -brand-primary-alt;
 }
 
 /* ── Right column ──────────────────────────────────────────────────────── */

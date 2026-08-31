@@ -1,57 +1,196 @@
 /*
  * ============================================================================
- *  Asociación de Asís — Design tokens (single source of truth)
+ *  Asociacion de Asis - Design tokens
  * ============================================================================
  *
- *  These are JavaFX "looked-up colors": once a stylesheet declares them on
- *  `.root`, any rule in a scene that also imports this file can reference them
- *  by name (e.g. `-fx-background-color: -brand-primary;`) instead of hardcoding
- *  hex values. Centralizing the palette here means a rebrand is a one-file edit.
+ *  Single source of truth for colour. Every stylesheet in the application
+ *  imports this file first and refers to colours by name; no view stylesheet
+ *  should contain a hex literal.
  *
- *  HOW TO USE: add this file first in a view's stylesheet list, e.g.
+ *  HOW TO USE - add this file first in a view's stylesheet list:
  *      stylesheets="@/css/theme.css, @/css/Animal/AnimalManagement.css"
- *  then replace hardcoded hex in the view CSS with the tokens below.
+ *  then write:
+ *      -fx-background-color: -brand-primary;
  *
- *  Brand palette (from the logo): warm orange primary + brown text accents.
- *  Green is reserved for positive/confirming actions, red for destructive ones.
+ *  WHY ONLY COLOURS ARE TOKENS
+ *  JavaFX CSS has no general variable mechanism. It supports "looked-up
+ *  colors" - a name declared on an ancestor that descendants resolve at apply
+ *  time - and nothing equivalent for numbers. `-fx-padding: -space-md` is not
+ *  a thing and never will be. Spacing and type are therefore expressed as the
+ *  utility classes at the foot of this file, not as tokens. Anyone looking for
+ *  a spacing variable should stop looking and use a class.
+ *
+ *  TWO NEUTRAL FAMILIES
+ *  The palette below carries both a "flat" neutral family (the #2c3e50
+ *  lineage) and a "slate" one (the Tailwind lineage). They coexist because
+ *  they accumulated, not because anyone chose two. They are both listed here,
+ *  exactly as they were, because collapsing them changes what the screens look
+ *  like and that is not this file's job. Naming them makes the duplication
+ *  visible so the screen rework can resolve it deliberately.
+ * ============================================================================
  */
 
 .root {
     /* --- Brand --- */
-    -brand-primary:        #F2921D;   /* main accent: primary buttons, active items */
-    -brand-primary-dark:   #E67E22;   /* gradient bottom / hover */
-    -brand-primary-darker: #D68910;   /* pressed */
-    -brand-accent:         #F24E29;   /* strong hover / attention */
-    -brand-text:           #593414;   /* headings and brand-colored labels */
+    -brand-primary:        #f2921d;
+    -brand-primary-dark:   #e67e22;
+    -brand-primary-darker: #d68910;
+    -brand-primary-deep:   #c1660f;
+    -brand-primary-alt:    #b0641a;
+    -brand-burnt:          #d35400;
+    -brand-text:           #593414;
+    -brand-text-dark:      #4a2a11;   /* was also #4b2e0e */
+    -brand-text-mid:       #7a4a1d;
+    -brand-text-soft:      #8a6d4f;
+    -brand-text-muted:     #7a6a5a;
+    -brand-sand:           #e7d3b8;
+    -brand-tint:           #fdf1e0;   /* was also #fef7e6, #fff3e0, #fdf0e6 */
+    -brand-tint-soft:      #fdf6ec;
 
-    /* --- Semantic --- */
-    -success:              #27ae60;
-    -success-dark:         #229954;
-    -danger:               #e74c3c;
-    -danger-dark:          #c0392b;
-    -warning:              #f39c12;
+    /* --- Surfaces --- */
+    -surface:     #ffffff;   /* was also #fafbfc, #f8fafc, #fffdfa */
+    -surface-alt: #f8f9fa;   /* was also #fffaf3, #fdf8f2, #f5f5f5, #f9f9f9 */
 
-    /* --- Neutrals (body text, borders, surfaces) --- */
-    -text-strong:          #2c2c2c;
-    -text-muted:           #666666;
-    -surface:              #ffffff;
-    -surface-alt:          #f8f9fa;
-    -border-subtle:        #e2e8f0;
+    /* --- Neutrals - "flat" family --- */
+    -flat-900: #2c3e50;
+    -flat-800: #34495e;
+    -flat-600: #7f8c8d;
+    -flat-500: #95a5a6;
+    -flat-450: #85929e;
+    -flat-300: #bdc3c7;
+    -flat-200: #d5dbdb;
+    -flat-100: #ecf0f1;   /* was also #e9ecef */
 
-    /* Consistent, accessible focus ring color across all controls. */
-    -focus-ring:           -brand-primary;
+    /* --- Neutrals - "slate" family --- */
+    -slate-900: #1e293b;
+    -slate-500: #64748b;
+    -slate-400: #94a3b8;
+    -slate-300: #cbd5e1;   /* was also #ced4da */
+    -slate-200: #e2e8f0;   /* was also #e8e8e8 */
+    -slate-50:  #f1f5f9;   /* was also #f1f2f6 */
+
+    /* --- Neutrals - plain grey --- */
+    -grey-900: #333333;
+    -grey-700: #495057;
+    -grey-600: #666666;
+    -grey-550: #6c757d;   /* was also #6c7b7d */
+    -grey-400: #adb5bd;
+    -grey-200: #e0e0e0;   /* was also #dee2e6 */
+
+    /* --- Semantic - success --- */
+    -success:          #27ae60;
+    -success-dark:     #229954;
+    -success-darker:   #1e8449;
+    -success-light:    #2ecc71;
+    -success-alt:      #28a745;
+    -success-alt-dark: #218838;
+    -success-tint:     #e8f5e8;   /* was also #e8f6ed */
+
+    /* --- Semantic - danger --- */
+    -danger:           #e74c3c;
+    -danger-dark:      #c0392b;
+    -danger-darker:    #b03a2e;
+    -danger-deep:      #a93226;
+    -danger-deepest:   #922b21;
+    -danger-bright:    #ef4444;
+    -danger-rose:      #d1495b;
+    -danger-soft:      #cc3e39;
+    -danger-tint:      #ffcccc;
+    -danger-tint-soft: #fdf2f2;
+
+    /* --- Semantic - warning --- */
+    -warning:      #f59e0b;   /* was also #f39c12 */
+    -warning-dark: #d97706;
+
+    /* --- Chart and decorative --- */
+    -chart-blue:         #3498db;
+    -chart-purple:       #8e44ad;
+    -chart-purple-light: #9b59b6;
+
+
+    /* --- Semantic aliases -------------------------------------------------
+       Names that say what a colour is for rather than what it is. Prefer these
+       in view stylesheets; reach for a palette name only when none fits. */
+    -text-strong:    -flat-900;
+    -text-muted:     -flat-600;
+    -border-subtle:  -slate-200;
+    -focus-ring:     -brand-primary;
 }
 
 /*
- * Accessible focus indicator. A visible focus ring is important for keyboard
- * navigation; JavaFX's default is faint. Scoped to common controls only so it
- * does not fight per-view styling.
+ * ---------------------------------------------------------------------------
+ *  Focus
+ * ---------------------------------------------------------------------------
+ *  JavaFX's default focus indicator is faint enough to be missed, which makes
+ *  keyboard navigation guesswork. One visible ring, applied to every control
+ *  that can take focus.
  */
 .button:focused,
 .text-field:focused,
 .text-area:focused,
 .combo-box:focused,
 .date-picker:focused,
-.check-box:focused {
+.check-box:focused,
+.spinner:focused,
+.choice-box:focused,
+.toggle-button:focused,
+.list-view:focused,
+.table-view:focused {
     -fx-effect: dropshadow(gaussian, -focus-ring, 6, 0.3, 0, 0);
 }
+
+/*
+ * ---------------------------------------------------------------------------
+ *  Type scale
+ * ---------------------------------------------------------------------------
+ *  Sizes are fixed rather than relative because JavaFX has no rem. Use these
+ *  classes instead of setting -fx-font-size ad hoc, so the steps stay a scale
+ *  and do not drift into twenty arbitrary sizes.
+ */
+.text-display { -fx-font-size: 28px; -fx-font-weight: bold;   -fx-text-fill: -brand-text; }
+.text-title   { -fx-font-size: 22px; -fx-font-weight: bold;   -fx-text-fill: -brand-text; }
+.text-heading { -fx-font-size: 18px; -fx-font-weight: bold;   -fx-text-fill: -text-strong; }
+.text-body    { -fx-font-size: 14px;                          -fx-text-fill: -text-strong; }
+.text-small   { -fx-font-size: 12px;                          -fx-text-fill: -text-muted; }
+.text-caption { -fx-font-size: 11px;                          -fx-text-fill: -text-muted; }
+
+/*
+ * ---------------------------------------------------------------------------
+ *  Spacing scale
+ * ---------------------------------------------------------------------------
+ *  A 4px base. Applied as padding utilities; for gaps between children set
+ *  spacing on the container in FXML using the same steps (4, 8, 12, 16, 24, 32).
+ */
+.pad-xs { -fx-padding:  4px; }
+.pad-sm { -fx-padding:  8px; }
+.pad-md { -fx-padding: 12px; }
+.pad-lg { -fx-padding: 16px; }
+.pad-xl { -fx-padding: 24px; }
+
+/*
+ * ---------------------------------------------------------------------------
+ *  Surfaces
+ * ---------------------------------------------------------------------------
+ *  A card is the same card everywhere: same radius, same border, same shadow.
+ */
+.surface-card {
+    -fx-background-color: -surface;
+    -fx-background-radius: 8px;
+    -fx-border-color: -border-subtle;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.06), 8, 0, 0, 2);
+}
+
+/*
+ * ---------------------------------------------------------------------------
+ *  States set from Java
+ * ---------------------------------------------------------------------------
+ *  Controllers used to build these with setStyle() and a hex literal, which put
+ *  colour decisions in Java where the theme cannot reach them. They are classes
+ *  now; the controllers add and remove the class instead.
+ */
+.date-cell-disabled { -fx-background-color: -danger-tint; }
+
+.status-success { -fx-text-fill: -success; }
+.status-error   { -fx-text-fill: -danger; }

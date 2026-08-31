@@ -1,6 +1,6 @@
 /* Root container */
 .form-root {
-    -fx-background-color: linear-gradient(to bottom right, #f1f5f9, #e2e8f0);
+    -fx-background-color: linear-gradient(to bottom right, -slate-50, -slate-200);
     -fx-padding: 0;
     -fx-alignment: center;
 }
@@ -52,26 +52,26 @@
 
 .icon-label {
     -fx-font-size: 48px;
-    -fx-text-fill: #F2921D;
+    -fx-text-fill: -brand-primary;
 }
 
 .form-title {
     -fx-font-size: 32px;
     -fx-font-weight: bold;
-    -fx-text-fill: #1e293b;
+    -fx-text-fill: -slate-900;
     -fx-font-family: "Segoe UI", "San Francisco", "Helvetica Neue", sans-serif;
 }
 
 .form-subtitle {
     -fx-font-size: 16px;
-    -fx-text-fill: #64748b;
+    -fx-text-fill: -slate-500;
     -fx-font-weight: normal;
     -fx-wrap-text: true;
     -fx-text-alignment: center;
 }
 
 .title-separator {
-    -fx-background-color: #e2e8f0;
+    -fx-background-color: -slate-200;
     -fx-pref-width: 100px;
     -fx-pref-height: 2px;
     -fx-opacity: 0.6;
@@ -79,11 +79,11 @@
 
 /* Form cards */
 .form-card {
-    -fx-background-color: #ffffff;
+    -fx-background-color: -surface;
     -fx-background-radius: 16px;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);
     -fx-padding: 32px;
-    -fx-border-color: #e2e8f0;
+    -fx-border-color: -slate-200;
     -fx-border-width: 1px;
     -fx-border-radius: 16px;
 }
@@ -92,7 +92,7 @@
 .section-title {
     -fx-font-size: 20px;
     -fx-font-weight: bold;
-    -fx-text-fill: #1e293b;
+    -fx-text-fill: -slate-900;
     -fx-font-family: "Segoe UI", "San Francisco", sans-serif;
 }
 
@@ -100,65 +100,65 @@
 .field-label {
     -fx-font-size: 14px;
     -fx-font-weight: 500;
-    -fx-text-fill: #1e293b;
+    -fx-text-fill: -slate-900;
     -fx-font-family: "Segoe UI", sans-serif;
 }
 
 .required-asterisk {
-    -fx-text-fill: #ef4444;
+    -fx-text-fill: -danger-bright;
     -fx-font-weight: bold;
     -fx-font-size: 14px;
 }
 
 /* Text fields */
 .custom-field {
-    -fx-background-color: #ffffff;
-    -fx-border-color: #cbd5e1;
+    -fx-background-color: -surface;
+    -fx-border-color: -slate-300;
     -fx-border-width: 2px;
     -fx-border-radius: 8px;
     -fx-background-radius: 8px;
     -fx-padding: 12px 16px;
     -fx-font-size: 14px;
-    -fx-text-fill: #1e293b;
-    -fx-prompt-text-fill: #64748b;
+    -fx-text-fill: -slate-900;
+    -fx-prompt-text-fill: -slate-500;
     -fx-font-family: "Segoe UI", sans-serif;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 2, 0, 0, 1);
     -fx-focus-traversable: true;
 }
 
 .custom-field:focused {
-    -fx-border-color: #F2921D;
+    -fx-border-color: -brand-primary;
     -fx-border-width: 2.5px;
     -fx-effect: dropshadow(gaussian, rgba(242,146,29,0.25), 6, 0, 0, 0);
 }
 
 .custom-field:hover {
-    -fx-border-color: #94a3b8;
+    -fx-border-color: -slate-400;
 }
 
 /* ComboBox */
 .custom-combo {
-    -fx-background-color: #ffffff;
-    -fx-border-color: #cbd5e1;
+    -fx-background-color: -surface;
+    -fx-border-color: -slate-300;
     -fx-border-width: 2px;
     -fx-border-radius: 8px;
     -fx-background-radius: 8px;
     -fx-padding: 8px 12px;
     -fx-font-size: 14px;
-    -fx-text-fill: #1e293b;
-    -fx-prompt-text-fill: #64748b;
+    -fx-text-fill: -slate-900;
+    -fx-prompt-text-fill: -slate-500;
     -fx-font-family: "Segoe UI", sans-serif;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 2, 0, 0, 1);
 }
 
 .custom-combo:focused {
-    -fx-border-color: #F2921D;
+    -fx-border-color: -brand-primary;
     -fx-border-width: 2.5px;
     -fx-effect: dropshadow(gaussian, rgba(242,146,29,0.25), 6, 0, 0, 0);
 }
 
 .custom-combo:hover {
-    -fx-border-color: #94a3b8;
+    -fx-border-color: -slate-400;
 }
 
 .custom-combo .arrow-button {
@@ -168,7 +168,7 @@
 }
 
 .custom-combo .arrow {
-    -fx-background-color: #64748b;
+    -fx-background-color: -slate-500;
     -fx-shape: "M7 10l5 5 5-5z";
     -fx-scale-shape: true;
     -fx-pref-width: 8px;
@@ -177,25 +177,25 @@
 
 /* DatePicker */
 .custom-date {
-    -fx-background-color: #ffffff;
-    -fx-border-color: #cbd5e1;
+    -fx-background-color: -surface;
+    -fx-border-color: -slate-300;
     -fx-border-width: 2px;
     -fx-border-radius: 8px;
     -fx-background-radius: 8px;
     -fx-font-size: 14px;
-    -fx-text-fill: #1e293b;
+    -fx-text-fill: -slate-900;
     -fx-font-family: "Segoe UI", sans-serif;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 2, 0, 0, 1);
 }
 
 .custom-date:focused {
-    -fx-border-color: #F2921D;
+    -fx-border-color: -brand-primary;
     -fx-border-width: 2.5px;
     -fx-effect: dropshadow(gaussian, rgba(242,146,29,0.25), 6, 0, 0, 0);
 }
 
 .custom-date:hover {
-    -fx-border-color: #94a3b8;
+    -fx-border-color: -slate-400;
 }
 
 .custom-date .text-field {
@@ -213,8 +213,8 @@
 
 /* Spinner */
 .custom-spinner {
-    -fx-background-color: #ffffff;
-    -fx-border-color: #cbd5e1;
+    -fx-background-color: -surface;
+    -fx-border-color: -slate-300;
     -fx-border-width: 2px;
     -fx-border-radius: 8px;
     -fx-background-radius: 8px;
@@ -223,20 +223,20 @@
 }
 
 .custom-spinner:focused {
-    -fx-border-color: #F2921D;
+    -fx-border-color: -brand-primary;
     -fx-border-width: 2.5px;
     -fx-effect: dropshadow(gaussian, rgba(242,146,29,0.25), 6, 0, 0, 0);
 }
 
 .custom-spinner:hover {
-    -fx-border-color: #94a3b8;
+    -fx-border-color: -slate-400;
 }
 
 .custom-spinner .text-field {
     -fx-background-color: transparent;
     -fx-border-width: 0;
     -fx-padding: 12px 16px;
-    -fx-text-fill: #1e293b;
+    -fx-text-fill: -slate-900;
 }
 
 .custom-spinner .increment-arrow-button,
@@ -247,28 +247,28 @@
 
 /* TextArea */
 .custom-textarea {
-    -fx-background-color: #ffffff;
-    -fx-border-color: #cbd5e1;
+    -fx-background-color: -surface;
+    -fx-border-color: -slate-300;
     -fx-border-width: 2px;
     -fx-border-radius: 8px;
     -fx-background-radius: 8px;
     -fx-padding: 12px 16px;
     -fx-font-size: 14px;
-    -fx-text-fill: #1e293b;
-    -fx-prompt-text-fill: #64748b;
+    -fx-text-fill: -slate-900;
+    -fx-prompt-text-fill: -slate-500;
     -fx-font-family: "Segoe UI", sans-serif;
     -fx-wrap-text: true;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 2, 0, 0, 1);
 }
 
 .custom-textarea:focused {
-    -fx-border-color: #F2921D;
+    -fx-border-color: -brand-primary;
     -fx-border-width: 2.5px;
     -fx-effect: dropshadow(gaussian, rgba(242,146,29,0.25), 6, 0, 0, 0);
 }
 
 .custom-textarea:hover {
-    -fx-border-color: #94a3b8;
+    -fx-border-color: -slate-400;
 }
 
 .custom-textarea .content {
@@ -281,7 +281,7 @@
 }
 
 .save-button {
-    -fx-background-color: #F2921D;
+    -fx-background-color: -brand-primary;
     -fx-text-fill: white;
     -fx-font-size: 16px;
     -fx-font-weight: bold;
@@ -294,7 +294,7 @@
 }
 
 .save-button:hover {
-    -fx-background-color: #E67E22;
+    -fx-background-color: -brand-primary-dark;
     -fx-effect: dropshadow(gaussian, rgba(242,146,29,0.4), 8, 0, 0, 3);
     -fx-scale-y: 1.02;
     -fx-scale-x: 1.02;
@@ -307,11 +307,11 @@
 
 .cancel-button {
     -fx-background-color: transparent;
-    -fx-text-fill: #64748b;
+    -fx-text-fill: -slate-500;
     -fx-font-size: 16px;
     -fx-font-weight: 500;
     -fx-padding: 14px 32px;
-    -fx-border-color: #e2e8f0;
+    -fx-border-color: -slate-200;
     -fx-border-width: 1.5px;
     -fx-border-radius: 8px;
     -fx-background-radius: 8px;
@@ -320,13 +320,13 @@
 }
 
 .cancel-button:hover {
-    -fx-background-color: #f8fafc;
-    -fx-border-color: #64748b;
-    -fx-text-fill: #1e293b;
+    -fx-background-color: -surface;
+    -fx-border-color: -slate-500;
+    -fx-text-fill: -slate-900;
 }
 
 .scan-button {
-    -fx-background-color: #27ae60;
+    -fx-background-color: -success;
     -fx-text-fill: white;
     -fx-font-size: 14px;
     -fx-font-weight: 500;
@@ -339,7 +339,7 @@
 }
 
 .scan-button:hover {
-    -fx-background-color: #229954;
+    -fx-background-color: -success-dark;
     -fx-effect: dropshadow(gaussian, rgba(39,174,96,0.4), 6, 0, 0, 2);
 }
 
@@ -357,3 +357,11 @@
 /* NOTE: JavaFX CSS has no @media support, so the responsive block that used to
    live here never applied and was removed. Size adaptation is handled by the
    layout instead (ScrollPane with fit-to-width). */
+/* Was an inline style on the label in the FXML, which meant the colour of a
+   required-field notice lived outside the stylesheet and could not follow the
+   theme. */
+.required-info-label {
+    -fx-text-fill: -danger-soft;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+}

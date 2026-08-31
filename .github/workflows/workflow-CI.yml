@@ -149,6 +149,12 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      # download-artifact reads from the current run via the runner's own token
+      # and should not need this. Granted anyway: unlike the other jobs, this one
+      # never runs on a pull request, so the assumption cannot be tested before
+      # it reaches main — and a wrong assumption here breaks publishing. A
+      # read-only scope is a cheap hedge against an untestable guess.
+      actions: read
     steps:
       - name: Download all installers
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4

@@ -57,7 +57,6 @@ public class PortalController {
             syncIndicator = new SyncStatusIndicator(syncChip);
         }
 
-        sidebar.setPortalController(this);
         sidebar.setCollapsed(UiPreferences.isRailCollapsed());
         VBox rail = sidebar.build(this::navigateTo);
         sidebarInclude.getChildren().setAll(rail.getChildren());

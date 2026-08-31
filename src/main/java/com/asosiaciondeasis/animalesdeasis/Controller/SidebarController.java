@@ -1,6 +1,5 @@
 package com.asosiaciondeasis.animalesdeasis.Controller;
 
-import com.asosiaciondeasis.animalesdeasis.Abstraccions.IPortalAwareController;
 import com.asosiaciondeasis.animalesdeasis.Model.NavigationSection;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -30,19 +29,17 @@ import java.util.Map;
  * tab stop, no Enter, nothing. A {@code Button} is focusable and handles Enter
  * and Space natively, which is most of keyboard support arriving for free.</p>
  */
-public class SidebarController implements IPortalAwareController {
+public class SidebarController {
 
     private static final String ACTIVE_CLASS = "active";
     private static final double EXPANDED_WIDTH = 180;
     private static final double COLLAPSED_WIDTH = 72;
 
     private final Map<NavigationSection, Button> items = new EnumMap<>(NavigationSection.class);
-    private final Map<NavigationSection, Label> itemLabels = new EnumMap<>(NavigationSection.class);
     private final Map<NavigationSection.Group, Node> groupHeadings =
             new EnumMap<>(NavigationSection.Group.class);
 
     private VBox root;
-    private PortalController portalController;
     private boolean collapsed;
 
     /**
@@ -96,9 +93,6 @@ public class SidebarController implements IPortalAwareController {
         FontIcon icon = new FontIcon(section.iconLiteral());
         icon.getStyleClass().add("sidebar-icon");
 
-        Label text = new Label(section.label());
-        text.getStyleClass().add("sidebar-item-text");
-
         Button item = new Button();
         item.setGraphic(icon);
         item.setText(section.label());
@@ -118,7 +112,6 @@ public class SidebarController implements IPortalAwareController {
         item.setTooltip(tooltip);
 
         items.put(section, item);
-        itemLabels.put(section, text);
         return item;
     }
 
@@ -167,16 +160,5 @@ public class SidebarController implements IPortalAwareController {
             divider.setVisible(value);
             divider.setManaged(value);
         }
-    }
-
-    @Override
-    public void setPortalController(PortalController portalController) {
-        this.portalController = portalController;
-    }
-
-    /** The rail lives as long as the portal does and subscribes to nothing. */
-    @Override
-    public void cleanup() {
-        // Nothing held.
     }
 }

@@ -41,3 +41,12 @@ updates:
       day: monday
     commit-message:
       prefix: "CI"
+    groups:
+      # init and analyze are two entry points into the same action and refuse to
+      # run at different versions: "Loaded a configuration file for version
+      # '3.37.9', but running version '4.37.9'". Ungrouped, Dependabot opens a
+      # pull request per entry point, each one mixing the old version with the
+      # new, so neither can go green and neither can be merged first.
+      codeql-action:
+        patterns:
+          - "github/codeql-action*"

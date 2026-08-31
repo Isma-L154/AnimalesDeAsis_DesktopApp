@@ -480,5 +480,11 @@ public class AnimalManagementController implements IPortalAwareController {
      * Cleans up the sync listener when the controller is disposed.
      * Removes the listener from the SyncEventManager.
      */
-    public void cleanup() {if (syncListener != null) {SyncEventManager.removeListener(syncListener);}}
+    @Override
+    public void cleanup() {
+        if (syncListener != null) {
+            SyncEventManager.removeListener(syncListener);
+            syncListener = null;
+        }
+    }
 }

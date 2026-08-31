@@ -33,8 +33,16 @@ jobs:
           java-version: '17'
           java-package: jdk+fx
           cache: maven
+      # The interface tests construct real JavaFX controls, and a Control cannot
+      # even be instantiated without a running toolkit - `new TextField()` throws
+      # on a plain JVM. A virtual X server is what lets them run on an agent with
+      # no display, against real JavaFX rather than a stub, so what the tests
+      # exercise is what ships.
+      - name: Install a virtual display
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends xvfb
+
       - name: Build and test
-        run: mvn -B clean test --file pom.xml
+        run: xvfb-run -a mvn -B clean test --file pom.xml
       - name: Publish test report
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

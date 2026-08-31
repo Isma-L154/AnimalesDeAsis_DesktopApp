@@ -54,3 +54,7 @@ google-services.json
 
 # ==== Brainstorming scratch (local only) ====
 .superpowers/
+
+# Audit questionnaire used to drive the security review. Deliberately local:
+# it is a working tool, not part of the project.
+security-audit-prompt.md

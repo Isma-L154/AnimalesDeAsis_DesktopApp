@@ -74,18 +74,34 @@ The goal of this project is to provide a **comprehensive offline-first solution*
 | Backend           | Java 17           |
 
 ### 🔐 Firebase Sync Setup
+
 To enable **Firebase cloud synchronization**:
+
 1. In the Firebase Console, generate a service-account private key (JSON).
-2. Encrypt it into `src/main/resources/FireConfig/firebase-credentials.enc`:
+2. Choose a long random passphrase and export it. There is no default, and the
+   tool refuses to run without one:
+   ```bash
+   export ANIMALESDEASIS_CRED_KEY='...'      # bash
+   $env:ANIMALESDEASIS_CRED_KEY = '...'      # PowerShell
+   ```
+3. Encrypt the JSON into `src/main/resources/FireConfig/firebase-credentials.enc`:
    ```bash
    java -cp target/classes \
      com.asosiaciondeasis.animalesdeasis.Config.FirebaseCredentialsEncryptor path/to/service-account.json
    ```
-3. Delete the plaintext JSON (it is already covered by `.gitignore`) and restart the app.
+4. Delete the plaintext JSON, and set the **same** passphrase as
+   `ANIMALESDEASIS_CRED_KEY` on every machine that synchronises.
 
-> The encrypted bundle and any service-account JSON are **never committed**. If no
-> credentials are present the app simply runs in **offline-only** mode. See
-> [SECURITY.md](SECURITY.md) for the full credential-handling and key-rotation guide.
+Without step 4 the application runs local-only. That is deliberate: it used to
+fall back to a key compiled into the source, so every published build decrypted
+with a passphrase anyone could read in this repository.
+
+> **Upgrading?** Bundles from before this change no longer open, and the
+> application says so on startup. The service-account key they hold has to be
+> **revoked**, not merely re-encrypted — see [SECURITY.md](SECURITY.md).
+
+> The encrypted bundle and any service-account JSON are **never committed**; the
+> git history was checked and neither ever has been.
 
 ---
 

@@ -1,142 +1,109 @@
 package com.asosiaciondeasis.animalesdeasis.Config;
 
-import javax.crypto.Cipher;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.MessageDigest;
-import java.security.SecureRandom;
 
 /**
- * FIREBASE CREDENTIALS ENCRYPTION UTILITY
+ * One-off tool that encrypts a Firebase service-account JSON into the bundle the
+ * application ships.
  *
- * This class is provided as a reference for users who want to use Firebase functionality.
- * Follow these steps to set up Firebase credentials:
+ * <h2>Usage</h2>
+ * <pre>
+ *   # Choose a long random passphrase and export it first. There is no default:
+ *   # the tool refuses to run without one, on purpose.
+ *   export ANIMALESDEASIS_CRED_KEY='...'                      # bash
+ *   $env:ANIMALESDEASIS_CRED_KEY = '...'                      # PowerShell
  *
- * STEP 1: Get your Firebase service account key
- *   - Go to Firebase Console → Project Settings → Service Accounts
- *   - Click "Generate new private key" 
- *   - Download the JSON file (e.g., "your-project-firebase-adminsdk.json")
+ *   mvn -q compile
+ *   java -cp target/classes \
+ *     com.asosiaciondeasis.animalesdeasis.Config.FirebaseCredentialsEncryptor \
+ *     path/to/service-account.json
+ * </pre>
  *
- * STEP 2: Encrypt your credentials
- *   - Place your Firebase JSON file in your project root
- *   - Uncomment the main() method below
- *   - Update the INPUT_FILE path to point to your JSON file
- *   - Run this class to generate the encrypted file
+ * <p>Then delete the plaintext JSON. It is covered by {@code .gitignore}, but the
+ * risk is the copy on disk, not the commit.</p>
  *
- * STEP 3: Add the encrypted file to resources
- *   - Copy the generated "firebase-credentials.enc" file 
- *   - Place it in "src/main/resources/FireConfig/" directory
+ * <h2>Encryption is not the whole answer</h2>
  *
- * STEP 4: Clean up
- *   - Delete the original JSON file from your project
- *   - Re-comment the main() method to avoid accidental execution
- *   - Add "*.json" to your .gitignore to prevent credential leaks
+ * <p>The bundle travels inside the installer and whatever opens it has to reach
+ * the machine running the application, so a determined reader can always get the
+ * credential back out. This raises the cost; it does not remove the exposure.
+ * The Admin SDK also ignores Firestore security rules entirely, so the key it
+ * protects grants unrestricted read and write over the whole database.</p>
  *
- * SECURITY NOTE: 
- * This encryption method provides basic obfuscation only. For production
- * environments, consider using proper key management solutions like:
- * - Environment variables
- * - Azure Key Vault / AWS Secrets Manager / Google Secret Manager
- * - Hardware Security Modules (HSM)
+ * <p>{@code SECURITY.md} sets out what actually removes that, and the rotation
+ * procedure that has to happen first.</p>
  */
-public class FirebaseCredentialsEncryptor {
+public final class FirebaseCredentialsEncryptor {
 
-    private static final String ALGORITHM = "AES";
-    private static final String TRANSFORMATION = "AES/ECB/PKCS5Padding";
-    private static final int IV_LENGTH = 16;
-
-    // Default location of the encrypted bundle inside the project resources.
-    private static final String DEFAULT_OUTPUT_FILE =
+    private static final String DEFAULT_OUTPUT =
             "src/main/resources/FireConfig/firebase-credentials.enc";
 
-    /**
-     * Generates an encryption key based on system properties.
-     * NOTE: This key generation method is NOT secure for production use.
-     * It's designed for development/demo purposes only.
-     */
-    /**
-     * Encrypts the Firebase credentials JSON file.
-     *
-     * @param inputFilePath Path to your Firebase service account JSON file
-     * @param outputFilePath Path where the encrypted file will be saved
-     */
-    public static void encryptCredentials(String inputFilePath, String outputFilePath) {
-        try {
-            // Read the original JSON file
-            byte[] fileContent = Files.readAllBytes(Paths.get(inputFilePath));
-
-            // Use CredentialsManager's encrypt method (no duplication!)
-            byte[] encryptedData = CredentialsManager.encrypt(fileContent);
-
-            // Write encrypted data to the output file
-            try (FileOutputStream fos = new FileOutputStream(outputFilePath)) {
-                fos.write(encryptedData);
-            }
-
-            System.out.println("✅ Firebase credentials encrypted successfully with CBC mode!");
-            System.out.println("📁 Encrypted file saved as: " + outputFilePath);
-            System.out.println("📋 Next steps:");
-            System.out.println("   1. Copy '" + outputFilePath + "' to 'src/main/resources/FireConfig/'");
-            System.out.println("   2. Delete the original JSON file: '" + inputFilePath + "'");
-            System.out.println("   3. Add '*.json' to your .gitignore file");
-            System.out.println("   4. Re-comment the main() method in this class");
-
-        } catch (Exception e) {
-            System.err.println("❌ Error encrypting credentials: " + e.getMessage());
-            e.printStackTrace();
-        }
+    private FirebaseCredentialsEncryptor() {
     }
 
     /**
-     * One-off tool to (re-)encrypt a Firebase service-account JSON.
-     *
-     * <p><b>Usage</b> (from IntelliJ: right-click → Run, or via Maven):</p>
-     * <pre>
-     *   args[0] = path to the downloaded service-account JSON  (required)
-     *   args[1] = output path for the .enc file                (optional,
-     *             defaults to src/main/resources/FireConfig/firebase-credentials.enc)
-     * </pre>
-     *
-     * <p>Set the passphrase first so the bundle is encrypted with the same key the
-     * app will use to decrypt it:</p>
-     * <pre>
-     *   Windows (PowerShell):  $env:ANIMALESDEASIS_CRED_KEY = "your-long-passphrase"
-     *   or pass a JVM option:  -Danimalesdeasis.cred.key=your-long-passphrase
-     * </pre>
-     *
-     * After it runs: delete the plaintext JSON and never commit it (it is already
-     * covered by .gitignore).
+     * @param inputPath  the downloaded service-account JSON
+     * @param outputPath where to write the encrypted bundle
      */
+    public static void encryptCredentials(String inputPath, String outputPath) throws Exception {
+        byte[] plaintext = Files.readAllBytes(Paths.get(inputPath));
+        byte[] encrypted = CredentialsManager.encrypt(plaintext);
+        java.util.Arrays.fill(plaintext, (byte) 0);
+
+        Path output = Paths.get(outputPath);
+        if (output.getParent() != null) {
+            Files.createDirectories(output.getParent());
+        }
+        try (FileOutputStream out = new FileOutputStream(outputPath)) {
+            out.write(encrypted);
+        }
+    }
+
     public static void main(String[] args) {
-        System.out.println("🔐 Firebase Credentials Encryptor");
-        System.out.println("==================================");
-
         if (args.length < 1) {
-            System.err.println("❌ Missing argument.");
-            System.err.println("   Usage: FirebaseCredentialsEncryptor <input.json> [output.enc]");
+            System.err.println("Uso: FirebaseCredentialsEncryptor <input.json> [output.enc]");
+            System.exit(2);
             return;
         }
 
-        String inputFile = args[0];
-        String outputFile = args.length >= 2 ? args[1] : DEFAULT_OUTPUT_FILE;
+        String input = args[0];
+        String output = args.length >= 2 ? args[1] : DEFAULT_OUTPUT;
 
-        if (!Files.exists(Paths.get(inputFile))) {
-            System.err.println("❌ Input file not found: " + inputFile);
+        if (!Files.exists(Paths.get(input))) {
+            System.err.println("No existe el archivo de entrada: " + input);
+            System.exit(2);
             return;
         }
 
-        boolean usingLegacyKey = System.getenv("ANIMALESDEASIS_CRED_KEY") == null
-                && System.getProperty("animalesdeasis.cred.key") == null;
-        if (usingLegacyKey) {
-            System.out.println("⚠️  No passphrase set — encrypting with the LEGACY key.");
-            System.out.println("    Set ANIMALESDEASIS_CRED_KEY (env) or -Danimalesdeasis.cred.key first to rotate.");
+        try {
+            encryptCredentials(input, output);
+        } catch (CredentialsException e) {
+            // Almost always the missing passphrase. Previous versions carried on
+            // with a built-in constant instead, which is how a public key ended
+            // up protecting a live database.
+            System.err.println(e.getMessage());
+            System.exit(1);
+            return;
+        } catch (Exception e) {
+            System.err.println("No se pudo cifrar el archivo: " + e.getMessage());
+            System.exit(1);
+            return;
         }
 
-        encryptCredentials(inputFile, outputFile);
+        System.out.println("Bundle cifrado en: " + output);
+        System.out.println();
+        System.out.println("Ahora:");
+        System.out.println("  1. Borrá el JSON en claro: " + input);
+        System.out.println("  2. Actualizá el secreto FIREBASE_CREDENTIALS_ENC del repositorio:");
+        System.out.println("       base64 -w0 " + output + "     (Linux)");
+        System.out.println("       base64 -i  " + output + "     (macOS)");
+        System.out.println("  3. Poné la misma passphrase en cada máquina que sincroniza,");
+        System.out.println("     como variable de entorno ANIMALESDEASIS_CRED_KEY.");
+        System.out.println();
+        System.out.println("Sin el paso 3 la aplicación arranca en modo local: es lo esperado,");
+        System.out.println("y es lo que antes quedaba tapado por la clave fija del código.");
     }
 }

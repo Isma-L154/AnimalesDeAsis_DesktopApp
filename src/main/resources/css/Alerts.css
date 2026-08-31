@@ -31,36 +31,51 @@
     -fx-spacing: 10px;
 }
 
+/*
+ * Buttons.
+ *
+ * The classes are assigned in NavigationHelper rather than relying on the
+ * :default and :cancel-button pseudo-classes. Those did not both match here, so
+ * confirming and dismissing came out in the same brand orange and neither read
+ * as the main action.
+ */
 .custom-alert .button-bar .button {
-    -fx-background-color: linear-gradient(to bottom, -brand-primary, -brand-primary-dark);
-    -fx-text-fill: white;
     -fx-font-size: 13px;
     -fx-font-weight: bold;
-    -fx-padding: 8px 16px;
-    -fx-background-radius: 20px;
+    -fx-padding: 8px 20px;
+    -fx-background-radius: 6px;
+    -fx-border-radius: 6px;
     -fx-cursor: hand;
-    -fx-effect: dropshadow(gaussian, -brand-primary-a30, 4, 0, 0, 2);
 }
 
-.custom-alert .button-bar .button:hover {
-    -fx-background-color: linear-gradient(to bottom, -brand-primary-dark, -brand-primary-darker);
-    -fx-effect: dropshadow(gaussian, -brand-primary-a50, 6, 0, 0, 2);
+/* The action the dialog is asking for. */
+.custom-alert .button-bar .button.alert-primary {
+    -fx-background-color: -brand-primary;
+    -fx-text-fill: -surface;
+    -fx-border-width: 0;
 }
 
-.custom-alert .button-bar .button:default {
-    -fx-background-color: linear-gradient(to bottom, -success, -success-dark);
+.custom-alert .button-bar .button.alert-primary:hover {
+    -fx-background-color: -brand-primary-dark;
 }
 
-.custom-alert .button-bar .button:default:hover {
-    -fx-background-color: linear-gradient(to bottom, -success-dark, -success-darker);
+/* The way out. Quiet on purpose: an outline, so it is plainly a button without
+   competing with the one beside it. */
+.custom-alert .button-bar .button.alert-secondary {
+    -fx-background-color: -surface;
+    -fx-text-fill: -text-muted;
+    -fx-border-color: -border-subtle;
+    -fx-border-width: 1px;
 }
 
-.custom-alert .button-bar .button:cancel-button {
-    -fx-background-color: linear-gradient(to bottom, -flat-500, -flat-600);
+.custom-alert .button-bar .button.alert-secondary:hover {
+    -fx-background-color: -surface-alt;
+    -fx-text-fill: -text-strong;
+    -fx-border-color: -slate-300;
 }
 
-.custom-alert .button-bar .button:cancel-button:hover {
-    -fx-background-color: linear-gradient(to bottom, -flat-600, -grey-550);
+.custom-alert .button-bar .button:focused {
+    -fx-effect: dropshadow(gaussian, -brand-primary-a40, 6, 0.3, 0, 0);
 }
 
 /* Success Alert Specific */
@@ -68,17 +83,12 @@
     -fx-background-color: linear-gradient(to right, -success, -success-light);
 }
 
-/* Error Alert Icon */
-.custom-alert.error .graphic {
-    -fx-text-fill: -danger;
-}
-
-/* Warning Alert Icon */
-.custom-alert.warning .graphic {
-    -fx-text-fill: -warning;
-}
-
 /* Info Alert Icon */
 .custom-alert.information .graphic {
     -fx-text-fill: -brand-primary;
 }
+
+/* The decorative graphic is removed in NavigationHelper, so the rules that used
+   to colour it are gone with it. JavaFX placed a large cross in the corner where
+   a window's close control lives, which read as a dismiss button and was not
+   one. */

@@ -8,8 +8,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PlacesDAO implements IPlaceDAO {
+    private static final Logger log = LoggerFactory.getLogger(PlacesDAO.class);
+
 
     private final Connection conn;
 
@@ -40,7 +44,7 @@ public class PlacesDAO implements IPlaceDAO {
                 places.add(place);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Unexpected error", e);
         }
 
         return places;

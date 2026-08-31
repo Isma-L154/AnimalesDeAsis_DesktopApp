@@ -6,8 +6,12 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NavigationHelper {
+    private static final Logger log = LoggerFactory.getLogger(NavigationHelper.class);
+
 
     private static final String COMPANY_ICON_PATH = "/images/AdeAsisLogo.png";
 
@@ -104,7 +108,7 @@ public class NavigationHelper {
             Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
             stage.getIcons().add(icon);
         } catch (Exception e) {
-            System.out.println("No se pudo cargar el icono: " + e.getMessage());
+            log.info("No se pudo cargar el icono: "+ e.getMessage());
         }
 
 

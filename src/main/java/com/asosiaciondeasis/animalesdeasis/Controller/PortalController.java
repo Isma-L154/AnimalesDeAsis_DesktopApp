@@ -24,12 +24,16 @@ import javafx.scene.layout.VBox;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.io.IOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The application shell: navigation rail on the left, header on top, and the
  * current screen in the centre.
  */
 public class PortalController {
+    private static final Logger log = LoggerFactory.getLogger(PortalController.class);
+
 
     /** Horizontal overhang of the collapse button, half its width. */
     private static final double COLLAPSE_BUTTON_OVERHANG = -13;
@@ -219,7 +223,7 @@ public class PortalController {
                     // A screen that fails to tidy up must not block the one
                     // replacing it; the alternative is an application that cannot
                     // navigate away from a broken screen.
-                    System.out.println("Error during screen cleanup: " + e.getMessage());
+                    log.info("Error during screen cleanup: "+ e.getMessage());
                 }
             }
         }

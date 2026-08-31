@@ -9,8 +9,12 @@ import com.asosiaciondeasis.animalesdeasis.Util.NetworkUtils;
 import java.sql.Connection;
 import java.util.Timer;
 import java.util.TimerTask;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AppInitializer {
+    private static final Logger log = LoggerFactory.getLogger(AppInitializer.class);
+
 
     /**
      * 24 Hours in milliseconds, because we need the sync with Firebase everytime the app initializes
@@ -38,15 +42,15 @@ public class AppInitializer {
                 if (NetworkUtils.isInternetAvailable()) {
                     syncService.sync();
                 } else {
-                    System.out.println("No internet connection available");
+                    log.info("No internet connection available");
                 }
 
                 schedulePeriodicSync();
             } else {
-                System.out.println("📱 Running in offline-only mode - no sync available");
+                log.info("Running in offline-only mode - no sync available");
             }
 
-            System.out.println("✅ App Initialized");
+            log.info("App Initialized");
 
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -63,7 +67,7 @@ public class AppInitializer {
                 if (NetworkUtils.isInternetAvailable()) {
                     syncService.sync();
                 } else {
-                    System.out.println("No internet connection available");
+                    log.info("No internet connection available");
                 }
             }
             // First run after 24h, then every 24h

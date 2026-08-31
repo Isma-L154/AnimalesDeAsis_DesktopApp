@@ -14,8 +14,12 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SplashController implements Initializable {
+    private static final Logger log = LoggerFactory.getLogger(SplashController.class);
+
 
     @FXML private ProgressIndicator progressIndicator;
     @FXML private Label statusLabel;
@@ -89,7 +93,7 @@ public class SplashController implements Initializable {
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Unexpected error", e);
         }
     }
 }

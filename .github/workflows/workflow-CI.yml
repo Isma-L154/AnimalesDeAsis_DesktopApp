@@ -26,11 +26,11 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Set up Liberica Full JDK 17
+      - name: Set up Liberica Full JDK 21
         uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
         with:
           distribution: liberica
-          java-version: '17'
+          java-version: '21'
           java-package: jdk+fx
           cache: maven
       # The interface tests construct real JavaFX controls, and a Control cannot
@@ -82,11 +82,11 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Set up Liberica Full JDK 17
+      - name: Set up Liberica Full JDK 21
         uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
         with:
           distribution: liberica
-          java-version: '17'
+          java-version: '21'
           java-package: jdk+fx
           cache: maven
 

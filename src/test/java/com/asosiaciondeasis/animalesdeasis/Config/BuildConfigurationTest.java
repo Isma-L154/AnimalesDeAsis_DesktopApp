@@ -68,6 +68,27 @@ class BuildConfigurationTest {
                         + "in every workflow.");
     }
 
+    /**
+     * maven-compiler-plugin's {@code <release>} overrides
+     * {@code maven.compiler.source} and {@code target} without saying so. This
+     * POM carried a literal 17 there while both properties said 21, so the build
+     * quietly kept compiling for the old release - and the check below, which
+     * only compared the two properties, saw nothing wrong. It reads the property
+     * now, and this makes sure it keeps doing so.
+     */
+    @Test
+    @DisplayName("the compiler release is not pinned behind the properties")
+    void releaseFollowsTheDeclaredTarget() throws IOException {
+        Matcher m = Pattern.compile("<release>([^<]+)</release>").matcher(pom());
+        while (m.find()) {
+            String value = m.group(1).trim();
+            assertTrue(value.startsWith("${"),
+                    "<release> is set to the literal " + value + ", which silently overrides "
+                            + "maven.compiler.source and target. Derive it from the property "
+                            + "instead, so there is one number to change.");
+        }
+    }
+
     @Test
     @DisplayName("compiler source and target agree")
     void compilerSourceAndTargetAgree() throws IOException {

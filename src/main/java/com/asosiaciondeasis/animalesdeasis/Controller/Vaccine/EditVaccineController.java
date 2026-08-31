@@ -172,6 +172,11 @@ public class EditVaccineController implements Initializable {
         return valid;
     }
 
+    @FXML
+    public void onCancelAction() {
+        closeWindow();
+    }
+
     private void closeWindow() {
         Stage stage = (Stage) animalInfoLabel.getScene().getWindow();
         stage.close();

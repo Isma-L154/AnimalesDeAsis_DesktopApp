@@ -29,50 +29,8 @@
     -fx-text-fill: -text-muted;
 }
 
-/* ---------------------------------------------------------------------------
-   Key figures
-   --------------------------------------------------------------------------- */
-
-.kpi-card {
-    -fx-padding: 14 16;
-    -fx-min-height: 84;
-}
-
-.kpi-caption {
-    -fx-font-size: 11px;
-    -fx-text-fill: -text-muted;
-    -fx-graphic-text-gap: 7;
-}
-
-.kpi-icon {
-    -fx-icon-color: -brand-primary;
-    -fx-icon-size: 13;
-}
-
-.kpi-value {
-    -fx-font-size: 26px;
-    -fx-font-weight: bold;
-    -fx-text-fill: -brand-text;
-}
-
-.kpi-note {
-    -fx-font-size: 11px;
-    -fx-text-fill: -text-muted;
-}
-
-/* A figure that needs doing something about does not look like one that does
-   not. Warm rather than red: these are tasks, not failures. */
-.kpi-warn {
-    -fx-border-color: -brand-primary-a30;
-}
-
-.kpi-warn .kpi-value {
-    -fx-text-fill: -warning-dark;
-}
-
-.kpi-warn .kpi-note {
-    -fx-text-fill: -warning-dark;
-}
+/* Key figures are styled in theme.css: the card is shared with the statistics
+   dashboard, so its appearance cannot live in one screen's stylesheet. */
 
 /* ---------------------------------------------------------------------------
    Panels

@@ -49,18 +49,27 @@
                 </HBox>
             </HBox>
 
-            <!-- Key Metrics Cards using FlowPane for TilesFX -->
-            <FlowPane fx:id="tilesContainer" hgap="20.0" vgap="20.0" styleClass="tiles-container" />
+            <!-- Headline figures. An HBox rather than a FlowPane: the cards share
+                 the row evenly, so there is no dead space on a wide window. The
+                 previous FlowPane held three fixed 250x150 TilesFX tiles and left
+                 a gap wherever the window was wider than 810 pixels. -->
+            <HBox fx:id="tilesContainer" spacing="14.0" styleClass="tiles-container" />
 
-            <!-- Charts Section -->
+            <!-- Charts.
+                 animated="false" on all three, deliberately. Replacing a series
+                 with clear() + add() while the chart animates leaves the category
+                 axis holding stale positions, and every month label ends up drawn
+                 on top of the next at the origin - which is what made this screen
+                 unreadable. It also spares the reader a fly-in every time the year
+                 changes. -->
             <GridPane hgap="25.0" vgap="25.0" styleClass="charts-grid">
                 <columnConstraints>
                     <ColumnConstraints hgrow="ALWAYS" percentWidth="60.0" />
                     <ColumnConstraints hgrow="ALWAYS" percentWidth="40.0" />
                 </columnConstraints>
                 <rowConstraints>
-                    <RowConstraints vgrow="ALWAYS" minHeight="350.0" />
-                    <RowConstraints vgrow="ALWAYS" minHeight="350.0" />
+                    <RowConstraints vgrow="ALWAYS" minHeight="300.0" />
+                    <RowConstraints vgrow="ALWAYS" minHeight="260.0" />
                 </rowConstraints>
 
                 <!-- Monthly Admissions Chart -->
@@ -69,7 +78,7 @@
                         <FontIcon iconLiteral="fas-chart-bar" iconSize="18" styleClass="chart-icon" />
                         <Label styleClass="chart-title" text="Admisiones Mensuales" />
                     </HBox>
-                    <BarChart fx:id="monthlyAdmissionsChart" animated="true" legendVisible="false"
+                    <BarChart fx:id="monthlyAdmissionsChart" animated="false" legendVisible="false"
                               styleClass="monthly-chart" VBox.vgrow="ALWAYS">
                         <xAxis>
                             <CategoryAxis fx:id="monthsAxis" styleClass="chart-axis" />
@@ -86,7 +95,7 @@
                         <FontIcon iconLiteral="fas-chart-pie" iconSize="18" styleClass="chart-icon" />
                         <Label styleClass="chart-title" text="Estado de Adopciones" />
                     </HBox>
-                    <PieChart fx:id="adoptionPieChart" animated="true" styleClass="adoption-pie" VBox.vgrow="ALWAYS" />
+                    <PieChart fx:id="adoptionPieChart" animated="false" styleClass="adoption-pie" VBox.vgrow="ALWAYS" />
                 </VBox>
 
                 <!--  Animal Origins Chart -->
@@ -95,7 +104,7 @@
                         <FontIcon iconLiteral="fas-map-marker-alt" iconSize="18" styleClass="chart-icon" />
                         <Label styleClass="chart-title" text="Origen de los Animales" />
                     </HBox>
-                    <BarChart fx:id="originsChart" animated="true" legendVisible="false"
+                    <BarChart fx:id="originsChart" animated="false" legendVisible="false"
                               styleClass="origins-chart" VBox.vgrow="ALWAYS">
                         <xAxis>
                             <NumberAxis fx:id="originsCountAxis" styleClass="chart-axis" />

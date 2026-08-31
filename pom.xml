@@ -98,7 +98,7 @@
             <dependency>
                 <groupId>com.itextpdf</groupId>
                 <artifactId>kernel</artifactId>
-                <version>7.2.5</version>
+                <version>9.7.1</version>
             </dependency>
             <dependency>
                 <groupId>com.itextpdf</groupId>

@@ -113,6 +113,10 @@
        same brand colour in a notation the hex sweep could not see. JavaFX has
        no way to take an existing looked-up color and change its alpha, so each
        needed opacity is its own token; the suffix is the alpha in percent. */
+    /* White at partial opacity, for hover and active states on the orange rail
+       where a solid surface colour would be too heavy. */
+    -surface-a22:       rgba(255, 255, 255, 0.22);
+    -surface-a32:       rgba(255, 255, 255, 0.32);
     -brand-primary-a25: rgba(242, 146, 29, 0.25);   /* x5 */
     -brand-primary-a30: rgba(242, 146, 29, 0.3);   /* x9 */
     -brand-primary-a40: rgba(242, 146, 29, 0.4);   /* x5 */

@@ -1,18 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.layout.VBox?>
 
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-
-<?import javafx.geometry.Insets?>
-<VBox fx:id="sidebar" xmlns="http://javafx.com/javafx"
+<!--
+  Container only. The rail's contents are built by SidebarController, because it
+  has two forms - expanded with labels and group headings, collapsed to icons -
+  and keeping one set of nodes that switches between them is less error-prone
+  than keeping two markup trees in step.
+-->
+<VBox fx:id="sidebar"
+      xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.asosiaciondeasis.animalesdeasis.Controller.SidebarController"
-      spacing="25" styleClass="sidebar">
-    <padding>
-        <Insets top="40" right="20" bottom="20" left="20"/>
-    </padding>
-    <Label fx:id="statsLabel" text="📊 Estadísticas" styleClass="sidebar-item"/>
-    <Label fx:id="animalsLabel" text="🐶 Animales" styleClass="sidebar-item"/>
-</VBox>
-
+      styleClass="sidebar"/>

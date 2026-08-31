@@ -1,43 +1,43 @@
 
 .animal-management-container {
     -fx-padding: 20px;
-    -fx-background-color: linear-gradient(to bottom, #fdf8f2, #ffffff);
+    -fx-background-color: linear-gradient(to bottom, -surface-alt, -surface);
 }
 
 .section-title {
     -fx-font-size: 28px;
     -fx-font-weight: bold;
-    -fx-text-fill: linear-gradient(to right, #593414, #F2921D);
+    -fx-text-fill: linear-gradient(to right, -brand-text, -brand-primary);
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 2, 0, 0, 1);
 }
 
 
 .create-button {
-    -fx-background-color: linear-gradient(to bottom, #F2921D, #E67E22);
+    -fx-background-color: linear-gradient(to bottom, -brand-primary, -brand-primary-dark);
     -fx-text-fill: white;
     -fx-font-size: 14px;
     -fx-font-weight: bold;
     -fx-padding: 12 20;
     -fx-background-radius: 25;
     -fx-cursor: hand;
-    -fx-effect: dropshadow(three-pass-box, rgba(242, 146, 29, 0.4), 6, 0, 0, 2);
+    -fx-effect: dropshadow(three-pass-box, -brand-primary-a40, 6, 0, 0, 2);
     -fx-border-radius: 25;
 }
 
 .create-button:hover {
-    -fx-background-color: linear-gradient(to bottom, #E67E22, #D68910);
-    -fx-effect: dropshadow(three-pass-box, rgba(242, 146, 29, 0.6), 8, 0, 0, 3);
+    -fx-background-color: linear-gradient(to bottom, -brand-primary-dark, -brand-primary-darker);
+    -fx-effect: dropshadow(three-pass-box, -brand-primary-a60, 8, 0, 0, 3);
     -fx-scale-y: 1.05;
     -fx-scale-x: 1.05;
 }
 
 
 .filter-container {
-    -fx-background-color: #ffffff;
+    -fx-background-color: -surface;
     -fx-background-radius: 15;
     -fx-padding: 20;
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 2);
-    -fx-border-color: #e8e8e8;
+    -fx-border-color: -slate-200;
     -fx-border-radius: 15;
     -fx-border-width: 1;
 }
@@ -45,30 +45,30 @@
 .filter-label {
     -fx-font-size: 16px;
     -fx-font-weight: bold;
-    -fx-text-fill: #593414;
+    -fx-text-fill: -brand-text;
 }
 
 .toggle-filters-btn {
-    -fx-background-color: #ecf0f1;
-    -fx-text-fill: #34495e;
+    -fx-background-color: -flat-100;
+    -fx-text-fill: -flat-800;
     -fx-font-size: 12px;
     -fx-padding: 6 12;
     -fx-background-radius: 15;
     -fx-cursor: hand;
-    -fx-border-color: #bdc3c7;
+    -fx-border-color: -flat-300;
     -fx-border-radius: 15;
     -fx-border-width: 1;
 }
 
 .toggle-filters-btn:hover {
-    -fx-background-color: #d5dbdb;
+    -fx-background-color: -flat-200;
 }
 
 .filters-box {
-    -fx-background-color: #f8f9fa;
+    -fx-background-color: -surface-alt;
     -fx-background-radius: 10;
     -fx-padding: 15;
-    -fx-border-color: #e9ecef;
+    -fx-border-color: -flat-100;
     -fx-border-radius: 10;
     -fx-border-width: 1;
 }
@@ -76,36 +76,36 @@
 .filter-input-label {
     -fx-font-size: 12px;
     -fx-font-weight: bold;
-    -fx-text-fill: #495057;
+    -fx-text-fill: -grey-700;
 }
 
 .filter-combo, .filter-date {
     -fx-pref-width: 140;
     -fx-background-color: white;
     -fx-background-radius: 8;
-    -fx-border-color: #ced4da;
+    -fx-border-color: -slate-300;
     -fx-border-radius: 8;
     -fx-border-width: 1;
     -fx-padding: 5 10;
 }
 
 .filter-combo:focused, .filter-date:focused {
-    -fx-border-color: #F2921D;
-    -fx-effect: dropshadow(three-pass-box, rgba(242, 146, 29, 0.3), 4, 0, 0, 0);
+    -fx-border-color: -brand-primary;
+    -fx-effect: dropshadow(three-pass-box, -brand-primary-a30, 4, 0, 0, 0);
 }
 .filter-column {
     -fx-min-width: 250px;
     -fx-padding: 10;
-    -fx-background-color: #f9f9f9;
+    -fx-background-color: -surface-alt;
     -fx-background-radius: 5;
-    -fx-border-color: #e0e0e0;
+    -fx-border-color: -grey-200;
     -fx-border-radius: 5;
     -fx-border-width: 1;
 }
 
 .filter-sublabel {
     -fx-font-size: 10px;
-    -fx-text-fill: #666;
+    -fx-text-fill: -grey-600;
 }
 
 .filter-input-label {
@@ -114,7 +114,7 @@
 }
 
 .apply-filters-btn {
-    -fx-background-color: linear-gradient(to bottom, #27ae60, #229954);
+    -fx-background-color: linear-gradient(to bottom, -success, -success-dark);
     -fx-text-fill: white;
     -fx-font-size: 13px;
     -fx-font-weight: bold;
@@ -126,11 +126,11 @@
 }
 
 .apply-filters-btn:hover {
-    -fx-background-color: linear-gradient(to bottom, #229954, #1e8449);
+    -fx-background-color: linear-gradient(to bottom, -success-dark, -success-darker);
 }
 
 .clear-filters-btn {
-    -fx-background-color: linear-gradient(to bottom, #e74c3c, #c0392b);
+    -fx-background-color: linear-gradient(to bottom, -danger, -danger-dark);
     -fx-text-fill: white;
     -fx-font-size: 13px;
     -fx-font-weight: bold;
@@ -142,16 +142,16 @@
 }
 
 .clear-filters-btn:hover {
-    -fx-background-color: linear-gradient(to bottom, #c0392b, #a93226);
+    -fx-background-color: linear-gradient(to bottom, -danger-dark, -danger-deep);
 }
 
 
 .search-container {
-    -fx-background-color: #ffffff;
+    -fx-background-color: -surface;
     -fx-background-radius: 15;
     -fx-padding: 15;
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 8, 0, 0, 1);
-    -fx-border-color: #e8e8e8;
+    -fx-border-color: -slate-200;
     -fx-border-radius: 15;
     -fx-border-width: 1;
 }
@@ -159,26 +159,26 @@
 .search-label {
     -fx-font-size: 14px;
     -fx-font-weight: bold;
-    -fx-text-fill: #593414;
+    -fx-text-fill: -brand-text;
 }
 
 .search-field {
     -fx-pref-width: 150;
     -fx-background-color: white;
     -fx-background-radius: 20;
-    -fx-border-color: #ced4da;
+    -fx-border-color: -slate-300;
     -fx-border-radius: 20;
     -fx-border-width: 1;
     -fx-padding: 8 15;
 }
 
 .search-field:focused {
-    -fx-border-color: #F2921D;
-    -fx-effect: dropshadow(three-pass-box, rgba(242,146,29, 0.3), 4, 0, 0, 0);
+    -fx-border-color: -brand-primary;
+    -fx-effect: dropshadow(three-pass-box, -brand-primary-a30, 4, 0, 0, 0);
 }
 
 .search-btn {
-    -fx-background-color: linear-gradient(to bottom, #F2921D, #E67E22);
+    -fx-background-color: linear-gradient(to bottom, -brand-primary, -brand-primary-dark);
     -fx-text-fill: white;
     -fx-font-size: 14px;
     -fx-padding: 8 12;
@@ -189,13 +189,13 @@
 }
 
 .search-btn:hover {
-    -fx-background-color: linear-gradient(to bottom, #E67E22, #D68910);
+    -fx-background-color: linear-gradient(to bottom, -brand-primary-dark, -brand-primary-darker);
     -fx-scale-x: 1.1;
     -fx-scale-y: 1.1;
 }
 
 .show-all-btn {
-    -fx-background-color: linear-gradient(to bottom, #F2921D, #E67E22);
+    -fx-background-color: linear-gradient(to bottom, -brand-primary, -brand-primary-dark);
     -fx-text-fill: white;
     -fx-font-size: 12px;
     -fx-font-weight: bold;
@@ -205,15 +205,15 @@
 }
 
 .show-all-btn:hover {
-    -fx-background-color: linear-gradient(to bottom, #E67E22, #D68910);
+    -fx-background-color: linear-gradient(to bottom, -brand-primary-dark, -brand-primary-darker);
 }
 .filter-checkbox {
     -fx-font-size: 12px;
-    -fx-text-fill: #333;
+    -fx-text-fill: -grey-900;
 }
 
 .filter-checkbox:selected .box {
-    -fx-background-color: #27ae60;
+    -fx-background-color: -success;
 }
 
 .scan-chip-button {
@@ -221,14 +221,14 @@
     -fx-max-width: 35px;
     -fx-pref-width: 35px;
     -fx-font-size: 12px;
-    -fx-background-color: #F2921D;
+    -fx-background-color: -brand-primary;
     -fx-text-fill: white;
     -fx-background-radius: 4px;
     -fx-cursor: hand;
 }
 
 .scan-chip-button:hover {
-    -fx-background-color: #E67E22;
+    -fx-background-color: -brand-primary-dark;
 }
 
 .filter-field {
@@ -239,15 +239,15 @@
 .results-count {
     -fx-font-size: 14px;
     -fx-font-weight: bold;
-    -fx-text-fill: #7f8c8d;
+    -fx-text-fill: -flat-600;
     -fx-padding: 0 0 0 10;
 }
 
 .animal-table {
-    -fx-background-color: #ffffff;
+    -fx-background-color: -surface;
     -fx-background-radius: 15;
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 15, 0, 0, 5);
-    -fx-border-color: #e8e8e8;
+    -fx-border-color: -slate-200;
     -fx-border-radius: 15;
     -fx-border-width: 1;
     -fx-min-width: 1150px;
@@ -256,8 +256,8 @@
 }
 
 .animal-table .column-header {
-    -fx-background-color: linear-gradient(to bottom, #593414, #4a2a11);
-    -fx-text-fill: #FFFFFF;
+    -fx-background-color: linear-gradient(to bottom, -brand-text, -brand-text-dark);
+    -fx-text-fill: -surface;
     -fx-font-weight: bold;
     -fx-font-size: 14px;
     -fx-padding: 12 8;
@@ -266,7 +266,7 @@
 }
 
 .animal-table .column-header .label {
-    -fx-text-fill: #FFFFFF;
+    -fx-text-fill: -surface;
     -fx-font-weight: bold;
 }
 
@@ -280,46 +280,46 @@
 
 .animal-table .table-row-cell {
     -fx-cell-size: 45px;
-    -fx-border-color: transparent transparent #f1f2f6 transparent;
+    -fx-border-color: transparent transparent -slate-50 transparent;
     -fx-border-width: 0 0 1 0;
 }
 
 /* Warm hover tint keeps the table in the brand palette (it used to be a bluish
    tone that clashed with the orange/brown identity). */
 .animal-table .table-row-cell:hover {
-    -fx-background-color: #fdf6ec;
+    -fx-background-color: -brand-tint-soft;
     -fx-cursor: hand;
 }
 
 /* Selected row: warm fill plus an orange rail on the left so the active record
    is unmistakable even at a glance. */
 .animal-table .table-row-cell:selected {
-    -fx-background-color: linear-gradient(to right, #fef7e6, #fff3e0);
-    -fx-text-fill: #593414;
-    -fx-border-color: #F2921D transparent #f1f2f6 transparent;
+    -fx-background-color: linear-gradient(to right, -brand-tint, -brand-tint);
+    -fx-text-fill: -brand-text;
+    -fx-border-color: -brand-primary transparent -slate-50 transparent;
     -fx-border-width: 0 0 1 4;
 }
 
 .animal-table .table-row-cell:selected .table-cell {
-    -fx-text-fill: #593414;
+    -fx-text-fill: -brand-text;
     -fx-font-weight: bold;
 }
 
 /* Empty-state text, instead of the default tiny grey label. */
 .animal-table .placeholder .label {
-    -fx-text-fill: #7f8c8d;
+    -fx-text-fill: -flat-600;
     -fx-font-size: 15px;
 }
 
 .animal-table .table-cell {
     -fx-alignment: CENTER;
     -fx-font-size: 13px;
-    -fx-text-fill: #2c3e50;
+    -fx-text-fill: -flat-900;
     -fx-padding: 8;
 }
 
 .animal-table .table-row-cell:even {
-    -fx-background-color: #fafbfc;
+    -fx-background-color: -surface;
 }
 
 /* Buttons */
@@ -336,36 +336,36 @@
 }
 
 .edit-btn {
-    -fx-background-color: linear-gradient(to bottom, #F2921D, #E67E22);
+    -fx-background-color: linear-gradient(to bottom, -brand-primary, -brand-primary-dark);
 }
 
 .edit-btn:hover {
-    -fx-background-color: linear-gradient(to bottom, #E67E22, #D68910);
+    -fx-background-color: linear-gradient(to bottom, -brand-primary-dark, -brand-primary-darker);
     -fx-scale-x: 1.05;
     -fx-scale-y: 1.05;
 }
 
 .delete-btn {
-    -fx-background-color: linear-gradient(to bottom, #D1495B, #B03A2E);
+    -fx-background-color: linear-gradient(to bottom, -danger-rose, -danger-darker);
 }
 
 .delete-btn:hover {
-    -fx-background-color: linear-gradient(to bottom, #B03A2E, #922B21);
+    -fx-background-color: linear-gradient(to bottom, -danger-darker, -danger-deepest);
     -fx-scale-x: 1.05;
     -fx-scale-y: 1.05;
 }
 
 .detail-btn {
-    -fx-background-color: linear-gradient(to bottom, #7a4a1d, #593414);
+    -fx-background-color: linear-gradient(to bottom, -brand-text-mid, -brand-text);
 }
 
 .detail-btn:hover {
-    -fx-background-color: linear-gradient(to bottom, #593414, #4a2a11);
+    -fx-background-color: linear-gradient(to bottom, -brand-text, -brand-text-dark);
     -fx-scale-x: 1.05;
     -fx-scale-y: 1.05;
 }
 .reactivate-btn {
-    -fx-background-color: #28a745;
+    -fx-background-color: -success-alt;
     -fx-text-fill: white;
     -fx-font-size: 12px;
     -fx-font-weight: bold;
@@ -378,7 +378,7 @@
 }
 
 .reactivate-btn:hover {
-    -fx-background-color: #218838;
+    -fx-background-color: -success-alt-dark;
     -fx-opacity: 0.9;
 }
 
@@ -395,8 +395,8 @@
 }
 
 .pagination .pagination-control .number-button {
-    -fx-background-color: #ecf0f1;
-    -fx-text-fill: #34495e;
+    -fx-background-color: -flat-100;
+    -fx-text-fill: -flat-800;
     -fx-background-radius: 20;
     -fx-cursor: hand;
     -fx-min-width: 35;
@@ -406,21 +406,21 @@
 }
 
 .pagination .pagination-control .number-button:selected {
-    -fx-background-color: linear-gradient(to bottom, #F2921D, #E67E22);
+    -fx-background-color: linear-gradient(to bottom, -brand-primary, -brand-primary-dark);
     -fx-text-fill: white;
-    -fx-effect: dropshadow(three-pass-box, rgba(242, 146, 29, 0.4), 4, 0, 0, 1);
+    -fx-effect: dropshadow(three-pass-box, -brand-primary-a40, 4, 0, 0, 1);
 }
 
 .pagination .pagination-control .number-button:hover {
-    -fx-background-color: #d5dbdb;
+    -fx-background-color: -flat-200;
     -fx-scale-x: 1.1;
     -fx-scale-y: 1.1;
 }
 
 .pagination .pagination-control .left-arrow-button,
 .pagination .pagination-control .right-arrow-button {
-    -fx-background-color: #bdc3c7;
-    -fx-text-fill: #34495e;
+    -fx-background-color: -flat-300;
+    -fx-text-fill: -flat-800;
     -fx-background-radius: 20;
     -fx-min-width: 35;
     -fx-min-height: 35;
@@ -428,5 +428,5 @@
 
 .pagination .pagination-control .left-arrow-button:hover,
 .pagination .pagination-control .right-arrow-button:hover {
-    -fx-background-color: #95a5a6;
+    -fx-background-color: -flat-500;
 }

@@ -114,11 +114,19 @@ public class EditAnimalController implements IPortalAwareController {
             @Override
             public void updateItem(LocalDate date, boolean empty) {
                 super.updateItem(date, empty);
-                if (date.isAfter(LocalDate.now())) {
-                    setDisable(true);
-                    setStyle("-fx-background-color: #ffcccc;");
-                    setTooltip(new Tooltip("No se pueden seleccionar fechas futuras"));
+                // DatePicker recycles its cells as the user pages through months, so
+                // every branch has to set the state explicitly. Setting it only in the
+                // "future date" case left a disabled day styled and unclickable once
+                // its cell was reused for a perfectly valid past date. The null check
+                // matters too: an emptied cell arrives here with a null date.
+                boolean isFuture = !empty && date != null && date.isAfter(LocalDate.now());
+
+                setDisable(isFuture);
+                getStyleClass().remove("date-cell-disabled");
+                if (isFuture) {
+                    getStyleClass().add("date-cell-disabled");
                 }
+                setTooltip(isFuture ? new Tooltip("No se pueden seleccionar fechas futuras") : null);
             }
         });
     }

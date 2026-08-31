@@ -1,17 +1,17 @@
 /* Root container styles */
 .detail-scroll-pane {
-    -fx-background-color: #f8f9fa;
+    -fx-background-color: -surface-alt;
     -fx-border-color: transparent;
 }
 
 .detail-main-container {
     -fx-padding: 40;
-    -fx-background-color: #f8f9fa;
+    -fx-background-color: -surface-alt;
 }
 
 /* Header section styles */
 .detail-header {
-    -fx-background-color: #ffffff;
+    -fx-background-color: -surface;
     -fx-background-radius: 12;
     -fx-padding: 30;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);
@@ -20,20 +20,20 @@
 .detail-title {
     -fx-font-size: 28px;
     -fx-font-weight: bold;
-    -fx-text-fill: #2c3e50;
+    -fx-text-fill: -flat-900;
 }
 
 .detail-separator {
-    -fx-background-color: #F2921D;
+    -fx-background-color: -brand-primary;
     -fx-pref-height: 3;
     -fx-background-radius: 2;
 }
 
 
 .vaccine-access-button {
-    -fx-background-color: #e8f5e8;
+    -fx-background-color: -success-tint;
     -fx-background-radius: 8px;
-    -fx-border-color: #27ae60;
+    -fx-border-color: -success;
     -fx-border-radius: 8px;
     -fx-border-width: 2;
     -fx-font-size: 14px;
@@ -42,13 +42,13 @@
     -fx-pref-width: 120px;
     -fx-pref-height: 35px;
     -fx-cursor: hand;
-    -fx-text-fill: #27ae60;
+    -fx-text-fill: -success;
     -fx-padding: 5 10 5 10;
 }
 
 /* Content card styles */
 .detail-content-card {
-    -fx-background-color: #ffffff;
+    -fx-background-color: -surface;
     -fx-background-radius: 12;
     -fx-padding: 35;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);
@@ -64,21 +64,21 @@
 .detail-field-label {
     -fx-font-size: 14px;
     -fx-font-weight: bold;
-    -fx-text-fill: #34495e;
+    -fx-text-fill: -flat-800;
     -fx-alignment: center-right;
 }
 
 .detail-field-label-top {
     -fx-font-size: 14px;
     -fx-font-weight: bold;
-    -fx-text-fill: #34495e;
+    -fx-text-fill: -flat-800;
     -fx-alignment: top-center;
 }
 
 .detail-field-value {
     -fx-font-size: 14px;
-    -fx-text-fill: #2c3e50;
-    -fx-background-color: #ecf0f1;
+    -fx-text-fill: -flat-900;
+    -fx-background-color: -flat-100;
     -fx-padding: 8 12;
     -fx-background-radius: 6;
     -fx-alignment: center;
@@ -86,8 +86,8 @@
 
 .detail-field-value-multiline {
     -fx-font-size: 14px;
-    -fx-text-fill: #2c3e50;
-    -fx-background-color: #ecf0f1;
+    -fx-text-fill: -flat-900;
+    -fx-background-color: -flat-100;
     -fx-padding: 12;
     -fx-background-radius: 6;
     -fx-alignment: center;
@@ -109,52 +109,52 @@
 }
 
 .detail-back-button {
-    -fx-background-color: #95a5a6;
+    -fx-background-color: -flat-500;
     -fx-text-fill: white;
 }
 
 .detail-back-button:hover {
-    -fx-background-color: #7f8c8d;
+    -fx-background-color: -flat-600;
     -fx-opacity: 0.9;
 }
 
 .detail-edit-button {
-    -fx-background-color: #F2921D;
+    -fx-background-color: -brand-primary;
     -fx-text-fill: white;
 }
 
 .detail-edit-button:hover {
-    -fx-background-color: #E67E22;
+    -fx-background-color: -brand-primary-dark;
     -fx-opacity: 0.9;
 }
 
 .btn-download-pdf {
-    -fx-background-color: linear-gradient(to bottom, #e74c3c, #c0392b);
+    -fx-background-color: linear-gradient(to bottom, -danger, -danger-dark);
     -fx-text-fill: white;
     -fx-background-radius: 10;
     -fx-padding: 12 20;
     -fx-font-size: 13px;
     -fx-font-weight: 600;
-    -fx-effect: dropshadow(gaussian, rgba(231,76,60,0.3), 6, 0, 0, 2);
+    -fx-effect: dropshadow(gaussian, -danger-a30, 6, 0, 0, 2);
     -fx-cursor: hand;
     -fx-border-radius: 10;
 }
 
 .btn-download-pdf:hover {
-    -fx-background-color: linear-gradient(to bottom, #c0392b, #a93226);
-    -fx-effect: dropshadow(gaussian, rgba(231,76,60,0.4), 8, 0, 0, 3);
+    -fx-background-color: linear-gradient(to bottom, -danger-dark, -danger-deep);
+    -fx-effect: dropshadow(gaussian, -danger-a40, 8, 0, 0, 3);
     -fx-scale-y: 1.02;
     -fx-scale-x: 1.02;
 }
 
 .btn-download-pdf:pressed {
-    -fx-background-color: #a93226;
+    -fx-background-color: -danger-deep;
     -fx-scale-y: 0.98;
     -fx-scale-x: 0.98;
 }
 
 .btn-download-pdf:disabled {
-    -fx-background-color: #95a5a6;
+    -fx-background-color: -flat-500;
     -fx-opacity: 0.7;
 }
 
@@ -169,12 +169,12 @@
     -fx-max-height: 20;
 }
 .copy-icon-button:hover {
-    -fx-background-color: #ecf0f1;
-    -fx-border-color: #F2921D;
+    -fx-background-color: -flat-100;
+    -fx-border-color: -brand-primary;
 }
 
 .copy-icon-button:pressed {
-    -fx-background-color: #d5dbdb;
+    -fx-background-color: -flat-200;
 }
 
 .copy-icon-button:disabled {

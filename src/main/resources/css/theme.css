@@ -108,6 +108,27 @@
     -chart-purple-light: #9b59b6;
 
 
+    /* --- Alpha variants -------------------------------------------------
+       Glows and tinted shadows. These lived as rgba() literals, which is the
+       same brand colour in a notation the hex sweep could not see. JavaFX has
+       no way to take an existing looked-up color and change its alpha, so each
+       needed opacity is its own token; the suffix is the alpha in percent. */
+    -brand-primary-a25: rgba(242, 146, 29, 0.25);   /* x5 */
+    -brand-primary-a30: rgba(242, 146, 29, 0.3);   /* x9 */
+    -brand-primary-a40: rgba(242, 146, 29, 0.4);   /* x5 */
+    -brand-primary-a50: rgba(242, 146, 29, 0.5);   /* x1 */
+    -brand-primary-a55: rgba(242, 146, 29, 0.55);   /* x1 */
+    -brand-primary-a60: rgba(242, 146, 29, 0.6);   /* x1 */
+    -brand-text-a18:    rgba(89, 52, 20, 0.18);   /* x1 */
+    -danger-a30:        rgba(231, 76, 60, 0.3);   /* x1 */
+    -danger-a40:        rgba(231, 76, 60, 0.4);   /* x2 */
+    -flat-500-a40:      rgba(149, 165, 166, 0.4);   /* x1 */
+    -success-a30:       rgba(39, 174, 96, 0.3);   /* x3 */
+    -success-a40:       rgba(39, 174, 96, 0.4);   /* x4 */
+    -warning-a25:       rgba(245, 158, 11, 0.25);   /* x5 */
+    -warning-a30:       rgba(245, 158, 11, 0.3);   /* x1 */
+    -warning-a40:       rgba(245, 158, 11, 0.4);   /* x3 */
+
     /* --- Semantic aliases -------------------------------------------------
        Names that say what a colour is for rather than what it is. Prefer these
        in view stylesheets; reach for a palette name only when none fits. */

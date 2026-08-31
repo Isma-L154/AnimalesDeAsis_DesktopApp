@@ -135,14 +135,14 @@
     -fx-padding: 12 20;
     -fx-font-size: 13px;
     -fx-font-weight: 600;
-    -fx-effect: dropshadow(gaussian, rgba(231,76,60,0.3), 6, 0, 0, 2);
+    -fx-effect: dropshadow(gaussian, -danger-a30, 6, 0, 0, 2);
     -fx-cursor: hand;
     -fx-border-radius: 10;
 }
 
 .btn-download-pdf:hover {
     -fx-background-color: linear-gradient(to bottom, -danger-dark, -danger-deep);
-    -fx-effect: dropshadow(gaussian, rgba(231,76,60,0.4), 8, 0, 0, 3);
+    -fx-effect: dropshadow(gaussian, -danger-a40, 8, 0, 0, 3);
     -fx-scale-y: 1.02;
     -fx-scale-x: 1.02;
 }

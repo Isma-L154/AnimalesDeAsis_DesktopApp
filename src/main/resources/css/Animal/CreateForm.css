@@ -129,7 +129,7 @@
 .custom-field:focused {
     -fx-border-color: -brand-primary;
     -fx-border-width: 2.5px;
-    -fx-effect: dropshadow(gaussian, rgba(242,146,29,0.25), 6, 0, 0, 0);
+    -fx-effect: dropshadow(gaussian, -brand-primary-a25, 6, 0, 0, 0);
 }
 
 .custom-field:hover {
@@ -154,7 +154,7 @@
 .custom-combo:focused {
     -fx-border-color: -brand-primary;
     -fx-border-width: 2.5px;
-    -fx-effect: dropshadow(gaussian, rgba(242,146,29,0.25), 6, 0, 0, 0);
+    -fx-effect: dropshadow(gaussian, -brand-primary-a25, 6, 0, 0, 0);
 }
 
 .custom-combo:hover {
@@ -191,7 +191,7 @@
 .custom-date:focused {
     -fx-border-color: -brand-primary;
     -fx-border-width: 2.5px;
-    -fx-effect: dropshadow(gaussian, rgba(242,146,29,0.25), 6, 0, 0, 0);
+    -fx-effect: dropshadow(gaussian, -brand-primary-a25, 6, 0, 0, 0);
 }
 
 .custom-date:hover {
@@ -225,7 +225,7 @@
 .custom-spinner:focused {
     -fx-border-color: -brand-primary;
     -fx-border-width: 2.5px;
-    -fx-effect: dropshadow(gaussian, rgba(242,146,29,0.25), 6, 0, 0, 0);
+    -fx-effect: dropshadow(gaussian, -brand-primary-a25, 6, 0, 0, 0);
 }
 
 .custom-spinner:hover {
@@ -264,7 +264,7 @@
 .custom-textarea:focused {
     -fx-border-color: -brand-primary;
     -fx-border-width: 2.5px;
-    -fx-effect: dropshadow(gaussian, rgba(242,146,29,0.25), 6, 0, 0, 0);
+    -fx-effect: dropshadow(gaussian, -brand-primary-a25, 6, 0, 0, 0);
 }
 
 .custom-textarea:hover {
@@ -290,12 +290,12 @@
     -fx-background-radius: 8px;
     -fx-cursor: hand;
     -fx-font-family: "Segoe UI", sans-serif;
-    -fx-effect: dropshadow(gaussian, rgba(242,146,29,0.3), 6, 0, 0, 2);
+    -fx-effect: dropshadow(gaussian, -brand-primary-a30, 6, 0, 0, 2);
 }
 
 .save-button:hover {
     -fx-background-color: -brand-primary-dark;
-    -fx-effect: dropshadow(gaussian, rgba(242,146,29,0.4), 8, 0, 0, 3);
+    -fx-effect: dropshadow(gaussian, -brand-primary-a40, 8, 0, 0, 3);
     -fx-scale-y: 1.02;
     -fx-scale-x: 1.02;
 }
@@ -335,12 +335,12 @@
     -fx-background-radius: 8px;
     -fx-cursor: hand;
     -fx-font-family: "Segoe UI", sans-serif;
-    -fx-effect: dropshadow(gaussian, rgba(39,174,96,0.3), 4, 0, 0, 1);
+    -fx-effect: dropshadow(gaussian, -success-a30, 4, 0, 0, 1);
 }
 
 .scan-button:hover {
     -fx-background-color: -success-dark;
-    -fx-effect: dropshadow(gaussian, rgba(39,174,96,0.4), 6, 0, 0, 2);
+    -fx-effect: dropshadow(gaussian, -success-a40, 6, 0, 0, 2);
 }
 
 .scan-button:pressed {

@@ -19,7 +19,7 @@
 /* ── Brand block ───────────────────────────────────────────────────────── */
 
 .brand-logo {
-    -fx-effect: dropshadow(gaussian, rgba(89,52,20,0.18), 8, 0, 0, 3);
+    -fx-effect: dropshadow(gaussian, -brand-text-a18, 8, 0, 0, 3);
 }
 
 .title-label {
@@ -67,13 +67,13 @@
     -fx-text-fill: white;
     -fx-background-color: linear-gradient(to bottom, -brand-primary, -brand-primary-dark);
     -fx-cursor: hand;
-    -fx-effect: dropshadow(gaussian, rgba(242,146,29,0.4), 10, 0.2, 0, 4);
+    -fx-effect: dropshadow(gaussian, -brand-primary-a40, 10, 0.2, 0, 4);
     -fx-border-color: transparent;
 }
 
 .continue-button:hover {
     -fx-background-color: linear-gradient(to bottom, -brand-primary-dark, -brand-primary-darker);
-    -fx-effect: dropshadow(gaussian, rgba(242,146,29,0.55), 14, 0.3, 0, 5);
+    -fx-effect: dropshadow(gaussian, -brand-primary-a55, 14, 0.3, 0, 5);
     -fx-scale-x: 1.03;
     -fx-scale-y: 1.03;
 }

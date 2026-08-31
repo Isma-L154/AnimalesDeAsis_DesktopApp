@@ -41,9 +41,25 @@ class ThemeTokensTest {
     private static final Path THEME = CSS_ROOT.resolve("theme.css");
 
     private static final Pattern HEX = Pattern.compile("#[0-9a-fA-F]{3,8}");
-    /** A token declaration inside the `.root` block, e.g. `    -brand-primary: #f2921d;` */
+    /**
+     * A token declaration, e.g. `    -brand-primary: #f2921d;`.
+     *
+     * <p>Indentation is not part of the pattern. Tying it to exactly four spaces
+     * would mean a reformat silently narrowed what the tests can see — and a test
+     * that stops looking without saying so is worse than no test. What identifies
+     * a declaration is its shape: a custom property name, which is any leading
+     * hyphen not followed by {@code fx-}, since those are JavaFX's own properties.</p>
+     */
     private static final Pattern DECLARATION =
-            Pattern.compile("^\\s{4}(-[a-z0-9-]+)\\s*:\\s*([^;]+);", Pattern.MULTILINE);
+            Pattern.compile("^\\s*(-(?!fx-)[a-z0-9-]+)\\s*:\\s*([^;]+);", Pattern.MULTILINE);
+    /**
+     * An rgba() literal with unequal channels. Equal channels are black, white or
+     * grey — legitimate neutral shadows. Unequal ones are a brand or semantic
+     * colour written in a notation the hex sweep cannot see, which is exactly how
+     * 43 of them survived the first pass.
+     */
+    private static final Pattern RGBA = Pattern.compile(
+            "rgba\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*[0-9.]+\\s*\\)");
     /** A token reference in a view stylesheet, e.g. `-fx-text-fill: -brand-text;` */
     private static final Pattern REFERENCE = Pattern.compile(
             "(?<![\\w-])(-(?:brand|surface|flat|slate|grey|success|danger|warning|chart|text|border|focus)[a-z0-9-]*)");
@@ -86,6 +102,30 @@ class ThemeTokensTest {
         }
         assertTrue(offenders.isEmpty(),
                 "Colour literals belong in theme.css as a token, not in a view stylesheet. Found:\n  "
+                        + String.join("\n  ", offenders));
+    }
+
+    @Test
+    @DisplayName("no view stylesheet contains a chromatic rgba literal")
+    void viewStylesheetsCarryNoChromaticRgba() throws IOException {
+        List<String> offenders = new ArrayList<>();
+        for (Path css : viewStylesheets()) {
+            String[] lines = read(css).split("\n", -1);
+            for (int i = 0; i < lines.length; i++) {
+                Matcher m = RGBA.matcher(lines[i]);
+                while (m.find()) {
+                    int r = Integer.parseInt(m.group(1));
+                    int g = Integer.parseInt(m.group(2));
+                    int b = Integer.parseInt(m.group(3));
+                    if (r != g || g != b) {
+                        offenders.add(css + ":" + (i + 1) + "  " + m.group());
+                    }
+                }
+            }
+        }
+        assertTrue(offenders.isEmpty(),
+                "A tinted glow is the brand colour in another notation, and a rebrand would "
+                        + "miss it. Use an alpha-variant token from theme.css. Found:\n  "
                         + String.join("\n  ", offenders));
     }
 

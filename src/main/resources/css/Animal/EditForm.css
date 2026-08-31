@@ -131,7 +131,7 @@
 .custom-field:focused {
     -fx-border-color: -warning;
     -fx-border-width: 2.5px;
-    -fx-effect: dropshadow(gaussian, rgba(245,158,11,0.25), 6, 0, 0, 0);
+    -fx-effect: dropshadow(gaussian, -warning-a25, 6, 0, 0, 0);
 }
 
 .custom-field:hover {
@@ -156,7 +156,7 @@
 .custom-combo:focused {
     -fx-border-color: -warning;
     -fx-border-width: 2.5px;
-    -fx-effect: dropshadow(gaussian, rgba(245,158,11,0.25), 6, 0, 0, 0);
+    -fx-effect: dropshadow(gaussian, -warning-a25, 6, 0, 0, 0);
 }
 
 .custom-combo:hover {
@@ -193,7 +193,7 @@
 .custom-date:focused {
     -fx-border-color: -warning;
     -fx-border-width: 2.5px;
-    -fx-effect: dropshadow(gaussian, rgba(245,158,11,0.25), 6, 0, 0, 0);
+    -fx-effect: dropshadow(gaussian, -warning-a25, 6, 0, 0, 0);
 }
 
 .custom-date:hover {
@@ -227,7 +227,7 @@
 .custom-spinner:focused {
     -fx-border-color: -warning;
     -fx-border-width: 2.5px;
-    -fx-effect: dropshadow(gaussian, rgba(245,158,11,0.25), 6, 0, 0, 0);
+    -fx-effect: dropshadow(gaussian, -warning-a25, 6, 0, 0, 0);
 }
 
 .custom-spinner:hover {
@@ -266,7 +266,7 @@
 .custom-textarea:focused {
     -fx-border-color: -warning;
     -fx-border-width: 2.5px;
-    -fx-effect: dropshadow(gaussian, rgba(245,158,11,0.25), 6, 0, 0, 0);
+    -fx-effect: dropshadow(gaussian, -warning-a25, 6, 0, 0, 0);
 }
 
 .custom-textarea:hover {
@@ -292,12 +292,12 @@
     -fx-background-radius: 8px;
     -fx-cursor: hand;
     -fx-font-family: "Segoe UI", sans-serif;
-    -fx-effect: dropshadow(gaussian, rgba(245,158,11,0.3), 6, 0, 0, 2);
+    -fx-effect: dropshadow(gaussian, -warning-a30, 6, 0, 0, 2);
 }
 
 .update-button:hover {
     -fx-background-color: -warning-dark;
-    -fx-effect: dropshadow(gaussian, rgba(245,158,11,0.4), 8, 0, 0, 3);
+    -fx-effect: dropshadow(gaussian, -warning-a40, 8, 0, 0, 3);
     -fx-scale-y: 1.02;
     -fx-scale-x: 1.02;
 }
@@ -337,7 +337,7 @@
     -fx-background-radius: 8px;
     -fx-cursor: hand;
     -fx-font-family: "Segoe UI", sans-serif;
-    -fx-effect: dropshadow(gaussian, rgba(39,174,96,0.3), 4, 0, 0, 1);
+    -fx-effect: dropshadow(gaussian, -success-a30, 4, 0, 0, 1);
     -fx-min-width: 110px;
     -fx-pref-width: 110px;
     -fx-min-height: 42px;
@@ -346,7 +346,7 @@
 
 .scan-button:hover {
     -fx-background-color: -success-dark;
-    -fx-effect: dropshadow(gaussian, rgba(39,174,96,0.4), 6, 0, 0, 2);
+    -fx-effect: dropshadow(gaussian, -success-a40, 6, 0, 0, 2);
     -fx-scale-y: 1.02;
     -fx-scale-x: 1.02;
 }

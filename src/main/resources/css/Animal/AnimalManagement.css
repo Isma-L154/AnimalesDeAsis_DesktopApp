@@ -20,13 +20,13 @@
     -fx-padding: 12 20;
     -fx-background-radius: 25;
     -fx-cursor: hand;
-    -fx-effect: dropshadow(three-pass-box, rgba(242, 146, 29, 0.4), 6, 0, 0, 2);
+    -fx-effect: dropshadow(three-pass-box, -brand-primary-a40, 6, 0, 0, 2);
     -fx-border-radius: 25;
 }
 
 .create-button:hover {
     -fx-background-color: linear-gradient(to bottom, -brand-primary-dark, -brand-primary-darker);
-    -fx-effect: dropshadow(three-pass-box, rgba(242, 146, 29, 0.6), 8, 0, 0, 3);
+    -fx-effect: dropshadow(three-pass-box, -brand-primary-a60, 8, 0, 0, 3);
     -fx-scale-y: 1.05;
     -fx-scale-x: 1.05;
 }
@@ -91,7 +91,7 @@
 
 .filter-combo:focused, .filter-date:focused {
     -fx-border-color: -brand-primary;
-    -fx-effect: dropshadow(three-pass-box, rgba(242, 146, 29, 0.3), 4, 0, 0, 0);
+    -fx-effect: dropshadow(three-pass-box, -brand-primary-a30, 4, 0, 0, 0);
 }
 .filter-column {
     -fx-min-width: 250px;
@@ -174,7 +174,7 @@
 
 .search-field:focused {
     -fx-border-color: -brand-primary;
-    -fx-effect: dropshadow(three-pass-box, rgba(242,146,29, 0.3), 4, 0, 0, 0);
+    -fx-effect: dropshadow(three-pass-box, -brand-primary-a30, 4, 0, 0, 0);
 }
 
 .search-btn {
@@ -408,7 +408,7 @@
 .pagination .pagination-control .number-button:selected {
     -fx-background-color: linear-gradient(to bottom, -brand-primary, -brand-primary-dark);
     -fx-text-fill: white;
-    -fx-effect: dropshadow(three-pass-box, rgba(242, 146, 29, 0.4), 4, 0, 0, 1);
+    -fx-effect: dropshadow(three-pass-box, -brand-primary-a40, 4, 0, 0, 1);
 }
 
 .pagination .pagination-control .number-button:hover {

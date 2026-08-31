@@ -39,12 +39,12 @@
     -fx-padding: 8px 16px;
     -fx-background-radius: 20px;
     -fx-cursor: hand;
-    -fx-effect: dropshadow(gaussian, rgba(242, 146, 29, 0.3), 4, 0, 0, 2);
+    -fx-effect: dropshadow(gaussian, -brand-primary-a30, 4, 0, 0, 2);
 }
 
 .custom-alert .button-bar .button:hover {
     -fx-background-color: linear-gradient(to bottom, -brand-primary-dark, -brand-primary-darker);
-    -fx-effect: dropshadow(gaussian, rgba(242, 146, 29, 0.5), 6, 0, 0, 2);
+    -fx-effect: dropshadow(gaussian, -brand-primary-a50, 6, 0, 0, 2);
 }
 
 .custom-alert .button-bar .button:default {

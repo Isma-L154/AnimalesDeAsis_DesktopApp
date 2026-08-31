@@ -64,7 +64,7 @@
 
 .vaccine-create-button:hover {
     -fx-background-color: -success-dark;
-    -fx-effect: dropshadow(three-pass-box, rgba(39,174,96,0.4), 8, 0, 0, 2);
+    -fx-effect: dropshadow(three-pass-box, -success-a40, 8, 0, 0, 2);
 }
 
 .vaccine-edit-button {
@@ -76,7 +76,7 @@
 
 .vaccine-edit-button:hover {
     -fx-background-color: -brand-primary-dark;
-    -fx-effect: dropshadow(three-pass-box, rgba(243,156,18,0.4), 8, 0, 0, 2);
+    -fx-effect: dropshadow(three-pass-box, -warning-a40, 8, 0, 0, 2);
 }
 
 .vaccine-delete-button {
@@ -88,7 +88,7 @@
 
 .vaccine-delete-button:hover {
     -fx-background-color: -danger-dark;
-    -fx-effect: dropshadow(three-pass-box, rgba(231,76,60,0.4), 8, 0, 0, 2);
+    -fx-effect: dropshadow(three-pass-box, -danger-a40, 8, 0, 0, 2);
 }
 
 /* --- Vaccine Table: Compact style, less spacing --- */
@@ -271,5 +271,5 @@
 
 .vaccine-back-button-simple:hover {
     -fx-background-color: -flat-600;
-    -fx-effect: dropshadow(three-pass-box, rgba(149,165,166,0.4), 8, 0, 0, 2);
+    -fx-effect: dropshadow(three-pass-box, -flat-500-a40, 8, 0, 0, 2);
 }

@@ -1,83 +1,199 @@
+/*
+ * Application shell: header, navigation rail, content area.
+ * Colours come from theme.css; there are no literals in this file.
+ */
+
 .mainPortal {
     -fx-background-color: -surface;
-        -fx-min-width: 1036px;
-        -fx-min-height: 798px;
-        -fx-max-width: Infinity;
-        -fx-max-height: Infinity;
-        -fx-pref-width: Infinity;
-        -fx-pref-height: Infinity;
-}
-
-
-.content-pane {
-    -fx-background-color: transparent;
+    /* Lowered from 1036x798. That minimum was taller than the working area of a
+       1366x768 laptop, which is what the association actually uses, so the window
+       could not be placed without part of it falling off the screen. */
+    -fx-min-width: 900px;
+    -fx-min-height: 640px;
     -fx-max-width: Infinity;
     -fx-max-height: Infinity;
     -fx-pref-width: Infinity;
     -fx-pref-height: Infinity;
 }
+
+.content-pane {
+    -fx-background-color: -surface-alt;
+    -fx-max-width: Infinity;
+    -fx-max-height: Infinity;
+    -fx-pref-width: Infinity;
+    -fx-pref-height: Infinity;
+}
+
+/* ---------------------------------------------------------------------------
+   Header
+   --------------------------------------------------------------------------- */
+
 .header {
-    -fx-background-color: white;
-    -fx-padding: 10 20;
-    -fx-effect: dropshadow( gaussian , rgba(0,0,0,0.25) , 8,0,0,2 );
+    -fx-background-color: -surface;
+    -fx-border-color: transparent transparent -border-subtle transparent;
+    -fx-border-width: 0 0 1 0;
     -fx-alignment: center-left;
     -fx-max-width: Infinity;
 }
 
-
-.toggle-button {
-    -fx-background-color: transparent;
-    -fx-text-fill: -brand-text;
-    -fx-font-size: 24px;
+.section-title {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 17px;
     -fx-font-weight: bold;
-    -fx-cursor: hand;
-    -fx-pref-width: 30px;
-    -fx-pref-height: 30px;
-    -fx-padding: 0;
-    -fx-border-width: 0;
+    -fx-text-fill: -brand-text;
 }
 
-.toggle-button:hover {
-    -fx-text-fill: -brand-primary;
-    -fx-background-color: transparent;
-    -fx-border-width: 0;
+/* Synchronisation state. Neutral until the application knows, so it never
+   claims to be in sync before it has checked. */
+.sync-chip {
+    -fx-font-size: 11px;
+    -fx-padding: 4 10;
+    -fx-background-radius: 99;
+    -fx-border-radius: 99;
+    -fx-border-width: 1;
+    -fx-background-color: -surface-alt;
+    -fx-text-fill: -text-muted;
+    -fx-border-color: -border-subtle;
 }
 
+.sync-chip.is-synced {
+    -fx-background-color: -success-tint;
+    -fx-text-fill: -success-darker;
+    -fx-border-color: -success-a30;
+}
+
+.sync-chip.is-offline {
+    -fx-background-color: -brand-tint;
+    -fx-text-fill: -brand-text-mid;
+    -fx-border-color: -brand-primary-a30;
+}
+
+.sync-chip.is-pending {
+    -fx-background-color: -brand-tint;
+    -fx-text-fill: -warning-dark;
+    -fx-border-color: -warning-a30;
+}
+
+/* ---------------------------------------------------------------------------
+   Navigation rail
+   --------------------------------------------------------------------------- */
 
 .sidebar {
     -fx-background-color: -brand-primary;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 8, 0.5, 2, 0);
-    -fx-pref-width: 220px;
-    -fx-padding: 60 20 20 20;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 8, 0.5, 2, 0);
+    -fx-padding: 18 12 18 12;
+    -fx-spacing: 3;
     -fx-max-height: Infinity;
 }
 
+.sidebar:collapsed {
+    -fx-padding: 18 6 18 6;
+    -fx-alignment: TOP_CENTER;
+}
 
+/*
+ * Items are Buttons, not Labels. A Label is not focus traversable, so the old
+ * rail could not be reached by keyboard at all - no tab stop, no Enter. The
+ * button chrome is stripped back to nothing so it still reads as navigation.
+ */
 .sidebar-item {
     -fx-font-family: "Segoe UI", sans-serif;
-    -fx-font-size: 18px;
-    -fx-text-fill: white;
-    -fx-padding: 12 16;
+    -fx-font-size: 14px;
+    -fx-text-fill: -surface;
+    -fx-background-color: transparent;
+    -fx-background-radius: 7;
+    -fx-padding: 9 11;
     -fx-cursor: hand;
-    -fx-alignment: CENTER_LEFT;
-    -fx-max-width: Infinity;
-    -fx-background-radius: 8;
-    /* Transparent border keeps the box the same size as the hover/active state,
-       so items no longer shift by a pixel when highlighted. */
+    -fx-border-width: 0 0 0 3;
+    /* Transparent rather than absent so the box does not resize when the active
+       state adds its left rail, which used to shift every item by three pixels. */
     -fx-border-color: transparent;
-    -fx-border-width: 0 0 0 4;
 }
 
 .sidebar-item:hover {
-    -fx-background-color: rgba(255,255,255,0.22);
-    -fx-text-fill: white;
+    -fx-background-color: -surface-a22;
 }
 
-/* Active/selected navigation item: a white left rail + stronger surface makes
-   the current screen obvious, which the sidebar previously did not indicate. */
-.sidebar-item:pressed,
-.sidebar-item.active {
-    -fx-background-color: rgba(255,255,255,0.32);
-    -fx-border-color: white;
+.sidebar-item:focused {
+    /* The shared focus ring is a drop shadow, which disappears against the
+       orange. On the rail, focus is a white outline instead. */
+    -fx-border-color: -surface;
+    -fx-border-width: 1;
+    -fx-background-color: -surface-a22;
+    -fx-effect: none;
+}
+
+.sidebar-item.active,
+.sidebar-item:pressed {
+    -fx-background-color: -surface-a32;
     -fx-font-weight: bold;
+    -fx-border-color: -surface;
+    -fx-border-width: 0 0 0 3;
+}
+
+.sidebar-icon {
+    -fx-icon-color: -surface;
+    -fx-icon-size: 16;
+}
+
+/* Group heading, expanded. */
+.sidebar-group-holder {
+    -fx-padding: 10 0 2 0;
+}
+
+.sidebar-group {
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -surface;
+    -fx-opacity: 0.72;
+    -fx-padding: 0 0 0 11;
+}
+
+/*
+ * Group heading, collapsed. At 72px the word does not fit, so the heading
+ * becomes a rule holding the same vertical position. The grouping is not lost -
+ * it moves into each item's tooltip, which reads "Gestión › Animales".
+ */
+.sidebar-divider {
+    -fx-background-color: -surface-a32;
+    -fx-pref-height: 1;
+    -fx-min-height: 1;
+    -fx-max-width: Infinity;
+}
+
+/* ---------------------------------------------------------------------------
+   Collapse control
+   ---------------------------------------------------------------------------
+   A circle straddling the rail's outer edge. It is a child of the content pane,
+   not the rail, so the overhanging half renders above the content rather than
+   being painted over by it.
+ */
+
+.collapse-button {
+    -fx-background-color: -surface;
+    -fx-background-radius: 99;
+    -fx-border-radius: 99;
+    -fx-border-color: -border-subtle;
+    -fx-border-width: 1;
+    -fx-min-width: 26;
+    -fx-min-height: 26;
+    -fx-max-width: 26;
+    -fx-max-height: 26;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.16), 5, 0, 0, 1);
+}
+
+.collapse-button:hover {
+    -fx-border-color: -brand-primary;
+}
+
+.collapse-button:focused {
+    -fx-border-color: -brand-primary;
+    -fx-effect: dropshadow(gaussian, -brand-primary-a40, 6, 0.3, 0, 0);
+}
+
+.collapse-icon {
+    -fx-icon-color: -brand-text;
+    -fx-icon-size: 11;
 }

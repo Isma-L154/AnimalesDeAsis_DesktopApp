@@ -28,6 +28,12 @@ updates:
         patterns:
           - "org.junit.jupiter:*"
           - "org.mockito:*"
+      # kernel and layout are one library split across two artifacts and have to
+      # move together. Ungrouped, Dependabot opens a pull request per artifact,
+      # each pairing a new version with the old one, and neither builds.
+      itext:
+        patterns:
+          - "com.itextpdf:*"
     ignore:
       # JavaFX tracks the JDK it is built for, and this application targets
       # Java 17. A major bump therefore ships class files a Java 17 runtime

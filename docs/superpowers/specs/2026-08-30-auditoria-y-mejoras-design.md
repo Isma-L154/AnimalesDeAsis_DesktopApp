@@ -17,6 +17,12 @@ Esta auditoría recorrió el código, la configuración de CI y los ajustes del
 repositorio en GitHub. Cada hallazgo cita el archivo y la línea, o el comando que
 lo produjo. Lo que no se pudo verificar está marcado como tal.
 
+> **Rutas.** Las de Java se dan relativas a
+> `src/main/java/com/asosiaciondeasis/animalesdeasis/`, así que
+> `Config/CredentialsManager.java:52` es
+> `src/main/java/com/asosiaciondeasis/animalesdeasis/Config/CredentialsManager.java:52`.
+> El resto (`.github/`, `src/main/resources/`) va desde la raíz del repositorio.
+
 ---
 
 ## 2. Hallazgos

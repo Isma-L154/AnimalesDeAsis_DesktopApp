@@ -317,6 +317,114 @@ public class AnimalDAO implements IAnimalDAO {
      * Private method to map the info of the animal, it is used in every method of the class that his purpose is
      * to search for a specific animal.
      */
+    // -------------------------------------------------------------------------
+    //  Home panel
+    // -------------------------------------------------------------------------
+    //  Counting and capping happen in SQL. The panel issues all of these when the
+    //  application opens, so returning a number rather than a list of rows to
+    //  measure in Java is what keeps that from being felt.
+    //
+    //  admission_date is stored as ISO 8601 ("2025-09-02T00:00:00") despite the
+    //  DD-MM-YYYY note in SQLiteSetup, which is wrong. That is why ORDER BY on
+    //  the raw column sorts correctly and why strftime can read a year out of it.
+
+    @Override
+    public int countInShelter() throws Exception {
+        String sql = "SELECT COUNT(*) FROM animals WHERE active = 1 AND adopted = 0";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            return rs.next() ? rs.getInt(1) : 0;
+        }
+    }
+
+    @Override
+    public int countAdoptedInYear(int year) throws Exception {
+        String sql = "SELECT COUNT(*) FROM animals "
+                   + "WHERE adopted = 1 AND strftime('%Y', admission_date) = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, String.valueOf(year));
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        }
+    }
+
+    @Override
+    public List<Animal> getRecentAdmissions(int limit) throws Exception {
+        List<Animal> animals = new ArrayList<>();
+        String sql = "SELECT * FROM animals WHERE active = 1 "
+                   + "ORDER BY admission_date DESC LIMIT ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, limit);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    animals.add(mapResultSetToAnimal(rs));
+                }
+            }
+        }
+        return animals;
+    }
+
+    /**
+     * NOT EXISTS rather than a LEFT JOIN with a null test: it stops at the first
+     * matching vaccine instead of building the join for every one an animal has.
+     */
+    @Override
+    public List<Animal> findWithoutVaccines(int limit) throws Exception {
+        List<Animal> animals = new ArrayList<>();
+        String sql = """
+                SELECT * FROM animals a
+                WHERE a.active = 1
+                  AND NOT EXISTS (
+                      SELECT 1 FROM vaccines v
+                      WHERE v.animal_record_number = a.record_number
+                  )
+                ORDER BY a.admission_date DESC
+                LIMIT ?
+                """;
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, limit);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    animals.add(mapResultSetToAnimal(rs));
+                }
+            }
+        }
+        return animals;
+    }
+
+    @Override
+    public List<Animal> findWithoutChip(int limit) throws Exception {
+        List<Animal> animals = new ArrayList<>();
+        // A missing chip reaches the database as NULL from the form and as an
+        // empty string from an import, so both count as missing.
+        String sql = """
+                SELECT * FROM animals
+                WHERE active = 1
+                  AND (chip_number IS NULL OR TRIM(chip_number) = '')
+                ORDER BY admission_date DESC
+                LIMIT ?
+                """;
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, limit);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    animals.add(mapResultSetToAnimal(rs));
+                }
+            }
+        }
+        return animals;
+    }
+
+    @Override
+    public int countUnsynced() throws Exception {
+        String sql = "SELECT COUNT(*) FROM animals WHERE synced = 0 AND active = 1";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            return rs.next() ? rs.getInt(1) : 0;
+        }
+    }
+
     private Animal mapResultSetToAnimal(ResultSet rs) throws SQLException {
         Animal animal = Animal.fromExistingRecord(rs.getString("record_number"));
         animal.setChipNumber(rs.getString("chip_number"));

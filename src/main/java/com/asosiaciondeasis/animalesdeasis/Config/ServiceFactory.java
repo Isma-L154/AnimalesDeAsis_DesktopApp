@@ -5,6 +5,7 @@ import com.asosiaciondeasis.animalesdeasis.DAO.Places.PlacesDAO;
 import com.asosiaciondeasis.animalesdeasis.DAO.Statistics.StatisticsDAO;
 import com.asosiaciondeasis.animalesdeasis.DAO.Vaccine.VaccineDAO;
 import com.asosiaciondeasis.animalesdeasis.Service.Animal.AnimalService;
+import com.asosiaciondeasis.animalesdeasis.Service.Home.ShelterSummaryService;
 import com.asosiaciondeasis.animalesdeasis.Service.Place.PlaceService;
 import com.asosiaciondeasis.animalesdeasis.Service.Statistics.StatisticsService;
 import com.asosiaciondeasis.animalesdeasis.Service.SyncService;
@@ -44,6 +45,10 @@ public class ServiceFactory {
     }
 
     public static PlaceService getPlaceService() {return new PlaceService(new PlacesDAO(conn));}
+
+    public static ShelterSummaryService getShelterSummaryService() {
+        return new ShelterSummaryService(new AnimalDAO(conn));
+    }
 
     public static SyncService getSyncService() {return new SyncService(conn);}
 

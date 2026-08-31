@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<!--
+  The operational panel. Replaces a 200px logo and the words "Bienvenido al
+  panel de administración", which told nobody anything.
+
+  Structure only. Every figure and every row is filled by HomeController once a
+  background task returns, so the layout appears immediately and the data
+  arrives into it. The skeleton classes are what is visible in between.
+-->
+<ScrollPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.asosiaciondeasis.animalesdeasis.Controller.HomeController"
+            stylesheets="@/css/theme.css, @/css/Home.css"
+            fitToWidth="true"
+            styleClass="home-scroll">
+
+    <VBox spacing="18" styleClass="home-root">
+        <padding>
+            <Insets top="22" right="26" bottom="26" left="26"/>
+        </padding>
+
+        <Label fx:id="greetingLabel" text="" styleClass="home-greeting"/>
+        <Label fx:id="subtitleLabel" text="" styleClass="home-subtitle"/>
+
+        <!-- Key figures -->
+        <HBox fx:id="kpiRow" spacing="14" styleClass="kpi-row"/>
+
+        <!-- Recent admissions and things needing attention, side by side -->
+        <HBox spacing="14" styleClass="panel-row" VBox.vgrow="ALWAYS">
+            <VBox fx:id="recentPanel" spacing="10" styleClass="panel" HBox.hgrow="ALWAYS"/>
+            <VBox fx:id="attentionPanel" spacing="10" styleClass="panel" HBox.hgrow="ALWAYS"/>
+        </HBox>
+
+        <!-- Only shown when loading fails, with a way to try again. -->
+        <HBox fx:id="errorBanner" spacing="12" styleClass="error-banner"
+              visible="false" managed="false"/>
+    </VBox>
+
+</ScrollPane>

@@ -18,6 +18,7 @@ import java.util.Optional;
  */
 public enum NavigationSection {
 
+    HOME("home", "Inicio", null, "/fxml/HomeView.fxml", "fas-home"),
     ANIMALS("animals", "Animales", Group.MANAGEMENT, "/fxml/Animal/AnimalManagement.fxml", "fas-paw"),
     STATISTICS("statistics", "Estadísticas", Group.ANALYSIS, "/fxml/Statistics/StatisticsManagement.fxml", "fas-chart-bar");
 

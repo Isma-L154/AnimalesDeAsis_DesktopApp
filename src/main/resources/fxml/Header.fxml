@@ -1,35 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 
+<!--
+  The header used to be a 150px logo centred between two spacers, and nothing
+  else. It spent the most valuable strip of the window on decoration while the
+  application had no way of telling you which screen you were on or whether your
+  data had reached the cloud.
 
-<?import javafx.scene.control.Button?>
-
+  Now: a small mark, the current section, and the synchronisation state.
+-->
 <HBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       alignment="CENTER_LEFT"
       styleClass="header"
-      spacing="20">
+      spacing="14">
 
-    <Button fx:id="toggleButton" text="☰"
-            styleClass="toggle-button"/>
-
-    <Region HBox.hgrow="ALWAYS"/>
+    <padding>
+        <Insets top="10" right="20" bottom="10" left="20"/>
+    </padding>
 
     <ImageView fx:id="logoImage"
-               fitHeight="150"
-               fitWidth="150"
-               pickOnBounds="true"
-               preserveRatio="true"
-               style="-fx-cursor: default;">
+               fitHeight="30"
+               fitWidth="30"
+               preserveRatio="true">
         <image>
             <Image url="@/images/AdeAsisLogo.png"/>
         </image>
     </ImageView>
 
+    <!-- Set by PortalController on every navigation. -->
+    <Label fx:id="sectionTitle" text="" styleClass="section-title"/>
+
     <Region HBox.hgrow="ALWAYS"/>
 
-</HBox>
+    <!-- Synchronisation state. Until now the only way to know whether records
+         had reached Firebase was to open a terminal and read println output. -->
+    <Label fx:id="syncStatus" text="Comprobando…" styleClass="sync-chip"/>
 
+</HBox>

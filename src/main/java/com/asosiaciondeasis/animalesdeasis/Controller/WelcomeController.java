@@ -1,6 +1,7 @@
 package com.asosiaciondeasis.animalesdeasis.Controller;
 
 import com.asosiaciondeasis.animalesdeasis.Config.FirebaseConfig;
+import com.asosiaciondeasis.animalesdeasis.Model.NavigationSection;
 import com.asosiaciondeasis.animalesdeasis.Util.NetworkUtils;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -108,7 +109,7 @@ public class WelcomeController implements Initializable {
         this.stage = stage;
     }
 
-    /** Opens the portal on its default (empty) content. */
+    /** Opens the portal on whichever section was last used. */
     @FXML
     public void handleContinue(ActionEvent event) {
         openPortal(null);
@@ -117,36 +118,45 @@ public class WelcomeController implements Initializable {
     /** Shortcut: opens the portal directly on the animals section. */
     @FXML
     public void handleGoToAnimals(ActionEvent event) {
-        openPortal("/fxml/Animal/AnimalManagement.fxml");
+        openPortal(NavigationSection.ANIMALS);
     }
 
     /** Shortcut: opens the portal directly on the statistics section. */
     @FXML
     public void handleGoToStatistics(ActionEvent event) {
-        openPortal("/fxml/Statistics/StatisticsManagement.fxml");
+        openPortal(NavigationSection.STATISTICS);
     }
 
     /**
-     * Loads the portal and, when {@code initialContent} is provided, immediately
-     * navigates to that section so the user skips a redundant click.
+     * Loads the portal and, when a section is given, navigates straight to it so
+     * the user skips a redundant click.
      *
-     * @param initialContent FXML path to open on arrival, or {@code null} for none
+     * @param initialSection section to open on arrival, or {@code null} to let the
+     *                       portal restore whichever one was last used
      */
-    private void openPortal(String initialContent) {
+    private void openPortal(NavigationSection initialSection) {
         try {
             boolean wasMaximized = stage.isMaximized();
 
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/PortalView.fxml"));
+            PortalController portalController;
             Scene scene = new Scene(loader.load());
+            portalController = loader.getController();
 
-            stage.setMinWidth(1036);
-            stage.setMinHeight(798);
+            // Was 1036x798, which is taller than the usable area of a 1366x768
+            // laptop - the size the association actually runs this on - so the
+            // window could not be positioned without part of it off-screen.
+            stage.setMinWidth(900);
+            stage.setMinHeight(640);
             stage.setScene(scene);
 
-            if (initialContent != null) {
-                PortalController portalController = loader.getController();
+            // The shell holds a sync listener on a static registry and a polling
+            // thread. Neither ends when the window does unless it is told.
+            stage.setOnHidden(e -> portalController.dispose());
+
+            if (initialSection != null) {
                 // Deferred so the portal finishes its own initialize() first.
-                Platform.runLater(() -> portalController.loadContent(initialContent));
+                Platform.runLater(() -> portalController.navigateTo(initialSection));
             }
 
             if (wasMaximized) {

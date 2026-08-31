@@ -71,7 +71,7 @@ The goal of this project is to provide a **comprehensive offline-first solution*
 | Local Database    | SQLite            |
 | Remote Sync       | Google Cloud Firestore SDK |
 | GUI               | JavaFX            |
-| Backend           | Java 17           |
+| Backend           | Java 21 (LTS)     |
 
 ### 🔐 Firebase Sync Setup
 
@@ -107,7 +107,7 @@ with a passphrase anyone could read in this repository.
 
 ## 🛠️ Building, Testing & Packaging
 
-Requires **JDK 17** (a *Full* JDK that includes JavaFX, e.g. Liberica Full, is used in CI).
+Requires **JDK 21** (a *Full* JDK that includes JavaFX, e.g. Liberica Full, is used in CI).
 
 ```bash
 # Run the unit tests (JUnit 5 + Mockito)

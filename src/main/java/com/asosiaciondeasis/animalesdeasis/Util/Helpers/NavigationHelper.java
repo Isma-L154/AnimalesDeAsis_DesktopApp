@@ -1,6 +1,7 @@
 package com.asosiaciondeasis.animalesdeasis.Util.Helpers;
 
 import com.asosiaciondeasis.animalesdeasis.Controller.PortalController;
+import com.asosiaciondeasis.animalesdeasis.Model.NavigationSection;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.image.Image;
@@ -12,7 +13,7 @@ public class NavigationHelper {
 
     public static void goToAnimalModule(PortalController portalController) {
         if (portalController != null) {
-            portalController.loadContent("/fxml/Animal/AnimalManagement.fxml");
+            portalController.navigateTo(NavigationSection.ANIMALS);
         } else {
             showErrorAlert("Error", "No se pudo cambiar de módulo", "El controlador del portal es nulo.");
         }

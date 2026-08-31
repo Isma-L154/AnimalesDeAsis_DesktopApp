@@ -24,11 +24,13 @@ lo produjo. Lo que no se pudo verificar está marcado como tal.
 ### 2.1 Seguridad de credenciales
 
 **Passphrase hardcodeada en repositorio público — riesgo alto.**
-`Config/CredentialsManager.java:52` define:
+`Config/CredentialsManager.java:52` declara una constante
+`LEGACY_PASSPHRASE` con el passphrase literal.
 
-```java
-private static final String LEGACY_PASSPHRASE = "AnimalesDeAsis2024!FixedSecretKey";
-```
+> El valor no se reproduce aquí a propósito. Repetirlo en documentación lo
+> propaga a un archivo más, y sobre todo lo deja sobreviviendo al arreglo: una
+> vez rotada la credencial y borrada esa línea del fuente, un documento que la
+> cite seguiría publicándola. Para reproducir el hallazgo, leer la línea 52.
 
 `resolvePassphrase()` (líneas 62-72) consulta la variable de entorno
 `ANIMALESDEASIS_CRED_KEY`, luego la propiedad de sistema
@@ -134,11 +136,11 @@ liberar sus suscripciones. Cada navegación deja listeners vivos.
 ### 2.5 UI/UX
 
 **Los tokens de diseño existen pero no se usan.** `css/theme.css` define 15
-looked-up colors, y aun así los 13 archivos CSS contienen **411 valores
+looked-up colors, y aun así los otros 12 archivos CSS contienen **411 valores
 hexadecimales hardcodeados** (`AnimalManagement.css` 88, `CreateForm.css` 49,
-`EditForm.css` 49, `StatisticsDashboard.css` 46…). Cambiar el naranja de marca hoy
-exige editar 13 archivos. Además 2 de las 13 vistas ni siquiera importan
-`theme.css`.
+`EditForm.css` 49, `StatisticsDashboard.css` 46…) — 426 contando los 15
+literales legítimos de `theme.css`. Cambiar el naranja de marca hoy exige editar
+13 archivos. Además 2 de las 13 vistas ni siquiera importan `theme.css`.
 
 **Todo es un diálogo modal.** 62 llamadas a `NavigationHelper.show*Alert`, de las
 cuales 49 son `showErrorAlert`. Cada validación fallida bloquea la aplicación con
@@ -305,9 +307,15 @@ Sin cambios visibles de comportamiento. Prepara el terreno.
   `pom.xml`.
 - Sustituir los emojis por iconos de `ikonli-fontawesome5`.
 
-**Criterio de aceptación:** `grep -o '#[0-9a-fA-F]\{3,8\}' css/**/*.css` no
-devuelve resultados fuera de `theme.css`. La app arranca y las pantallas se ven
-igual que antes del cambio.
+**Criterio de aceptación:** el conteo baja de 411 a 0. Comando exacto:
+
+```bash
+grep -rno '#[0-9a-fA-F]\{3,8\}' src/main/resources/css --include='*.css' \
+  | grep -v '/theme\.css:' | wc -l
+```
+
+`theme.css` se excluye porque es donde los literales deben vivir. La app arranca
+y las pantallas se ven igual que antes del cambio.
 
 ### PR 2.2 — Shell de la aplicación
 

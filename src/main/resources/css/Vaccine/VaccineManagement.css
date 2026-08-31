@@ -1,6 +1,6 @@
 /* Main Container Styles */
 .vaccine-scroll-pane {
-    -fx-background-color: #f5f5f5;
+    -fx-background-color: -surface-alt;
     -fx-padding: 20;
 }
 
@@ -20,18 +20,18 @@
 .vaccine-title {
     -fx-font-size: 28px;
     -fx-font-weight: bold;
-    -fx-text-fill: #2c3e50;
+    -fx-text-fill: -flat-900;
     -fx-font-family: "Segoe UI", Arial, sans-serif;
 }
 
 .animal-info-subtitle {
     -fx-font-size: 16px;
-    -fx-text-fill: #7f8c8d;
+    -fx-text-fill: -flat-600;
     -fx-font-style: italic;
 }
 
 .vaccine-separator {
-    -fx-background-color: #F2921D;
+    -fx-background-color: -brand-primary;
     -fx-pref-height: 3;
     -fx-background-radius: 2;
 }
@@ -56,45 +56,45 @@
 }
 
 .vaccine-create-button {
-    -fx-background-color: #27ae60;
+    -fx-background-color: -success;
     -fx-text-fill: white;
-    -fx-border-color: #229954;
+    -fx-border-color: -success-dark;
     -fx-border-width: 1;
 }
 
 .vaccine-create-button:hover {
-    -fx-background-color: #229954;
-    -fx-effect: dropshadow(three-pass-box, rgba(39,174,96,0.4), 8, 0, 0, 2);
+    -fx-background-color: -success-dark;
+    -fx-effect: dropshadow(three-pass-box, -success-a40, 8, 0, 0, 2);
 }
 
 .vaccine-edit-button {
-    -fx-background-color: #f39c12;
+    -fx-background-color: -warning;
     -fx-text-fill: white;
-    -fx-border-color: #e67e22;
+    -fx-border-color: -brand-primary-dark;
     -fx-border-width: 1;
 }
 
 .vaccine-edit-button:hover {
-    -fx-background-color: #e67e22;
-    -fx-effect: dropshadow(three-pass-box, rgba(243,156,18,0.4), 8, 0, 0, 2);
+    -fx-background-color: -brand-primary-dark;
+    -fx-effect: dropshadow(three-pass-box, -warning-a40, 8, 0, 0, 2);
 }
 
 .vaccine-delete-button {
-    -fx-background-color: #e74c3c;
+    -fx-background-color: -danger;
     -fx-text-fill: white;
-    -fx-border-color: #c0392b;
+    -fx-border-color: -danger-dark;
     -fx-border-width: 1;
 }
 
 .vaccine-delete-button:hover {
-    -fx-background-color: #c0392b;
-    -fx-effect: dropshadow(three-pass-box, rgba(231,76,60,0.4), 8, 0, 0, 2);
+    -fx-background-color: -danger-dark;
+    -fx-effect: dropshadow(three-pass-box, -danger-a40, 8, 0, 0, 2);
 }
 
 /* --- Vaccine Table: Compact style, less spacing --- */
 .vaccine-table {
     -fx-background-color: transparent;
-    -fx-border-color: #ecf0f1;
+    -fx-border-color: -flat-100;
     -fx-border-width: 1;
     -fx-border-radius: 8;
     -fx-background-radius: 8;
@@ -104,12 +104,12 @@
 }
 
 .vaccine-table .column-header {
-    -fx-background-color: #593414;
+    -fx-background-color: -brand-text;
     -fx-text-fill: white;
     -fx-font-weight: bold;
     -fx-font-size: 14px;
     -fx-padding: 12 8;
-    -fx-border-color: #4b2e0e;
+    -fx-border-color: -brand-text-dark;
     -fx-border-width: 0 1 0 0;
     -fx-alignment: CENTER;
 }
@@ -126,7 +126,7 @@
 
 .vaccine-table .table-row-cell {
     -fx-background-color: white;
-    -fx-border-color: #ecf0f1;
+    -fx-border-color: -flat-100;
     -fx-border-width: 0 0 1 0;
     -fx-padding: 0;
     -fx-cell-size: 40px;
@@ -135,36 +135,36 @@
 /* Warm hover + orange selection rail, matching the animals table so both
    listings behave and read identically (this row used to select in blue). */
 .vaccine-table .table-row-cell:hover {
-    -fx-background-color: #fdf6ec;
+    -fx-background-color: -brand-tint-soft;
     -fx-cursor: hand;
 }
 
 .vaccine-table .table-row-cell:selected {
-    -fx-background-color: linear-gradient(to right, #fef7e6, #fff3e0);
-    -fx-border-color: #F2921D transparent #ecf0f1 transparent;
+    -fx-background-color: linear-gradient(to right, -brand-tint, -brand-tint);
+    -fx-border-color: -brand-primary transparent -flat-100 transparent;
     -fx-border-width: 0 0 1 4;
 }
 
 .vaccine-table .table-cell {
     -fx-font-size: 13px;
-    -fx-text-fill: #2c3e50;
+    -fx-text-fill: -flat-900;
     -fx-padding: 8;
     -fx-alignment: CENTER;
     -fx-text-alignment: center;
 }
 
 .vaccine-table .table-row-cell:selected .table-cell {
-    -fx-text-fill: #593414;
+    -fx-text-fill: -brand-text;
     -fx-font-weight: bold;
 }
 
 .vaccine-table .placeholder .label {
-    -fx-text-fill: #7f8c8d;
+    -fx-text-fill: -flat-600;
     -fx-font-size: 15px;
 }
 
 .vaccine-table .table-row-cell:even {
-    -fx-background-color: #fafbfc;
+    -fx-background-color: -surface;
 }
 
 /* Action Buttons - AnimalManagement style, compact */
@@ -183,23 +183,23 @@
 }
 
 .edit-btn {
-    -fx-background-color: linear-gradient(to bottom, #F2921D, #E67E22);
+    -fx-background-color: linear-gradient(to bottom, -brand-primary, -brand-primary-dark);
 }
 
 .edit-btn:hover {
-    -fx-background-color: linear-gradient(to bottom, #E67E22, #D68910);
+    -fx-background-color: linear-gradient(to bottom, -brand-primary-dark, -brand-primary-darker);
     -fx-scale-x: 1.05;
     -fx-scale-y: 1.05;
 }
 
 .delete-btn {
-    -fx-background-color: linear-gradient(to bottom, #D1495B, #B03A2E);
+    -fx-background-color: linear-gradient(to bottom, -danger-rose, -danger-darker);
     -fx-min-width: 75px;
     -fx-pref-width: 75px;
 }
 
 .delete-btn:hover {
-    -fx-background-color: linear-gradient(to bottom, #B03A2E, #922B21);
+    -fx-background-color: linear-gradient(to bottom, -danger-darker, -danger-deepest);
     -fx-scale-x: 1.05;
     -fx-scale-y: 1.05;
 }
@@ -220,7 +220,7 @@
 .table-title {
     -fx-font-size: 18px;
     -fx-font-weight: bold;
-    -fx-text-fill: #2c3e50;
+    -fx-text-fill: -flat-900;
 }
 
 /* Summary Cards */
@@ -244,20 +244,20 @@
 .summary-title {
     -fx-font-size: 14px;
     -fx-font-weight: bold;
-    -fx-text-fill: #7f8c8d;
+    -fx-text-fill: -flat-600;
 }
 
 .summary-value {
     -fx-font-size: 24px;
     -fx-font-weight: bold;
-    -fx-text-fill: #F2921D;
+    -fx-text-fill: -brand-primary;
 }
 
 /* Navigation Button - Simple style without container */
 .vaccine-back-button-simple {
-    -fx-background-color: #95a5a6;
+    -fx-background-color: -flat-500;
     -fx-text-fill: white;
-    -fx-border-color: #7f8c8d;
+    -fx-border-color: -flat-600;
     -fx-border-width: 1;
     -fx-font-size: 14px;
     -fx-font-weight: bold;
@@ -270,6 +270,6 @@
 }
 
 .vaccine-back-button-simple:hover {
-    -fx-background-color: #7f8c8d;
-    -fx-effect: dropshadow(three-pass-box, rgba(149,165,166,0.4), 8, 0, 0, 2);
+    -fx-background-color: -flat-600;
+    -fx-effect: dropshadow(three-pass-box, -flat-500-a40, 8, 0, 0, 2);
 }

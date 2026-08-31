@@ -84,13 +84,26 @@ jobs:
 
       # Version: from the tag (v1.2.3 -> 1.2.3) for releases, or a unique dev
       # version (1.0.<run_number>) for rolling "latest" builds off main.
+      # jpackage will only accept a strictly numeric version: on Windows it maps
+      # to a Windows Installer ProductVersion, on macOS to CFBundleVersion. A tag
+      # like v1.0.0-rc1 strips to "1.0.0-rc1", which is rejected — but only at the
+      # jpackage step, after a full build has already run on three platforms, and
+      # with a message that does not mention the tag. Validate up front so a bad
+      # tag fails in seconds with a message that says what to do about it.
       - name: Resolve version
         id: ver
         shell: bash
         run: |
           REF="${GITHUB_REF_NAME}"
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then echo "value=${REF#v}" >> "$GITHUB_OUTPUT";
-          else echo "value=1.0.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"; fi
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then VALUE="${REF#v}";
+          else VALUE="1.0.${GITHUB_RUN_NUMBER}"; fi
+
+          if [[ ! "$VALUE" =~ ^[0-9]+(\.[0-9]+){0,2}$ ]]; then
+            echo "::error::Tag '${REF}' resolves to version '${VALUE}', which jpackage will reject."
+            echo "::error::Release tags must be strictly numeric: v1.2.3, v1.2 or v1 — no suffixes such as -rc1 or -beta."
+            exit 1
+          fi
+          echo "value=${VALUE}" >> "$GITHUB_OUTPUT"
 
       # Inject the encrypted Firebase bundle from a secret (kept out of git).
       # If the secret is absent the app still builds and runs in offline-only mode.

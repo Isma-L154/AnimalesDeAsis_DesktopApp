@@ -2,31 +2,54 @@
 
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
 
-<BorderPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="com.asosiaciondeasis.animalesdeasis.Controller.PortalController"
-            fx:id="mainPortal"
-            stylesheets="@/css/theme.css, @/css/Portal.css"
-            styleClass="mainPortal">
+<!--
+  The root is a StackPane so the toast layer can sit above the whole window
+  rather than inside one screen. Toasts report things that finish while you are
+  somewhere else - a record saved just before navigating away, a sync completing
+  - so they cannot belong to the content area.
+-->
+<StackPane xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="com.asosiaciondeasis.animalesdeasis.Controller.PortalController"
+           fx:id="portalRoot"
+           stylesheets="@/css/theme.css, @/css/Portal.css"
+           styleClass="mainPortal">
 
-    <top>
-        <fx:include fx:id="headerInclude" source="Header.fxml"/>
-    </top>
-    <left>
-        <fx:include fx:id="sidebarInclude" source="Sidebar.fxml"/>
-    </left>
-    <center>
-        <!--
-          Holds the current screen plus the collapse button, which PortalController
-          adds as a permanent child. The button lives here rather than in the rail
-          so that the half of it overhanging the boundary renders above the
-          content instead of being painted over by it.
+    <BorderPane fx:id="mainPortal">
+        <top>
+            <fx:include fx:id="headerInclude" source="Header.fxml"/>
+        </top>
+        <left>
+            <fx:include fx:id="sidebarInclude" source="Sidebar.fxml"/>
+        </left>
+        <center>
+            <!--
+              Holds the current screen plus the collapse button, which
+              PortalController adds as a permanent child. The button lives here
+              rather than in the rail so that the half of it overhanging the
+              boundary renders above the content instead of being painted over
+              by it.
 
-          No placeholder content: the portal opens straight onto the section the
-          user was last in.
-        -->
-        <StackPane fx:id="contentPane" styleClass="content-pane"/>
-    </center>
+              No placeholder content: the portal opens straight onto the section
+              the user was last in.
+            -->
+            <StackPane fx:id="contentPane" styleClass="content-pane"/>
+        </center>
+    </BorderPane>
 
-</BorderPane>
+    <!--
+      pickOnBounds="false" is what stops this layer swallowing every click in the
+      window. Without it the transparent VBox covers the whole interface and eats
+      them, which is the classic way an overlay like this breaks an application.
+    -->
+    <VBox fx:id="toastLayer"
+          styleClass="toast-layer"
+          pickOnBounds="false"
+          StackPane.alignment="BOTTOM_RIGHT"
+          alignment="BOTTOM_RIGHT"
+          maxWidth="-Infinity"
+          maxHeight="-Infinity"/>
+
+</StackPane>

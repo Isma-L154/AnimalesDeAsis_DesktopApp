@@ -4,6 +4,7 @@ import com.asosiaciondeasis.animalesdeasis.Abstraccions.IPortalAwareController;
 import com.asosiaciondeasis.animalesdeasis.Config.UiPreferences;
 import com.asosiaciondeasis.animalesdeasis.Model.NavigationSection;
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
+import com.asosiaciondeasis.animalesdeasis.Util.Helpers.Toasts;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -33,7 +34,9 @@ public class PortalController {
     /** Horizontal overhang of the collapse button, half its width. */
     private static final double COLLAPSE_BUTTON_OVERHANG = -13;
 
+    @FXML private StackPane portalRoot;
     @FXML private BorderPane mainPortal;
+    @FXML private VBox toastLayer;
     @FXML private HBox headerInclude;
     @FXML private VBox sidebarInclude;
     @FXML private StackPane contentPane;
@@ -73,8 +76,14 @@ public class PortalController {
                 .orElse(NavigationSection.ANIMALS);
         navigateTo(restored);
 
-        // Accelerators need a scene, which does not exist during initialize().
-        Platform.runLater(this::installAccelerators);
+        // Both need a scene, which does not exist yet during initialize().
+        Platform.runLater(() -> {
+            installAccelerators();
+            Scene scene = portalRoot.getScene();
+            if (scene != null) {
+                Toasts.register(scene, toastLayer);
+            }
+        });
     }
 
     /**
@@ -105,7 +114,7 @@ public class PortalController {
     }
 
     private void installAccelerators() {
-        Scene scene = mainPortal.getScene();
+        Scene scene = portalRoot.getScene();
         if (scene == null) {
             return;
         }

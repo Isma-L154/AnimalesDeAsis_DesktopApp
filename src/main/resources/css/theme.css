@@ -219,3 +219,82 @@
 
 .status-success { -fx-text-fill: -success; }
 .status-error   { -fx-text-fill: -danger; }
+
+/*
+ * ---------------------------------------------------------------------------
+ *  Feedback
+ * ---------------------------------------------------------------------------
+ *  The application used to answer everything with a modal dialog: 62 of them, 50
+ *  of which were errors. Confirming a save cost a click, and a validation error
+ *  blocked the form it was describing. These are what replaced that.
+ */
+
+/* Toasts: brief, non-blocking, fade on their own. Bottom right, out of the way
+   of the work and of the navigation rail. */
+.toast-layer {
+    -fx-padding: 18;
+    -fx-spacing: 8;
+}
+
+.toast {
+    -fx-background-color: -surface;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-width: 1 1 1 3;
+    -fx-border-color: -border-subtle -border-subtle -border-subtle -text-muted;
+    -fx-padding: 10 14;
+    -fx-alignment: CENTER_LEFT;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.16), 12, 0, 0, 3);
+}
+
+.toast-text {
+    -fx-font-size: 12px;
+    -fx-text-fill: -text-strong;
+}
+
+.toast-icon {
+    -fx-icon-size: 14;
+}
+
+.toast-success {
+    -fx-border-color: -border-subtle -border-subtle -border-subtle -success;
+}
+
+.toast-success .toast-icon {
+    -fx-icon-color: -success;
+}
+
+.toast-info {
+    -fx-border-color: -border-subtle -border-subtle -border-subtle -brand-primary;
+}
+
+.toast-info .toast-icon {
+    -fx-icon-color: -brand-primary;
+}
+
+.toast-warning {
+    -fx-border-color: -border-subtle -border-subtle -border-subtle -warning;
+}
+
+.toast-warning .toast-icon {
+    -fx-icon-color: -warning-dark;
+}
+
+/* Inline validation. The outline says which field; the message says why. A
+   modal could only ever say why. */
+.field-error {
+    -fx-border-color: -danger;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 5;
+    -fx-background-color: -danger-tint-soft;
+}
+
+.field-error:focused {
+    -fx-border-color: -danger-dark;
+    -fx-effect: dropshadow(gaussian, -danger-a30, 5, 0.2, 0, 0);
+}
+
+.field-error-message {
+    -fx-font-size: 11px;
+    -fx-text-fill: -danger-dark;
+}

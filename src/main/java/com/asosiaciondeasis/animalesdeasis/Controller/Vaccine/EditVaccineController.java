@@ -4,6 +4,7 @@ import com.asosiaciondeasis.animalesdeasis.Config.ServiceFactory;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Model.Vaccine;
 import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
+import com.asosiaciondeasis.animalesdeasis.Util.Helpers.FieldValidation;
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -23,6 +24,8 @@ public class EditVaccineController implements Initializable {
     @FXML private TextField vaccineNameField;
     @FXML private Label animalInfoLabel;
     @FXML private DatePicker vaccinationDatePicker;
+
+    private final FieldValidation validation = new FieldValidation();
 
     private Animal currentAnimal;
     private String animalName;
@@ -131,37 +134,44 @@ public class EditVaccineController implements Initializable {
     }
 
     /**
-     * Validates the form fields for vaccine name and vaccination date.
-     * Shows an error alert if validation fails.
+     * Checks the form and marks whatever is wrong, in place.
      *
-     * @return true if the form is valid, false otherwise.
+     * <p>This used to gather every problem into a string and raise a dialog
+     * listing them. The dialog could say what was wrong but never <em>where</em>:
+     * you read it, dismissed it, and then went looking. Each message now sits
+     * under the field that caused it, and focus lands on the first one.</p>
+     *
+     * @return true if the form is valid
      */
     private boolean validateForm() {
-        StringBuilder errors = new StringBuilder();
+        validation.clear();
+        boolean valid = true;
 
-        if (vaccineNameField.getText() == null || vaccineNameField.getText().trim().isEmpty()) {
-            errors.append("- El nombre de la vacuna es obligatorio\n");
-        } else if (vaccineNameField.getText().trim().length() > 100) {
-            errors.append("- El nombre de la vacuna no puede exceder 100 caracteres\n");
+        String name = vaccineNameField.getText();
+        if (name == null || name.trim().isEmpty()) {
+            validation.reject(vaccineNameField, "El nombre de la vacuna es obligatorio");
+            valid = false;
+        } else if (name.trim().length() > 100) {
+            validation.reject(vaccineNameField,
+                    "No puede exceder 100 caracteres (van " + name.trim().length() + ")");
+            valid = false;
         }
 
-        if (vaccinationDatePicker.getValue() == null) {
-            errors.append("- La fecha de vacunación es obligatoria\n");
-        } else if (vaccinationDatePicker.getValue().isAfter(LocalDate.now())) {
-            errors.append("- La fecha de vacunación no puede ser futura\n");
+        LocalDate date = vaccinationDatePicker.getValue();
+        if (date == null) {
+            validation.reject(vaccinationDatePicker, "La fecha de vacunación es obligatoria");
+            valid = false;
+        } else if (date.isAfter(LocalDate.now())) {
+            validation.reject(vaccinationDatePicker, "La fecha no puede ser futura");
+            valid = false;
         }
 
-        if (errors.length() > 0) {
-            NavigationHelper.showErrorAlert("Datos inválidos",
-                    "Por favor corrija los siguientes errores:", errors.toString());
-            return false;
+        if (!valid) {
+            validation.focusFirstError();
         }
-
-        return true;
+        return valid;
     }
 
-    @FXML
-    public void onCancelAction() {closeWindow();}
     private void closeWindow() {
         Stage stage = (Stage) animalInfoLabel.getScene().getWindow();
         stage.close();

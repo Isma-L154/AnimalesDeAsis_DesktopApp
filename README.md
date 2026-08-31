@@ -109,6 +109,8 @@ with a passphrase anyone could read in this repository.
 
 Requires **JDK 21** (a *Full* JDK that includes JavaFX, e.g. Liberica Full, is used in CI).
 
+From an IDE, run **`Main`** — pressing Run works with no launch configuration.
+
 ```bash
 # Run the unit tests (JUnit 5 + Mockito)
 ./mvnw test

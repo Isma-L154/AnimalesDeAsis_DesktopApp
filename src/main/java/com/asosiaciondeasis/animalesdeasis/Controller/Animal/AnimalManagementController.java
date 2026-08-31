@@ -11,6 +11,7 @@ import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
 import com.asosiaciondeasis.animalesdeasis.Util.SyncEventManager;
 import javafx.animation.FadeTransition;
 import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
@@ -24,7 +25,12 @@ import javafx.util.Duration;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 public class AnimalManagementController implements IPortalAwareController {
 
@@ -60,6 +66,7 @@ public class AnimalManagementController implements IPortalAwareController {
     private List<Animal> filteredAnimals;
     private boolean filtersVisible = false;
     private Runnable syncListener;
+    private ExecutorService executor;
 
     @Override
     public void setPortalController(PortalController portalController) {
@@ -71,20 +78,74 @@ public class AnimalManagementController implements IPortalAwareController {
      */
     @FXML
     public void initialize() {
-        try {
-            // Initialize the animal table and pagination
-            allAnimals = ServiceFactory.getAnimalService().getActiveAnimals();
-            filteredAnimals = allAnimals; // Initially, all animals are shown
-            initializeComboBoxes();
-            setUpTables(); //Set up the table columns and pagination
-            addActionButtons();
-            setUpPagination(); // Load the first page of animals
-            updateResultsCount();
-            animalTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-            setupSyncListener();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        // Nothing here touches the database. This method runs on the JavaFX
+        // application thread, and it used to open with getActiveAnimals(), so the
+        // window froze until the query returned - the exact rule the project sets
+        // out not to break. The table is built empty and filled from a background
+        // task instead.
+        executor = Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r, "animal-list");
+            // Daemon: a query still in flight must not keep the application alive
+            // once the window is gone.
+            t.setDaemon(true);
+            return t;
+        });
+
+        allAnimals = Collections.emptyList();
+        filteredAnimals = Collections.emptyList();
+
+        initializeComboBoxes();
+        setUpTables();
+        addActionButtons();
+        animalTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        animalTable.setPlaceholder(new Label("Cargando animales…"));
+        setUpPagination();
+        updateResultsCount();
+        setupSyncListener();
+
+        loadInBackground(() -> ServiceFactory.getAnimalService().getActiveAnimals(),
+                animals -> {
+                    allAnimals = animals;
+                    filteredAnimals = animals;
+                    applyLoadedAnimals();
+                });
+    }
+
+    /**
+     * Runs a query off the interface thread and applies its result back on it.
+     *
+     * <p>Every database call in this screen goes through here. Doing it in one
+     * place is what stops the next one from quietly being written inline again,
+     * and it is also where the empty-table message is kept honest: "loading",
+     * then either rows or a reason there are none.</p>
+     */
+    private void loadInBackground(Callable<List<Animal>> query, Consumer<List<Animal>> onLoaded) {
+        if (executor == null || executor.isShutdown()) {
+            return;
         }
+        Task<List<Animal>> task = new Task<>() {
+            @Override
+            protected List<Animal> call() throws Exception {
+                return query.call();
+            }
+        };
+        task.setOnSucceeded(e -> onLoaded.accept(task.getValue()));
+        task.setOnFailed(e -> {
+            Throwable cause = task.getException();
+            animalTable.setPlaceholder(new Label("No se pudieron cargar los animales"));
+            NavigationHelper.showErrorAlert("Error", "No se pudieron cargar los animales",
+                    cause == null ? "Error desconocido" : cause.getMessage());
+        });
+        executor.submit(task);
+    }
+
+    /** Repaints the table from {@code filteredAnimals}. Interface thread only. */
+    private void applyLoadedAnimals() {
+        animalTable.setPlaceholder(new Label(
+                "No hay animales que coincidan con los filtros"));
+        setUpPagination();
+        updateResultsCount();
+        animalTable.refresh();
     }
 
     /**
@@ -240,15 +301,24 @@ public class AnimalManagementController implements IPortalAwareController {
                 return;
             }
 
-            filteredAnimals = ServiceFactory.getAnimalService().findByFilters(species, startDateStr, endDateStr,chipNumber ,showInactive);
-            setUpPagination();
-            updateResultsCount();
+            final String finalSpecies = species;
+            final String finalChip = chipNumber;
+            final String finalStart = startDateStr;
+            final String finalEnd = endDateStr;
+            final Boolean finalInactive = showInactive;
 
-            String message = filteredAnimals.isEmpty() ?
-                    "No se encontraron animales con los filtros seleccionados." :
-                    "Se encontraron " + filteredAnimals.size() + " animales.";
-
-            NavigationHelper.showSuccessAlert("Filtros aplicados", message);
+            animalTable.setPlaceholder(new Label("Buscando…"));
+            loadInBackground(
+                    () -> ServiceFactory.getAnimalService().findByFilters(
+                            finalSpecies, finalStart, finalEnd, finalChip, finalInactive),
+                    animals -> {
+                        filteredAnimals = animals;
+                        applyLoadedAnimals();
+                        String message = animals.isEmpty()
+                                ? "No se encontraron animales con los filtros seleccionados."
+                                : "Se encontraron " + animals.size() + " animales.";
+                        NavigationHelper.showSuccessAlert("Filtros aplicados", message);
+                    });
 
         } catch (Exception e) {
             NavigationHelper.showErrorAlert("Error aplicando filtros",
@@ -270,9 +340,12 @@ public class AnimalManagementController implements IPortalAwareController {
         chipNumberFilter.clear();
         scannedChipNumber = null;
 
-        filteredAnimals = allAnimals;
-        setUpPagination();
-        updateResultsCount();
+        loadInBackground(() -> ServiceFactory.getAnimalService().getActiveAnimals(),
+                animals -> {
+                    allAnimals = animals;
+                    filteredAnimals = animals;
+                    applyLoadedAnimals();
+                });
 
         NavigationHelper.showInfoAlert("Filtros limpiados", "Se han eliminado todos los filtros. Mostrando todos los animales.");
     }
@@ -424,8 +497,6 @@ public class AnimalManagementController implements IPortalAwareController {
      * @throws Exception if there is an error retrieving animal data.
      */
     private void refreshAnimalList() throws Exception {
-        allAnimals = ServiceFactory.getAnimalService().getActiveAnimals();
-
         if (hasActiveFilters()) {
             String species = getFilterValue(speciesFilter.getValue());
             LocalDate startDate = startDateFilter.getValue();
@@ -440,13 +511,27 @@ public class AnimalManagementController implements IPortalAwareController {
             String endDateStr = endDate != null ? endDate.toString() : null;
             Boolean showInactive = inactiveFilter.isSelected();
 
-            filteredAnimals = ServiceFactory.getAnimalService().findByFilters(species, startDateStr, endDateStr, chipNumber ,showInactive);
+            final String finalSpecies = species;
+            final String finalChip = chipNumber;
+            final String finalStart = startDateStr;
+            final String finalEnd = endDateStr;
+            final Boolean finalInactive = showInactive;
+
+            loadInBackground(
+                    () -> ServiceFactory.getAnimalService().findByFilters(
+                            finalSpecies, finalStart, finalEnd, finalChip, finalInactive),
+                    animals -> {
+                        filteredAnimals = animals;
+                        applyLoadedAnimals();
+                    });
         } else {
-            filteredAnimals = allAnimals;
+            loadInBackground(() -> ServiceFactory.getAnimalService().getActiveAnimals(),
+                    animals -> {
+                        allAnimals = animals;
+                        filteredAnimals = animals;
+                        applyLoadedAnimals();
+                    });
         }
-        setUpPagination();
-        updateResultsCount();
-        animalTable.refresh();
     }
 
     /**
@@ -464,14 +549,18 @@ public class AnimalManagementController implements IPortalAwareController {
      * Sets up a listener for synchronization events to refresh the animal list automatically when a sync occurs.
      */
     private void setupSyncListener() {
-        syncListener = () -> {
+        // SyncEventManager notifies from the synchronisation thread, and
+        // refreshAnimalList touches the table, the pagination and the labels.
+        // Calling it straight from here mutated the scene graph off the interface
+        // thread, which JavaFX does not allow and does not always fail loudly
+        // about. The hop is what makes it legal.
+        syncListener = () -> Platform.runLater(() -> {
             try {
-                System.out.println("🔄 Sync completado - actualizando tabla automáticamente...");
                 refreshAnimalList();
             } catch (Exception e) {
                 System.out.println("Error actualizando tabla después del sync: " + e.getMessage());
             }
-        };
+        });
 
         SyncEventManager.addListener(syncListener);
     }
@@ -485,6 +574,12 @@ public class AnimalManagementController implements IPortalAwareController {
         if (syncListener != null) {
             SyncEventManager.removeListener(syncListener);
             syncListener = null;
+        }
+        if (executor != null) {
+            // Stops an in-flight query from completing into a table that is no
+            // longer on screen.
+            executor.shutdownNow();
+            executor = null;
         }
     }
 }

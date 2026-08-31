@@ -48,6 +48,7 @@ class NavigationSectionTest {
     @Test
     @DisplayName("stored ids do not change")
     void storedIdsAreStable() {
+        assertEquals("home", NavigationSection.HOME.id());
         assertEquals("animals", NavigationSection.ANIMALS.id());
         assertEquals("statistics", NavigationSection.STATISTICS.id());
     }
@@ -78,6 +79,8 @@ class NavigationSectionTest {
     @DisplayName("a grouped section names its group in the collapsed description")
     void groupedSectionsDescribeTheirGroup() {
         assertEquals("Gestión › Animales", NavigationSection.ANIMALS.accessibleDescription());
+        assertEquals("Inicio", NavigationSection.HOME.accessibleDescription(),
+                "Inicio stands outside any group, so its description is just its name");
         assertEquals("Análisis › Estadísticas", NavigationSection.STATISTICS.accessibleDescription());
     }
 }

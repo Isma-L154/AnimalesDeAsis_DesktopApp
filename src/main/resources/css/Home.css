@@ -1,0 +1,246 @@
+/*
+ * Home panel. Colours come from theme.css; there are no literals here.
+ */
+
+.home-scroll {
+    -fx-background-color: -surface-alt;
+    -fx-background: -surface-alt;
+}
+
+/* ScrollPane paints its own viewport, which shows through as white unless it is
+   told otherwise. */
+.home-scroll > .viewport {
+    -fx-background-color: -surface-alt;
+}
+
+.home-root {
+    -fx-background-color: -surface-alt;
+}
+
+.home-greeting {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -brand-text;
+}
+
+.home-subtitle {
+    -fx-font-size: 13px;
+    -fx-text-fill: -text-muted;
+}
+
+/* ---------------------------------------------------------------------------
+   Key figures
+   --------------------------------------------------------------------------- */
+
+.kpi-card {
+    -fx-padding: 14 16;
+    -fx-min-height: 84;
+}
+
+.kpi-caption {
+    -fx-font-size: 11px;
+    -fx-text-fill: -text-muted;
+    -fx-graphic-text-gap: 7;
+}
+
+.kpi-icon {
+    -fx-icon-color: -brand-primary;
+    -fx-icon-size: 13;
+}
+
+.kpi-value {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -brand-text;
+}
+
+.kpi-note {
+    -fx-font-size: 11px;
+    -fx-text-fill: -text-muted;
+}
+
+/* A figure that needs doing something about does not look like one that does
+   not. Warm rather than red: these are tasks, not failures. */
+.kpi-warn {
+    -fx-border-color: -brand-primary-a30;
+}
+
+.kpi-warn .kpi-value {
+    -fx-text-fill: -warning-dark;
+}
+
+.kpi-warn .kpi-note {
+    -fx-text-fill: -warning-dark;
+}
+
+/* ---------------------------------------------------------------------------
+   Panels
+   --------------------------------------------------------------------------- */
+
+.panel {
+    -fx-background-color: -surface;
+    -fx-background-radius: 8px;
+    -fx-border-color: -border-subtle;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 14 16 16 16;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 8, 0, 0, 2);
+}
+
+.panel-heading {
+    -fx-padding: 0 0 4 0;
+}
+
+.panel-title {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -brand-text;
+}
+
+.panel-link {
+    -fx-background-color: transparent;
+    -fx-text-fill: -brand-primary;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 2 4;
+    -fx-cursor: hand;
+    -fx-border-width: 0;
+}
+
+.panel-link:hover {
+    -fx-text-fill: -brand-primary-dark;
+    -fx-underline: true;
+}
+
+/* Rows are Buttons so they can be reached by keyboard, which means stripping the
+   button chrome back until they read as list rows again. */
+.panel-row-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 6;
+    -fx-padding: 7 8;
+    -fx-cursor: hand;
+    -fx-border-width: 0;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.panel-row-button:hover {
+    -fx-background-color: -surface-alt;
+}
+
+.panel-row-button:focused {
+    -fx-background-color: -brand-tint;
+    -fx-effect: dropshadow(gaussian, -brand-primary-a40, 5, 0.2, 0, 0);
+}
+
+.row-main {
+    -fx-font-size: 12px;
+    -fx-text-fill: -text-strong;
+}
+
+.row-meta {
+    -fx-font-size: 11px;
+    -fx-text-fill: -text-muted;
+}
+
+/* ---------------------------------------------------------------------------
+   Attention
+   --------------------------------------------------------------------------- */
+
+.attention-group {
+    -fx-padding: 4 0 6 0;
+}
+
+.attention-group-title {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -warning-dark;
+    -fx-padding: 0 0 0 8;
+}
+
+.attention-note {
+    -fx-font-size: 11px;
+    -fx-text-fill: -text-muted;
+    -fx-padding: 6 8;
+    -fx-background-color: -surface-alt;
+    -fx-background-radius: 6;
+}
+
+/* ---------------------------------------------------------------------------
+   Empty state
+   ---------------------------------------------------------------------------
+   The application had none anywhere: an empty table simply looked broken. An
+   empty panel should say it is empty and what would fill it.
+ */
+
+.empty-state {
+    -fx-padding: 16 8;
+}
+
+.empty-title {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -text-strong;
+}
+
+.empty-detail {
+    -fx-font-size: 11px;
+    -fx-text-fill: -text-muted;
+}
+
+/* ---------------------------------------------------------------------------
+   Skeletons
+   ---------------------------------------------------------------------------
+   Shown while the queries run. The panel takes its final shape immediately and
+   the numbers drop into it, instead of a blank rectangle followed by everything
+   at once.
+ */
+
+.skeleton-bar {
+    -fx-background-color: -slate-200;
+    -fx-background-radius: 4;
+    -fx-min-height: 12;
+    -fx-pref-height: 12;
+    -fx-opacity: 0.7;
+}
+
+/* ---------------------------------------------------------------------------
+   Error banner
+   ---------------------------------------------------------------------------
+   In the page, with a retry, rather than a modal. This is the first screen the
+   application shows; a dialog that must be dismissed before anything can be
+   seen is the wrong thing to meet.
+ */
+
+.error-banner {
+    -fx-background-color: -brand-tint;
+    -fx-background-radius: 8;
+    -fx-border-color: -brand-primary-a30;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-padding: 12 14;
+}
+
+.banner-icon {
+    -fx-icon-color: -warning-dark;
+    -fx-icon-size: 15;
+}
+
+.banner-text {
+    -fx-font-size: 12px;
+    -fx-text-fill: -brand-text-mid;
+}
+
+.banner-action {
+    -fx-background-color: -brand-primary;
+    -fx-text-fill: -surface;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6;
+    -fx-padding: 6 14;
+    -fx-cursor: hand;
+}
+
+.banner-action:hover {
+    -fx-background-color: -brand-primary-dark;
+}

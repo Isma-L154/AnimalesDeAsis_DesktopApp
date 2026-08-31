@@ -5,6 +5,8 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 
 import java.io.InputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Brings up the Firebase Admin SDK, or explains why it could not.
@@ -17,6 +19,8 @@ import java.io.InputStream;
  * was installed.</p>
  */
 public final class FirebaseConfig {
+    private static final Logger log = LoggerFactory.getLogger(FirebaseConfig.class);
+
 
     private static boolean initialized = false;
     private static boolean firebaseAvailable = false;
@@ -38,7 +42,7 @@ public final class FirebaseConfig {
             FirebaseApp.initializeApp(options);
             firebaseAvailable = true;
             unavailableReason = null;
-            System.out.println("Firebase inicializado: la sincronización está disponible.");
+            log.info("Firebase inicializado: la sincronización está disponible.");
             return true;
 
         } catch (CredentialsException e) {
@@ -50,7 +54,7 @@ public final class FirebaseConfig {
         } catch (Exception e) {
             firebaseAvailable = false;
             unavailableReason = "No se pudo inicializar Firebase: " + e.getMessage();
-            System.out.println("[Firebase] " + unavailableReason);
+            log.info("[Firebase] "+ unavailableReason);
             return false;
         }
     }
@@ -62,14 +66,17 @@ public final class FirebaseConfig {
      */
     private static void report(CredentialsException.Reason reason, String message) {
         if (reason == CredentialsException.Reason.MISSING_BUNDLE) {
-            System.out.println("[Firebase] " + message);
+            // Not a fault: an installation with no credentials is a supported
+            // configuration, and INFO is what that deserves.
+            log.info(message);
             return;
         }
-        System.out.println("======================================================================");
-        System.out.println("[Firebase] La sincronización está DESACTIVADA.");
-        System.out.println("[Firebase] " + message);
-        System.out.println("[Firebase] Los datos se guardan localmente y no salen de esta máquina.");
-        System.out.println("======================================================================");
+        // Credentials that exist but do not work is somebody's mistake, and the
+        // symptom is identical to having none - synchronisation simply never
+        // happens. WARN so it stands out in a file someone is scrolling through
+        // months later, asking why nothing reached the cloud.
+        log.warn("La sincronización está desactivada: {}", message);
+        log.warn("Los datos se guardan localmente y no salen de esta máquina.");
     }
 
     public static boolean isFirebaseAvailable() {

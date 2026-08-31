@@ -31,8 +31,12 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AnimalManagementController implements IPortalAwareController {
+    private static final Logger log = LoggerFactory.getLogger(AnimalManagementController.class);
+
 
     private final int ROWS_PER_PAGE = 20;
     // Table components
@@ -558,7 +562,7 @@ public class AnimalManagementController implements IPortalAwareController {
             try {
                 refreshAnimalList();
             } catch (Exception e) {
-                System.out.println("Error actualizando tabla después del sync: " + e.getMessage());
+                log.info("Error actualizando tabla después del sync: "+ e.getMessage());
             }
         });
 

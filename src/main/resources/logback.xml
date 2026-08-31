@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Logging for a packaged desktop application.
+
+  The application used to report itself through System.out. That works while you
+  run it from an IDE and is worth nothing once it is installed from a .exe or a
+  .dmg: there is no console, so a failing synchronisation left no trace anywhere.
+  Someone at the shelter could only say "it stopped working", and there was
+  nothing to look at.
+
+  Output goes to a file under the same directory as the database, so a person can
+  be asked for one folder and get both.
+-->
+<configuration>
+
+    <!-- Same place as the SQLite database: ~/.asociaciondeasis -->
+    <property name="LOG_DIR" value="${user.home}/.asociaciondeasis/logs"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss} %-5level %logger{20} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/animalesdeasis.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/animalesdeasis.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>5MB</maxFileSize>
+            <!-- A fortnight is long enough to look into something reported late,
+                 and short enough not to fill a machine nobody administers. -->
+            <maxHistory>14</maxHistory>
+            <totalSizeCap>50MB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+
+    <!-- The Firebase and gRPC stack is extremely talkative at INFO and would
+         bury the application's own messages in the file. -->
+    <logger name="com.google" level="WARN"/>
+    <logger name="io.grpc" level="WARN"/>
+    <logger name="io.netty" level="WARN"/>
+
+</configuration>

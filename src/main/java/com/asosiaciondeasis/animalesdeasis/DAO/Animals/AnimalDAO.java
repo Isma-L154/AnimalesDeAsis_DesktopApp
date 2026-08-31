@@ -9,8 +9,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AnimalDAO implements IAnimalDAO {
+    private static final Logger log = LoggerFactory.getLogger(AnimalDAO.class);
+
 
     //This value is for DI (Dependency injection), makes it easier to change the DB if needed
     private final Connection conn;
@@ -74,10 +78,10 @@ public class AnimalDAO implements IAnimalDAO {
             }
 
             pstmt.executeUpdate();
-            System.out.println("✅ Animal inserted successfully.");
+            log.info("Animal inserted successfully.");
             return true;
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("Unexpected error", e);
             return false;
         }
     }
@@ -108,7 +112,7 @@ public class AnimalDAO implements IAnimalDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("Unexpected error", e);
             throw new Exception("Error getting animal", e);
         }
 
@@ -126,7 +130,7 @@ public class AnimalDAO implements IAnimalDAO {
                 return mapResultSetToAnimal(rs);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("Unexpected error", e);
         }
         return null;
     }
@@ -250,7 +254,7 @@ public class AnimalDAO implements IAnimalDAO {
                 throw new Exception("⚠️ No active animal found with recordNumber: " + animal.getRecordNumber());
             }
 
-            System.out.println("Animal updated successfully.");
+            log.info("Animal updated successfully.");
             return true;
         } catch (SQLException e) {
             if (e.getMessage().contains("UNIQUE constraint failed")) {
@@ -275,7 +279,7 @@ public class AnimalDAO implements IAnimalDAO {
                 throw new Exception("❌ No animal found with the given record number.");
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("Unexpected error", e);
             throw new Exception("Error performing logical delete", e);
         }
     }
@@ -308,7 +312,7 @@ public class AnimalDAO implements IAnimalDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("Unexpected error", e);
             throw new Exception("Error getting unsynced animals", e);
         }
         return unsyncedAnimals;

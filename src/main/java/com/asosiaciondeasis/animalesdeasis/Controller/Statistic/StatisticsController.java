@@ -31,8 +31,12 @@ import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class StatisticsController implements Initializable {
+    private static final Logger log = LoggerFactory.getLogger(StatisticsController.class);
+
 
     // FXML Components
     @FXML private ComboBox<Integer> yearComboBox;
@@ -96,7 +100,7 @@ public class StatisticsController implements Initializable {
 
         } catch (Exception e) {
             updateStatus("Error al inicializar servicios: " + e.getMessage(), false);
-            e.printStackTrace();
+            log.error("Unexpected error", e);
         }
     }
 
@@ -310,7 +314,7 @@ public class StatisticsController implements Initializable {
 
         } catch (Exception e) {
             updateStatus("Error al configurar tiles: " + e.getMessage(), false);
-            e.printStackTrace();
+            log.error("Unexpected error", e);
         }
     }
 
@@ -347,7 +351,7 @@ public class StatisticsController implements Initializable {
 
         } catch (Exception e) {
             updateStatus("Error al configurar gráficos: " + e.getMessage(), false);
-            e.printStackTrace();
+            log.error("Unexpected error", e);
         }
     }
 
@@ -372,7 +376,7 @@ public class StatisticsController implements Initializable {
 
         } catch (Exception e) {
             updateStatus("Error al actualizar tiles: " + e.getMessage(), false);
-            e.printStackTrace();
+            log.error("Unexpected error", e);
         }
     }
 
@@ -415,7 +419,7 @@ public class StatisticsController implements Initializable {
 
         } catch (Exception e) {
             updateStatus("Error al actualizar gráfico mensual: " + e.getMessage(), false);
-            e.printStackTrace();
+            log.error("Unexpected error", e);
         }
     }
 
@@ -448,7 +452,7 @@ public class StatisticsController implements Initializable {
 
         } catch (Exception e) {
             updateStatus("Error al actualizar gráfico de orígenes: " + e.getMessage(), false);
-            e.printStackTrace();
+            log.error("Unexpected error", e);
         }
     }
 
@@ -477,7 +481,7 @@ public class StatisticsController implements Initializable {
 
         } catch (Exception e) {
             updateStatus("Error al actualizar gráfico circular: " + e.getMessage(), false);
-            e.printStackTrace();
+            log.error("Unexpected error", e);
         }
     }
 

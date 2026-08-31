@@ -21,6 +21,8 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Controller for the landing screen.
@@ -31,6 +33,8 @@ import java.util.ResourceBundle;
  * {@link Task} — never on the JavaFX application thread.</p>
  */
 public class WelcomeController implements Initializable {
+    private static final Logger log = LoggerFactory.getLogger(WelcomeController.class);
+
 
     /**
      * Share of the window height taken by the artwork. Driving the image from the
@@ -169,7 +173,7 @@ public class WelcomeController implements Initializable {
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Unexpected error", e);
         }
     }
 }

@@ -19,12 +19,16 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
  * Service class responsible for syncing the local SQLite database with Firebase.
  */
 public class SyncService {
+    private static final Logger log = LoggerFactory.getLogger(SyncService.class);
+
 
     private final AnimalDAO animalDAO;
     private final VaccineDAO vaccineDAO;
@@ -55,11 +59,11 @@ public class SyncService {
      */
     public void sync() {
         if (!FirebaseConfig.isFirebaseAvailable()) {
-            System.out.println("Firebase not available - skipping sync");
+            log.info("Firebase not available - skipping sync");
             return;
         }
         if (!NetworkUtils.isInternetAvailable()) {
-            System.out.println("No internet connection");
+            log.info("No internet connection");
             return;
         }
         try {
@@ -67,7 +71,7 @@ public class SyncService {
             PushChanges();
             SyncEventManager.notifyListeners();
         } catch (Exception e) {
-            System.out.println("Sync process failed -> " + e.getMessage());
+            log.info("Sync process failed -> "+ e.getMessage());
         }
     }
 
@@ -89,7 +93,7 @@ public class SyncService {
         ApiFuture<QuerySnapshot> query = db.collection("animals").get();
         List<QueryDocumentSnapshot> documents = query.get().getDocuments();
 
-        System.out.println("📥 Encontrados " + documents.size() + " animales en Firebase");
+        log.info("Encontrados " + documents.size() + " animales en Firebase");
 
         List<ApiFuture<QuerySnapshot>> vaccineFutures = new ArrayList<>();
         List<String> recordNumbers = new ArrayList<>();
@@ -104,11 +108,11 @@ public class SyncService {
             if (localAnimal == null) {
                 firebaseAnimal.setSynced(true);
                 animalDAO.insertAnimal(firebaseAnimal);
-                System.out.println("⬇ Animal insertado: " + recordNumber);
+                log.info("Animal insertado: " + recordNumber);
             } else if (shouldUpdateFromFirebase(firebaseAnimal, localAnimal)) {
                 firebaseAnimal.setSynced(true);
                 animalDAO.updateAnimal(firebaseAnimal, false);
-                System.out.println("🔁 Animal actualizado: " + recordNumber);
+                log.info("Animal actualizado: " + recordNumber);
             }
 
             vaccineFutures.add(doc.getReference().collection("vaccines").get());
@@ -193,7 +197,7 @@ public class SyncService {
             vaccineDAO.clearPendingDeletion(vaccineId);
         }
 
-        System.out.println("Subido: " + unsyncedAnimals.size() + " animales, "
+        log.info("Subido: "+ unsyncedAnimals.size() + " animales, "
                 + allUnsyncedVaccines.size() + " vacunas, "
                 + pendingDeletions.size() + " eliminaciones");
     }
@@ -282,11 +286,11 @@ public class SyncService {
             if (localVaccine == null) {
                 firebaseVaccine.setSynced(true);
                 vaccineDAO.insertVaccine(firebaseVaccine);
-                System.out.println("⬇ Vacuna insertada: " + firebaseVaccine.getVaccineName());
+                log.info("Vacuna insertada: " + firebaseVaccine.getVaccineName());
             } else if (shouldUpdateFromFirebaseVaccine(firebaseVaccine, localVaccine)) {
                 firebaseVaccine.setSynced(true);
                 vaccineDAO.updateVaccine(firebaseVaccine, false);
-                System.out.println("🔁 Vacuna actualizada: " + firebaseVaccine.getVaccineName());
+                log.info("Vacuna actualizada: " + firebaseVaccine.getVaccineName());
             }
         }
 
@@ -294,7 +298,7 @@ public class SyncService {
         for (Vaccine localVaccine : localVaccines) {
             if (!firebaseVaccineIds.contains(localVaccine.getId()) && localVaccine.isSynced()) {
                 vaccineDAO.deleteVaccine(localVaccine.getId());
-                System.out.println("🗑 Vacuna eliminada: " + localVaccine.getVaccineName());
+                log.info("Vacuna eliminada: " + localVaccine.getVaccineName());
             }
         }
     }
@@ -338,7 +342,7 @@ public class SyncService {
             // concerned, and the tombstone guarantees it reaches Firebase
             // eventually. Failing here would report an error for something that
             // succeeded.
-            System.out.println("La eliminación se aplicará en la próxima sincronización: "
+            log.info("La eliminación se aplicará en la próxima sincronización: "
                     + e.getMessage());
         }
     }

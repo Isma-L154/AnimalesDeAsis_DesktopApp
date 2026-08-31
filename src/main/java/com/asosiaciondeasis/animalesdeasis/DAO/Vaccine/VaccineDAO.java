@@ -9,8 +9,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class VaccineDAO implements IVaccineDAO {
+    private static final Logger log = LoggerFactory.getLogger(VaccineDAO.class);
+
 
     private final Connection conn;
 
@@ -46,10 +50,10 @@ public class VaccineDAO implements IVaccineDAO {
             }
 
             pstmt.executeUpdate();
-            System.out.println("✅ Vaccine inserted successfully.");
+            log.info("Vaccine inserted successfully.");
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("Unexpected error", e);
             throw new Exception("Error inserting vaccine", e);
         }
     }
@@ -73,7 +77,7 @@ public class VaccineDAO implements IVaccineDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("Unexpected error", e);
             throw new Exception("Error retrieving vaccines", e);
         }
 
@@ -120,9 +124,9 @@ public class VaccineDAO implements IVaccineDAO {
                 throw new Exception("No vaccine found with ID: " + vaccine.getId());
             }
 
-            System.out.println("Vaccine updated successfully.");
+            log.info("Vaccine updated successfully.");
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("Unexpected error", e);
             throw new Exception("Error updating vaccine", e);
         }
     }
@@ -237,7 +241,7 @@ public class VaccineDAO implements IVaccineDAO {
                 vaccines.add(mapResultSetToVaccine(rs));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("Unexpected error", e);
             throw new Exception("Error retrieving all unsynced vaccines", e);
         }
 

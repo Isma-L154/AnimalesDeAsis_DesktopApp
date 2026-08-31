@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-<?import javafx.scene.image.ImageView?>
-<?import javafx.scene.image.Image?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.StackPane?>
 
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
@@ -19,18 +17,16 @@
         <fx:include fx:id="sidebarInclude" source="Sidebar.fxml"/>
     </left>
     <center>
-        <StackPane fx:id="contentPane" styleClass="content-pane"
-                   VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
-            <VBox alignment="CENTER" spacing="20"
-                  VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
-                <ImageView fx:id="logoImage" fitWidth="200" preserveRatio="true">
-                    <image>
-                        <Image url="@/images/AdeAsisLogo.png" />
-                    </image>
-                </ImageView>
-                <Label text="Bienvenido al panel de administración" />
-            </VBox>
-        </StackPane>
+        <!--
+          Holds the current screen plus the collapse button, which PortalController
+          adds as a permanent child. The button lives here rather than in the rail
+          so that the half of it overhanging the boundary renders above the
+          content instead of being painted over by it.
+
+          No placeholder content: the portal opens straight onto the section the
+          user was last in.
+        -->
+        <StackPane fx:id="contentPane" styleClass="content-pane"/>
     </center>
 
 </BorderPane>

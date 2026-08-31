@@ -1,6 +1,6 @@
 .custom-alert {
-    -fx-background-color: #ffffff;
-    -fx-border-color: #e0e0e0;
+    -fx-background-color: -surface;
+    -fx-border-color: -grey-200;
     -fx-border-width: 1px;
     -fx-border-radius: 12px;
     -fx-background-radius: 12px;
@@ -8,7 +8,7 @@
 }
 
 .custom-alert .header-panel {
-    -fx-background-color: linear-gradient(to right, #593414, #F2921D);
+    -fx-background-color: linear-gradient(to right, -brand-text, -brand-primary);
     -fx-background-radius: 12px 12px 0 0;
     -fx-padding: 15px;
 }
@@ -22,7 +22,7 @@
 .custom-alert .content {
     -fx-padding: 20px;
     -fx-font-size: 14px;
-    -fx-text-fill: #2c3e50;
+    -fx-text-fill: -flat-900;
     -fx-font-family: "Segoe UI", "Arial", sans-serif;
 }
 
@@ -32,53 +32,53 @@
 }
 
 .custom-alert .button-bar .button {
-    -fx-background-color: linear-gradient(to bottom, #F2921D, #E67E22);
+    -fx-background-color: linear-gradient(to bottom, -brand-primary, -brand-primary-dark);
     -fx-text-fill: white;
     -fx-font-size: 13px;
     -fx-font-weight: bold;
     -fx-padding: 8px 16px;
     -fx-background-radius: 20px;
     -fx-cursor: hand;
-    -fx-effect: dropshadow(gaussian, rgba(242, 146, 29, 0.3), 4, 0, 0, 2);
+    -fx-effect: dropshadow(gaussian, -brand-primary-a30, 4, 0, 0, 2);
 }
 
 .custom-alert .button-bar .button:hover {
-    -fx-background-color: linear-gradient(to bottom, #E67E22, #D68910);
-    -fx-effect: dropshadow(gaussian, rgba(242, 146, 29, 0.5), 6, 0, 0, 2);
+    -fx-background-color: linear-gradient(to bottom, -brand-primary-dark, -brand-primary-darker);
+    -fx-effect: dropshadow(gaussian, -brand-primary-a50, 6, 0, 0, 2);
 }
 
 .custom-alert .button-bar .button:default {
-    -fx-background-color: linear-gradient(to bottom, #27ae60, #229954);
+    -fx-background-color: linear-gradient(to bottom, -success, -success-dark);
 }
 
 .custom-alert .button-bar .button:default:hover {
-    -fx-background-color: linear-gradient(to bottom, #229954, #1e8449);
+    -fx-background-color: linear-gradient(to bottom, -success-dark, -success-darker);
 }
 
 .custom-alert .button-bar .button:cancel-button {
-    -fx-background-color: linear-gradient(to bottom, #95a5a6, #7f8c8d);
+    -fx-background-color: linear-gradient(to bottom, -flat-500, -flat-600);
 }
 
 .custom-alert .button-bar .button:cancel-button:hover {
-    -fx-background-color: linear-gradient(to bottom, #7f8c8d, #6c7b7d);
+    -fx-background-color: linear-gradient(to bottom, -flat-600, -grey-550);
 }
 
 /* Success Alert Specific */
 .success-alert .header-panel {
-    -fx-background-color: linear-gradient(to right, #27ae60, #2ecc71);
+    -fx-background-color: linear-gradient(to right, -success, -success-light);
 }
 
 /* Error Alert Icon */
 .custom-alert.error .graphic {
-    -fx-text-fill: #e74c3c;
+    -fx-text-fill: -danger;
 }
 
 /* Warning Alert Icon */
 .custom-alert.warning .graphic {
-    -fx-text-fill: #f39c12;
+    -fx-text-fill: -warning;
 }
 
 /* Info Alert Icon */
 .custom-alert.information .graphic {
-    -fx-text-fill: #F2921D;
+    -fx-text-fill: -brand-primary;
 }

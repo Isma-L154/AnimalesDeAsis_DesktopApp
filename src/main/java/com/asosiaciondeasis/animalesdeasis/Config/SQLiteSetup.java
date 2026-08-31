@@ -132,11 +132,34 @@ public class SQLiteSetup {
                 );
                 """;
 
+        /*
+         * Records a vaccine that was deleted here, so the deletion survives long
+         * enough to reach Firebase.
+         *
+         * Vaccines are hard-deleted, unlike animals, which carry an `active` flag
+         * that synchronises like any other change. So deleting a vaccine with no
+         * connection left no trace at all, and the next pull found the row in
+         * Firebase, saw nothing locally, and put it back. The record returned
+         * days later with no explanation - the kind of fault people work around
+         * rather than report, because it looks like they imagined it.
+         *
+         * A row lives here from the moment of deletion until the deletion has
+         * been applied to Firebase, and is then removed.
+         */
+        String createDeletedVaccines = """
+                CREATE TABLE IF NOT EXISTS deleted_vaccines (
+                    id TEXT PRIMARY KEY,               -- the deleted vaccine's id
+                    animal_record_number TEXT NOT NULL,
+                    deleted_at TEXT NOT NULL DEFAULT (datetime('now', 'utc'))
+                );
+                """;
+
         try (Statement stmt = conn.createStatement()) {
             stmt.execute(createProvinces);
             stmt.execute(createPlaces);
             stmt.execute(createAnimals);
             stmt.execute(createVaccines);
+            stmt.execute(createDeletedVaccines);
 
             // --- Indexes for the hot query paths (sync filters, listings, joins) ---
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_animals_synced ON animals(synced)");
@@ -146,6 +169,8 @@ public class SQLiteSetup {
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_vaccines_animal ON vaccines(animal_record_number)");
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_vaccines_synced ON vaccines(synced)");
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_places_province ON places(province_id)");
+            stmt.execute("CREATE INDEX IF NOT EXISTS idx_deleted_vaccines_animal "
+                    + "ON deleted_vaccines(animal_record_number)");
         }
     }
 }

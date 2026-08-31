@@ -31,6 +31,13 @@ public class SyncService {
     private static final DateTimeFormatter DB_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     /**
+     * Firestore commits at most 500 operations in one batch. Exceeding it fails
+     * the whole commit, so the more work had accumulated offline, the more
+     * certain it was that none of it would upload.
+     */
+    private static final int MAX_BATCH_OPERATIONS = 500;
+
+    /**
      * Constructor initializes DAOs with a DB connection obtained from DatabaseConnection.
      * Also initializes Firebase once.
      */
@@ -134,39 +141,109 @@ public class SyncService {
      */
     private void PushChanges() throws Exception {
         Firestore db = FirestoreClient.getFirestore();
-        WriteBatch batch = db.batch();
 
         List<Animal> unsyncedAnimals = animalDAO.getUnsyncedAnimals();
         List<Vaccine> allUnsyncedVaccines = vaccineDAO.getAllUnsyncedVaccines();
+        List<String> pendingDeletions = vaccineDAO.getPendingDeletions();
+
+        if (unsyncedAnimals.isEmpty() && allUnsyncedVaccines.isEmpty() && pendingDeletions.isEmpty()) {
+            return;
+        }
+
+        // Every write is queued as an operation, then committed in chunks. This
+        // used to be a single WriteBatch holding everything, which fails outright
+        // past Firestore's limit of 500 operations - so the more work had piled
+        // up offline, the more certain it was that none of it would upload. The
+        // failure was silent, too: sync() logged the exception and returned.
+        // Each entry applies itself to whichever batch it is handed, so no
+        // shared mutable state is needed to assemble the chunks.
+        List<java.util.function.Consumer<WriteBatch>> pendingWrites = new ArrayList<>();
 
         for (Animal animal : unsyncedAnimals) {
-            DocumentReference animalDoc = db.collection("animals").document(animal.getRecordNumber());
-            batch.set(animalDoc, animal);
+            pendingWrites.add(batch -> batch.set(
+                    db.collection("animals").document(animal.getRecordNumber()), animal));
         }
-
         for (Vaccine vaccine : allUnsyncedVaccines) {
-            DocumentReference vaccineDoc = db.collection("animals")
-                    .document(vaccine.getAnimalRecordNumber())
-                    .collection("vaccines")
-                    .document(vaccine.getId());
-            batch.set(vaccineDoc, vaccine);
+            pendingWrites.add(batch -> batch.set(
+                    vaccineDocument(db, vaccine.getAnimalRecordNumber(), vaccine.getId()), vaccine));
+        }
+        // Deletions travel with the rest. Applying them in the same pass is what
+        // keeps a record deleted offline from coming back on the next pull.
+        for (String vaccineId : pendingDeletions) {
+            String animalRecordNumber = vaccineDAO.getPendingDeletionAnimal(vaccineId);
+            if (animalRecordNumber != null) {
+                pendingWrites.add(batch ->
+                        batch.delete(vaccineDocument(db, animalRecordNumber, vaccineId)));
+            }
         }
 
-        if (!unsyncedAnimals.isEmpty() || !allUnsyncedVaccines.isEmpty()) {
+        commitInChunks(db, pendingWrites);
+
+        // Marked only after the commit that carried them succeeded. Marking first
+        // would lose the change permanently if the commit then failed.
+        for (Animal animal : unsyncedAnimals) {
+            animal.setSynced(true);
+            animalDAO.updateAnimal(animal, false);
+        }
+        for (Vaccine vaccine : allUnsyncedVaccines) {
+            vaccine.setSynced(true);
+            vaccineDAO.updateVaccine(vaccine, false);
+        }
+        for (String vaccineId : pendingDeletions) {
+            vaccineDAO.clearPendingDeletion(vaccineId);
+        }
+
+        System.out.println("Subido: " + unsyncedAnimals.size() + " animales, "
+                + allUnsyncedVaccines.size() + " vacunas, "
+                + pendingDeletions.size() + " eliminaciones");
+    }
+
+    private static DocumentReference vaccineDocument(Firestore db, String animalRecordNumber,
+                                                     String vaccineId) {
+        return db.collection("animals")
+                .document(animalRecordNumber)
+                .collection("vaccines")
+                .document(vaccineId);
+    }
+
+    /**
+     * Commits queued writes in batches no larger than Firestore allows.
+     *
+     * <p>Chunks are committed in order and each one is awaited, so a failure
+     * halfway leaves the earlier chunks applied and the rest still marked
+     * unsynced locally. That is deliberate: the alternative is losing everything
+     * because of one bad record, and the next run simply picks up where this one
+     * stopped. Synchronisation here is idempotent - every write is a
+     * {@code set()} on a known document id.</p>
+     */
+    private void commitInChunks(Firestore db, List<java.util.function.Consumer<WriteBatch>> writes)
+            throws Exception {
+        for (List<java.util.function.Consumer<WriteBatch>> chunk
+                : partition(writes, MAX_BATCH_OPERATIONS)) {
+            WriteBatch batch = db.batch();
+            for (java.util.function.Consumer<WriteBatch> write : chunk) {
+                write.accept(batch);
+            }
             batch.commit().get();
-
-            for (Animal animal : unsyncedAnimals) {
-                animal.setSynced(true);
-                animalDAO.updateAnimal(animal, false);
-            }
-            for (Vaccine vaccine : allUnsyncedVaccines) {
-                vaccine.setSynced(true);
-                vaccineDAO.updateVaccine(vaccine, false);
-            }
-
-            System.out.println("⬆ Batch enviado: " + unsyncedAnimals.size() +
-                    " animales, " + allUnsyncedVaccines.size() + " vacunas");
         }
+    }
+
+    /**
+     * Splits {@code items} into consecutive groups of at most {@code size}.
+     *
+     * <p>Separated out and package-visible so the boundaries can be tested
+     * without Firestore. Off-by-one here is the whole bug: one operation over the
+     * limit and the commit fails entirely.</p>
+     */
+    static <T> List<List<T>> partition(List<T> items, int size) {
+        if (size < 1) {
+            throw new IllegalArgumentException("chunk size must be positive, got " + size);
+        }
+        List<List<T>> chunks = new ArrayList<>();
+        for (int start = 0; start < items.size(); start += size) {
+            chunks.add(new ArrayList<>(items.subList(start, Math.min(start + size, items.size()))));
+        }
+        return chunks;
     }
 
 
@@ -185,11 +262,20 @@ public class SyncService {
     private void pullVaccines(QuerySnapshot vaccineSnapshot, String recordNumber) throws Exception {
         Set<String> firebaseVaccineIds = new HashSet<>();
 
+        // Deletions made here that have not reached Firebase yet. Without this the
+        // pull sees the row still present remotely, finds nothing locally, and
+        // helpfully puts it back - undoing the deletion the user made offline.
+        Set<String> deletedHere = new HashSet<>(vaccineDAO.getPendingDeletions());
+
         for (QueryDocumentSnapshot vaccineDoc : vaccineSnapshot.getDocuments()) {
             Vaccine firebaseVaccine = vaccineDoc.toObject(Vaccine.class);
             String vaccineId = vaccineDoc.getId();
 
             firebaseVaccineIds.add(vaccineId);
+
+            if (deletedHere.contains(vaccineId)) {
+                continue;
+            }
 
             Vaccine localVaccine = vaccineDAO.existsVaccine(vaccineId);
 
@@ -228,24 +314,32 @@ public class SyncService {
      * @throws Exception if Firebase deletion fails
      */
     public void deleteVaccineAndSync(Vaccine vaccine) throws Exception {
-        if (FirebaseConfig.isFirebaseAvailable()) {
-            try {
-                Firestore db = FirestoreClient.getFirestore();
-                DocumentReference vaccineDoc = db.collection("animals")
-                        .document(vaccine.getAnimalRecordNumber())
-                        .collection("vaccines")
-                        .document(vaccine.getId()); // Now using GUID directly
+        // Delete locally first, which also writes the tombstone. The record then
+        // cannot come back regardless of what happens next: if the remote delete
+        // fails, or there is no connection at all, the tombstone keeps the
+        // deletion pending until a later sync applies it.
+        //
+        // The previous order was the other way round - remote first, local only
+        // if that succeeded - so a failure left the vaccine present locally while
+        // the user had been told it was gone.
+        vaccineDAO.deleteVaccine(vaccine.getId());
 
-                ApiFuture<WriteResult> deleteFuture = vaccineDoc.delete();
-                deleteFuture.get();
-
-                vaccineDAO.deleteVaccine(vaccine.getId());
-            } catch (Exception e) {
-                System.out.println("Failed to delete from Firebase: " + e.getMessage());
-                throw e;
-            }
-        } else {
-            vaccineDAO.deleteVaccine(vaccine.getId());
+        if (!FirebaseConfig.isFirebaseAvailable()) {
+            return;
+        }
+        try {
+            Firestore db = FirestoreClient.getFirestore();
+            ApiFuture<WriteResult> deleteFuture =
+                    vaccineDocument(db, vaccine.getAnimalRecordNumber(), vaccine.getId()).delete();
+            deleteFuture.get();
+            vaccineDAO.clearPendingDeletion(vaccine.getId());
+        } catch (Exception e) {
+            // Not rethrown. The deletion has happened as far as the user is
+            // concerned, and the tombstone guarantees it reaches Firebase
+            // eventually. Failing here would report an error for something that
+            // succeeded.
+            System.out.println("La eliminación se aplicará en la próxima sincronización: "
+                    + e.getMessage());
         }
     }
     /**

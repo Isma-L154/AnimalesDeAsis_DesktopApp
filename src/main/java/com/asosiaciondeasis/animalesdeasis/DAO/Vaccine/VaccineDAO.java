@@ -128,24 +128,100 @@ public class VaccineDAO implements IVaccineDAO {
     }
 
     /**
-     * This DOES NOT work as a Logic Delete
+     * Deletes a vaccine and records that it was deleted.
+     *
+     * <p>The row itself is removed - this is a hard delete, unlike animals, which
+     * carry an {@code active} flag that synchronises like any other change. The
+     * tombstone in {@code deleted_vaccines} is what makes the deletion survive
+     * long enough to reach Firebase.</p>
+     *
+     * <p>Without it, deleting a vaccine offline left nothing behind, so the next
+     * pull found the row still in Firebase, saw nothing locally, and treated it
+     * as new. The record came back days later with no explanation.</p>
+     *
+     * <p>Both statements run in one transaction. A row removed without its
+     * tombstone written is exactly the bug this is here to fix, so they cannot be
+     * allowed to come apart.</p>
      */
     @Override
     public void deleteVaccine(String id) throws Exception {
-        String sql = "DELETE FROM vaccines WHERE id = ?";
-
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, id);
-            int rowsAffected = pstmt.executeUpdate();
-
-            if (rowsAffected == 0) {
-                throw new Exception("⚠️ No vaccine found with the provided ID.");
+        // Read the owning animal before the row goes: the tombstone needs it to
+        // address the remote document, and afterwards there is nowhere to get it.
+        String animalRecordNumber = null;
+        try (PreparedStatement lookup = conn.prepareStatement(
+                "SELECT animal_record_number FROM vaccines WHERE id = ?")) {
+            lookup.setString(1, id);
+            try (ResultSet rs = lookup.executeQuery()) {
+                if (rs.next()) {
+                    animalRecordNumber = rs.getString("animal_record_number");
+                }
             }
+        }
+        if (animalRecordNumber == null) {
+            throw new Exception("No vaccine found with the provided ID.");
+        }
 
-            System.out.println("✅ Vaccine deleted successfully.");
-        } catch (SQLException e) {
-            e.printStackTrace();
+        boolean previousAutoCommit = conn.getAutoCommit();
+        conn.setAutoCommit(false);
+        try {
+            try (PreparedStatement tombstone = conn.prepareStatement(
+                    "INSERT OR REPLACE INTO deleted_vaccines (id, animal_record_number) VALUES (?, ?)")) {
+                tombstone.setString(1, id);
+                tombstone.setString(2, animalRecordNumber);
+                tombstone.executeUpdate();
+            }
+            try (PreparedStatement delete = conn.prepareStatement(
+                    "DELETE FROM vaccines WHERE id = ?")) {
+                delete.setString(1, id);
+                if (delete.executeUpdate() == 0) {
+                    throw new Exception("No vaccine found with the provided ID.");
+                }
+            }
+            conn.commit();
+        } catch (Exception e) {
+            conn.rollback();
             throw new Exception("Error deleting vaccine", e);
+        } finally {
+            conn.setAutoCommit(previousAutoCommit);
+        }
+    }
+
+    @Override
+    public List<String> getPendingDeletions() throws Exception {
+        List<String> ids = new ArrayList<>();
+        try (PreparedStatement pstmt = conn.prepareStatement(
+                     "SELECT id FROM deleted_vaccines ORDER BY deleted_at");
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                ids.add(rs.getString("id"));
+            }
+        }
+        return ids;
+    }
+
+    @Override
+    public String getPendingDeletionAnimal(String vaccineId) throws Exception {
+        try (PreparedStatement pstmt = conn.prepareStatement(
+                "SELECT animal_record_number FROM deleted_vaccines WHERE id = ?")) {
+            pstmt.setString(1, vaccineId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next() ? rs.getString("animal_record_number") : null;
+            }
+        }
+    }
+
+    /**
+     * Removes a tombstone once the deletion has been applied remotely.
+     *
+     * <p>Only then. Dropping it earlier would restore the original bug, with the
+     * deletion lost and the record free to return on the next pull.</p>
+     */
+    @Override
+    public void clearPendingDeletion(String vaccineId) throws Exception {
+        try (PreparedStatement pstmt = conn.prepareStatement(
+                "DELETE FROM deleted_vaccines WHERE id = ?")) {
+            pstmt.setString(1, vaccineId);
+            pstmt.executeUpdate();
         }
     }
 

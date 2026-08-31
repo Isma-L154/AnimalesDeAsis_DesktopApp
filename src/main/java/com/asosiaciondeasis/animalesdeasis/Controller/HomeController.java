@@ -323,7 +323,11 @@ public class HomeController implements IPortalAwareController {
             return;
         }
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Animal/DetailAnimal.fxml"));
+            // The class literal rather than getClass(): the latter resolves the path
+            // against whatever the runtime type is, so a subclass in another
+            // package would look for the resource somewhere else entirely.
+            FXMLLoader loader = new FXMLLoader(
+                    HomeController.class.getResource("/fxml/Animal/DetailAnimal.fxml"));
             Parent root = loader.load();
             DetailAnimalController detail = loader.getController();
             detail.setPortalController(portalController);

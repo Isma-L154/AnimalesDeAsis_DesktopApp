@@ -28,6 +28,15 @@ updates:
         patterns:
           - "org.junit.jupiter:*"
           - "org.mockito:*"
+    ignore:
+      # JavaFX tracks the JDK it is built for, and this application targets
+      # Java 17. A major bump therefore ships class files a Java 17 runtime
+      # cannot load - and the failure hides, because CI uses a Full JDK whose
+      # bundled JavaFX shadows the Maven artifact. Green CI on a build that
+      # cannot start anywhere else is worse than a red one, so major updates
+      # here are a deliberate decision, taken alongside moving the JDK.
+      - dependency-name: "org.openjfx:*"
+        update-types: ["version-update:semver-major"]
 
   # ---------------------------------------------------------------------------
   # GitHub Actions. Pinned to commit SHAs in the workflows, which is what makes

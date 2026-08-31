@@ -53,7 +53,6 @@ public class VaccineDAO implements IVaccineDAO {
             log.info("Vaccine inserted successfully.");
 
         } catch (SQLException e) {
-            log.error("Unexpected error", e);
             throw new Exception("Error inserting vaccine", e);
         }
     }
@@ -77,7 +76,6 @@ public class VaccineDAO implements IVaccineDAO {
             }
 
         } catch (SQLException e) {
-            log.error("Unexpected error", e);
             throw new Exception("Error retrieving vaccines", e);
         }
 
@@ -126,7 +124,6 @@ public class VaccineDAO implements IVaccineDAO {
 
             log.info("Vaccine updated successfully.");
         } catch (SQLException e) {
-            log.error("Unexpected error", e);
             throw new Exception("Error updating vaccine", e);
         }
     }
@@ -241,7 +238,6 @@ public class VaccineDAO implements IVaccineDAO {
                 vaccines.add(mapResultSetToVaccine(rs));
             }
         } catch (SQLException e) {
-            log.error("Unexpected error", e);
             throw new Exception("Error retrieving all unsynced vaccines", e);
         }
 

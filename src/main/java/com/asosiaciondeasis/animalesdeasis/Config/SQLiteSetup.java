@@ -72,8 +72,10 @@ public class SQLiteSetup {
             }
 
         } catch (Exception e) {
-            log.error("Unexpected error", e);
-            throw new RuntimeException("Error initializing the database.");
+            // The cause travels with the exception rather than being logged here.
+            // Logging and rethrowing records one failure twice, and the previous
+            // throw discarded the cause entirely.
+            throw new RuntimeException("Error initializing the database.", e);
         }
     }
 

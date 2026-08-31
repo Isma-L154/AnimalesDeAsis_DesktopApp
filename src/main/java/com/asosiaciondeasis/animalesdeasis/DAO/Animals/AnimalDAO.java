@@ -112,7 +112,6 @@ public class AnimalDAO implements IAnimalDAO {
             }
 
         } catch (SQLException e) {
-            log.error("Unexpected error", e);
             throw new Exception("Error getting animal", e);
         }
 
@@ -279,7 +278,6 @@ public class AnimalDAO implements IAnimalDAO {
                 throw new Exception("❌ No animal found with the given record number.");
             }
         } catch (SQLException e) {
-            log.error("Unexpected error", e);
             throw new Exception("Error performing logical delete", e);
         }
     }
@@ -312,7 +310,6 @@ public class AnimalDAO implements IAnimalDAO {
             }
 
         } catch (SQLException e) {
-            log.error("Unexpected error", e);
             throw new Exception("Error getting unsynced animals", e);
         }
         return unsyncedAnimals;

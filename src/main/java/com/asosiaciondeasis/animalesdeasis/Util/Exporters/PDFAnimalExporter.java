@@ -4,8 +4,11 @@ import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Model.Place;
 import com.asosiaciondeasis.animalesdeasis.Model.Vaccine;
 import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
+import com.itextpdf.io.font.constants.StandardFonts;
 import com.itextpdf.kernel.colors.ColorConstants;
 import com.itextpdf.kernel.colors.DeviceRgb;
+import com.itextpdf.kernel.font.PdfFont;
+import com.itextpdf.kernel.font.PdfFontFactory;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
@@ -18,7 +21,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -34,6 +37,27 @@ public class PDFAnimalExporter {
     private static final DeviceRgb HEADER_COLOR = new DeviceRgb(52, 73, 94);
     private static final DeviceRgb ACCENT_COLOR = new DeviceRgb(52, 152, 219);
     private static final DeviceRgb LIGHT_GRAY = new DeviceRgb(236, 240, 241);
+
+    /**
+     * The emphasised fonts used across the report.
+     *
+     * <p>iText 8 removed the {@code setBold()} / {@code setItalic()} shortcuts, so emphasis is now
+     * expressed by handing the element the matching font program. Helvetica is one of the PDF
+     * base-14 fonts: nothing gets embedded, so the exported file stays small, and its default
+     * WinAnsi encoding still covers the Spanish accents and the "N°" sign this report uses.
+     *
+     * <p>A {@link PdfFont} is bound to the document that first draws with it, so a fresh instance
+     * is created per export instead of being cached in a field. That also keeps the exporter safe
+     * to reuse from several background threads.
+     */
+    private record ReportFonts(PdfFont bold, PdfFont italic) {
+
+        static ReportFonts create() throws IOException {
+            return new ReportFonts(
+                    PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD),
+                    PdfFontFactory.createFont(StandardFonts.HELVETICA_OBLIQUE));
+        }
+    }
 
     /**
      * Exports an animal's complete medical record to PDF format with file selection dialog.
@@ -106,33 +130,35 @@ public class PDFAnimalExporter {
      * @param place The place where the animal was rescued
      * @param vaccines List of vaccines administered to the animal
      * @param filePath Destination path for the PDF file
-     * @throws FileNotFoundException if the file path is invalid
+     * @throws IOException if the file path is invalid or the standard fonts cannot be loaded
      */
     public void exportAnimalRecord(Animal animal, Place place, List<Vaccine> vaccines, String filePath)
-            throws FileNotFoundException {
+            throws IOException {
 
-        PdfWriter writer = new PdfWriter(filePath);
-        PdfDocument pdf = new PdfDocument(writer);
-        Document document = new Document(pdf);
+        ReportFonts fonts = ReportFonts.create();
 
-        try {
-            addHeader(document, animal);
-            addAnimalDetails(document, animal, place);
-            addVaccineHistory(document, vaccines);
+        // All three are closed in reverse order, so a failure while constructing the PdfDocument or
+        // the Document still releases the writer. Leaking it would leave the half-written file
+        // locked on Windows, and the user would be told the export failed for the wrong reason.
+        try (PdfWriter writer = new PdfWriter(filePath);
+             PdfDocument pdf = new PdfDocument(writer);
+             Document document = new Document(pdf)) {
+
+            addHeader(document, animal, fonts);
+            addAnimalDetails(document, animal, place, fonts);
+            addVaccineHistory(document, vaccines, fonts);
             addFooter(document);
-        } finally {
-            document.close();
         }
     }
 
     /**
      * Adds the document header with title and animal identification.
      */
-    private void addHeader(Document document, Animal animal) {
+    private void addHeader(Document document, Animal animal, ReportFonts fonts) {
         // Title
         Paragraph title = new Paragraph("EXPEDIENTE")
                 .setFontSize(20)
-                .setBold()
+                .setFont(fonts.bold())
                 .setFontColor(HEADER_COLOR)
                 .setTextAlignment(TextAlignment.CENTER)
                 .setMarginBottom(10);
@@ -141,7 +167,7 @@ public class PDFAnimalExporter {
         // Animal ID
         Paragraph animalId = new Paragraph("Registro N°: " + animal.getRecordNumber())
                 .setFontSize(14)
-                .setBold()
+                .setFont(fonts.bold())
                 .setFontColor(ACCENT_COLOR)
                 .setTextAlignment(TextAlignment.CENTER)
                 .setMarginBottom(20);
@@ -159,11 +185,11 @@ public class PDFAnimalExporter {
     /**
      * Adds animal basic information section.
      */
-    private void addAnimalDetails(Document document, Animal animal, Place place) {
+    private void addAnimalDetails(Document document, Animal animal, Place place, ReportFonts fonts) {
         // Section title
         Paragraph sectionTitle = new Paragraph("INFORMACIÓN DEL ANIMAL")
                 .setFontSize(16)
-                .setBold()
+                .setFont(fonts.bold())
                 .setFontColor(HEADER_COLOR)
                 .setMarginBottom(15);
         document.add(sectionTitle);
@@ -172,38 +198,38 @@ public class PDFAnimalExporter {
         Table table = new Table(2);
         table.setWidth(UnitValue.createPercentValue(100));
 
-        addDetailRow(table, "Nombre:", validateField(animal.getName()));
-        addDetailRow(table, "Especie:", validateField(animal.getSpecies()));
-        addDetailRow(table, "Sexo:", validateField(animal.getSex()));
+        addDetailRow(table, "Nombre:", validateField(animal.getName()), fonts);
+        addDetailRow(table, "Especie:", validateField(animal.getSpecies()), fonts);
+        addDetailRow(table, "Sexo:", validateField(animal.getSex()), fonts);
 
         String ageText = animal.getApproximateAge() == 1 ?
                 animal.getApproximateAge() + " año" :
                 animal.getApproximateAge() + " años";
-        addDetailRow(table, "Edad Aproximada:", ageText);
+        addDetailRow(table, "Edad Aproximada:", ageText, fonts);
 
         addDetailRow(table, "Fecha de Ingreso:",
-                formatDate(animal.getAdmissionDate()));
+                formatDate(animal.getAdmissionDate()), fonts);
         addDetailRow(table, "Fecha de Castración:",
-                formatDate(animal.getNeuteringDate()));
-        addDetailRow(table, "Número de Chip:", validateField(animal.getChipNumber()));
-        addDetailRow(table, "Recogido por:", validateField(animal.getCollectedBy()));
+                formatDate(animal.getNeuteringDate()), fonts);
+        addDetailRow(table, "Número de Chip:", validateField(animal.getChipNumber()), fonts);
+        addDetailRow(table, "Recogido por:", validateField(animal.getCollectedBy()), fonts);
 
         if (place != null) {
             addDetailRow(table, "Lugar de Rescate:",
-                    place.getName() + ", " + place.getProvinceName());
+                    place.getName() + ", " + place.getProvinceName(), fonts);
         } else {
-            addDetailRow(table, "Lugar de Rescate:", "Sin información");
+            addDetailRow(table, "Lugar de Rescate:", "Sin información", fonts);
         }
 
         document.add(table);
 
         // Add multi-line fields
         if (animal.getReasonForRescue() != null && !animal.getReasonForRescue().isEmpty()) {
-            addMultilineField(document, "Razón de Rescate:", animal.getReasonForRescue());
+            addMultilineField(document, "Razón de Rescate:", animal.getReasonForRescue(), fonts);
         }
 
         if (animal.getAilments() != null && !animal.getAilments().isEmpty()) {
-            addMultilineField(document, "Afecciones Médicas:", animal.getAilments());
+            addMultilineField(document, "Afecciones Médicas:", animal.getAilments(), fonts);
         }
 
         document.add(new Paragraph().setMarginBottom(20));
@@ -212,10 +238,10 @@ public class PDFAnimalExporter {
     /**
      * Adds vaccination history section.
      */
-    private void addVaccineHistory(Document document, List<Vaccine> vaccines) {
+    private void addVaccineHistory(Document document, List<Vaccine> vaccines, ReportFonts fonts) {
         Paragraph sectionTitle = new Paragraph("HISTORIAL DE VACUNACIÓN")
                 .setFontSize(16)
-                .setBold()
+                .setFont(fonts.bold())
                 .setFontColor(HEADER_COLOR)
                 .setMarginBottom(15);
         document.add(sectionTitle);
@@ -223,19 +249,20 @@ public class PDFAnimalExporter {
         if (vaccines == null || vaccines.isEmpty()) {
             Paragraph noVaccines = new Paragraph("No hay registros de vacunación disponibles.")
                     .setFontColor(ColorConstants.GRAY)
-                    .setItalic()
+                    .setFont(fonts.italic())
                     .setMarginBottom(20);
             document.add(noVaccines);
             return;
         }
 
-        // Create vaccine table
-        Table vaccineTable = new Table(4);
+        // Two columns, matching the two cells written per vaccine below. Declaring more would
+        // make iText pack several vaccines into a single physical row.
+        Table vaccineTable = new Table(2);
         vaccineTable.setWidth(UnitValue.createPercentValue(100));
 
         // Headers
-        vaccineTable.addHeaderCell(createHeaderCell("Vacuna"));
-        vaccineTable.addHeaderCell(createHeaderCell("Fecha"));
+        vaccineTable.addHeaderCell(createHeaderCell("Vacuna", fonts));
+        vaccineTable.addHeaderCell(createHeaderCell("Fecha", fonts));
 
         // Data rows
         for (Vaccine vaccine : vaccines) {
@@ -260,14 +287,14 @@ public class PDFAnimalExporter {
     }
 
     // Helper methods
-    private void addDetailRow(Table table, String label, String value) {
-        table.addCell(createLabelCell(label));
+    private void addDetailRow(Table table, String label, String value, ReportFonts fonts) {
+        table.addCell(createLabelCell(label, fonts));
         table.addCell(createValueCell(value));
     }
 
-    private void addMultilineField(Document document, String label, String value) {
+    private void addMultilineField(Document document, String label, String value, ReportFonts fonts) {
         Paragraph fieldLabel = new Paragraph(label)
-                .setBold()
+                .setFont(fonts.bold())
                 .setFontColor(HEADER_COLOR)
                 .setMarginTop(10)
                 .setMarginBottom(5);
@@ -280,9 +307,9 @@ public class PDFAnimalExporter {
         document.add(fieldValue);
     }
 
-    private Cell createHeaderCell(String text) {
+    private Cell createHeaderCell(String text, ReportFonts fonts) {
         return new Cell()
-                .add(new Paragraph(text).setBold().setFontColor(ColorConstants.WHITE))
+                .add(new Paragraph(text).setFont(fonts.bold()).setFontColor(ColorConstants.WHITE))
                 .setBackgroundColor(ACCENT_COLOR)
                 .setPadding(8)
                 .setTextAlignment(TextAlignment.CENTER);
@@ -295,9 +322,9 @@ public class PDFAnimalExporter {
                 .setBorder(new SolidBorder(ColorConstants.LIGHT_GRAY, 1));
     }
 
-    private Cell createLabelCell(String text) {
+    private Cell createLabelCell(String text, ReportFonts fonts) {
         return new Cell()
-                .add(new Paragraph(text).setBold())
+                .add(new Paragraph(text).setFont(fonts.bold()))
                 .setBackgroundColor(LIGHT_GRAY)
                 .setPadding(8);
     }

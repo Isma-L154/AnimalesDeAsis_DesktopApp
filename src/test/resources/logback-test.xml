@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Logging while the test suite runs.
+
+  Without this file the tests pick up src/main/resources/logback.xml, which
+  appends to ~/.asociaciondeasis/logs/animalesdeasis.log, the very file a
+  person at the shelter is asked for when something breaks in an installed
+  copy. Every local "mvn test" was interleaving its own noise into it.
+
+  Tests log to the console only, and the Firebase/gRPC stack is pinned to WARN:
+  booting the SDK emits several thousand DEBUG lines about cipher suites that
+  would bury an actual test failure in the CI output.
+-->
+<configuration>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss} %-5level %logger{20} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
+    <logger name="com.google" level="WARN"/>
+    <logger name="io.grpc" level="WARN"/>
+    <logger name="io.netty" level="WARN"/>
+
+</configuration>

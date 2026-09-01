@@ -137,17 +137,17 @@ public class PDFAnimalExporter {
 
         ReportFonts fonts = ReportFonts.create();
 
-        PdfWriter writer = new PdfWriter(filePath);
-        PdfDocument pdf = new PdfDocument(writer);
-        Document document = new Document(pdf);
+        // All three are closed in reverse order, so a failure while constructing the PdfDocument or
+        // the Document still releases the writer. Leaking it would leave the half-written file
+        // locked on Windows, and the user would be told the export failed for the wrong reason.
+        try (PdfWriter writer = new PdfWriter(filePath);
+             PdfDocument pdf = new PdfDocument(writer);
+             Document document = new Document(pdf)) {
 
-        try {
             addHeader(document, animal, fonts);
             addAnimalDetails(document, animal, place, fonts);
             addVaccineHistory(document, vaccines, fonts);
             addFooter(document);
-        } finally {
-            document.close();
         }
     }
 

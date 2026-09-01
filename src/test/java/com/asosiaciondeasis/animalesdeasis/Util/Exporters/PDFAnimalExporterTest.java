@@ -98,7 +98,11 @@ class PDFAnimalExporterTest {
 
         // The table has to declare exactly the two columns that are filled per vaccine; with more,
         // iText packs two vaccines into one physical row and they end up on the same line.
-        List<String> lines = text.lines().map(String::trim).toList();
+        // Runs of whitespace are collapsed so the assertion tracks that invariant rather than the
+        // exact column spacing iText happens to emit.
+        List<String> lines = text.lines()
+                .map(line -> line.replaceAll("\\s+", " ").trim())
+                .toList();
         assertTrue(lines.contains("Rabia 10/03/2026"), text);
         assertTrue(lines.contains("Moquillo 05/04/2026"), text);
     }

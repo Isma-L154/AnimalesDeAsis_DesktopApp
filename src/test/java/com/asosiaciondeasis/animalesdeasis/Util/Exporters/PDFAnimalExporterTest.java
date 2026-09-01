@@ -85,6 +85,25 @@ class PDFAnimalExporterTest {
     }
 
     @Test
+    void listsEachVaccineOnItsOwnRow() throws Exception {
+        Vaccine rabies = new Vaccine();
+        rabies.setVaccineName("Rabia");
+        rabies.setVaccinationDate("2026-03-10T00:00:00");
+
+        Vaccine distemper = new Vaccine();
+        distemper.setVaccineName("Moquillo");
+        distemper.setVaccinationDate("2026-04-05T00:00:00");
+
+        String text = exportAndExtractText(sampleAnimal(), null, List.of(rabies, distemper));
+
+        // The table has to declare exactly the two columns that are filled per vaccine; with more,
+        // iText packs two vaccines into one physical row and they end up on the same line.
+        List<String> lines = text.lines().map(String::trim).toList();
+        assertTrue(lines.contains("Rabia 10/03/2026"), text);
+        assertTrue(lines.contains("Moquillo 05/04/2026"), text);
+    }
+
+    @Test
     void fallsBackToPlaceholdersWhenDataIsMissing() throws Exception {
         Animal sparse = new Animal();
         sparse.setRecordNumber("A-2026-0001");

@@ -255,8 +255,9 @@ public class PDFAnimalExporter {
             return;
         }
 
-        // Create vaccine table
-        Table vaccineTable = new Table(4);
+        // Two columns, matching the two cells written per vaccine below. Declaring more would
+        // make iText pack several vaccines into a single physical row.
+        Table vaccineTable = new Table(2);
         vaccineTable.setWidth(UnitValue.createPercentValue(100));
 
         // Headers

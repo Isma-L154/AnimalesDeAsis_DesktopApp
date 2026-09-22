@@ -3,10 +3,9 @@ package com.asosiaciondeasis.animalesdeasis.Util.Exporters;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Model.Place;
 import com.asosiaciondeasis.animalesdeasis.Model.Vaccine;
-import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfReader;
-import com.itextpdf.kernel.pdf.canvas.parser.PdfTextExtractor;
 import org.junit.jupiter.api.Test;
+import org.openpdf.text.pdf.PdfReader;
+import org.openpdf.text.pdf.parser.PdfTextExtractor;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
@@ -18,9 +17,9 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * End-to-end checks for the PDF export.
  *
- * <p>These read the text back out of the generated file rather than mocking iText, because the
+ * <p>These read the text back out of the generated file rather than mocking the PDF library, because the
  * failure modes worth guarding against here are the ones a mock would hide: an API that moved
- * between iText majors, a missing transitive artifact, or an encoding that silently drops the
+ * between library versions, a missing transitive artifact, or an encoding that silently drops the
  * Spanish accents from the report.
  */
 class PDFAnimalExporterTest {
@@ -51,9 +50,12 @@ class PDFAnimalExporterTest {
         assertTrue(Files.size(target) > 0, "the exporter produced an empty file");
 
         StringBuilder text = new StringBuilder();
-        try (PdfDocument pdf = new PdfDocument(new PdfReader(target.toString()))) {
-            for (int page = 1; page <= pdf.getNumberOfPages(); page++) {
-                text.append(PdfTextExtractor.getTextFromPage(pdf.getPage(page)));
+        // Read from bytes: a PdfReader opened on the path memory-maps the file,
+        // which Windows keeps locked until the mapping is collected.
+        try (PdfReader reader = new PdfReader(Files.readAllBytes(target))) {
+            PdfTextExtractor extractor = new PdfTextExtractor(reader);
+            for (int page = 1; page <= reader.getNumberOfPages(); page++) {
+                text.append(extractor.getTextFromPage(page));
             }
         }
         return text.toString();
@@ -97,14 +99,14 @@ class PDFAnimalExporterTest {
         String text = exportAndExtractText(sampleAnimal(), null, List.of(rabies, distemper));
 
         // The table has to declare exactly the two columns that are filled per vaccine; with more,
-        // iText packs two vaccines into one physical row and they end up on the same line.
-        // Runs of whitespace are collapsed so the assertion tracks that invariant rather than the
-        // exact column spacing iText happens to emit.
-        List<String> lines = text.lines()
-                .map(line -> line.replaceAll("\\s+", " ").trim())
-                .toList();
-        assertTrue(lines.contains("Rabia 10/03/2026"), text);
-        assertTrue(lines.contains("Moquillo 05/04/2026"), text);
+        // the library packs two vaccines into one physical row and they end up on the same line.
+        // Runs of whitespace are collapsed, and only "no two vaccines share a line" is asserted:
+        // where the extractor places the text that follows the table is not part of the invariant.
+        String collapsed = text.replaceAll("[ \\t]+", " ");
+        assertTrue(collapsed.contains("Rabia 10/03/2026"), text);
+        assertTrue(collapsed.contains("Moquillo 05/04/2026"), text);
+        assertTrue(collapsed.lines().noneMatch(line -> line.contains("Rabia") && line.contains("Moquillo")),
+                text);
     }
 
     @Test

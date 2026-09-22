@@ -95,16 +95,12 @@
             <version>1.5.13</version>
         </dependency>
 
-        <!-- PDF Generation -->
+        <!-- PDF Generation. OpenPDF is LGPL 2.1 / MPL 2.0; iText, used before, is
+             AGPL, which an MIT project publishing installers cannot meet. -->
         <dependency>
-            <groupId>com.itextpdf</groupId>
-            <artifactId>kernel</artifactId>
-            <version>9.7.1</version>
-        </dependency>
-        <dependency>
-            <groupId>com.itextpdf</groupId>
-            <artifactId>layout</artifactId>
-            <version>9.7.1</version>
+            <groupId>com.github.librepdf</groupId>
+            <artifactId>openpdf</artifactId>
+            <version>3.0.5</version>
         </dependency>
 
         <!-- Icons -->

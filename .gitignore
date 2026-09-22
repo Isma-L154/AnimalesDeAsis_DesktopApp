@@ -51,9 +51,3 @@ service-account*.json
 google-services.json
 .env
 .env.local
-
-# ==== Local tooling (never versioned) ====
-CLAUDE.md
-.superpowers/
-docs/superpowers/
-security-audit-prompt.md

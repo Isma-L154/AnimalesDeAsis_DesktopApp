@@ -340,7 +340,7 @@ public class StatisticsController {
 
         } catch (Exception e) {
             updateStatus("Error al actualizar gráfico mensual: " + e.getMessage(), false);
-            log.error("Unexpected error", e);
+            log.error("Could not update the monthly chart", e);
         }
     }
 
@@ -376,7 +376,7 @@ public class StatisticsController {
 
         } catch (Exception e) {
             updateStatus("Error al actualizar gráfico de orígenes: " + e.getMessage(), false);
-            log.error("Unexpected error", e);
+            log.error("Could not update the origins chart", e);
         }
     }
 
@@ -406,7 +406,7 @@ public class StatisticsController {
 
         } catch (Exception e) {
             updateStatus("Error al actualizar gráfico circular: " + e.getMessage(), false);
-            log.error("Unexpected error", e);
+            log.error("Could not update the adoption chart", e);
         }
     }
 

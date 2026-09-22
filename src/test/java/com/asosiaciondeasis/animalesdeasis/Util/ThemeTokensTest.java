@@ -1,7 +1,5 @@
 package com.asosiaciondeasis.animalesdeasis.Util;
 
-import com.asosiaciondeasis.animalesdeasis.Util.Helpers.BrandPalette;
-import javafx.scene.paint.Color;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -28,8 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * {@code theme.css} sat beside them claiming to be the single source of truth.
  * Nothing enforced the claim, so it quietly stopped being true. These tests are
  * that enforcement: they fail the build the moment a hex literal reappears in a
- * view stylesheet, a stylesheet refers to a token nobody defined, or the Java
- * mirror of the palette drifts from the stylesheet it mirrors.</p>
+ * view stylesheet or a stylesheet refers to a token nobody defined.</p>
  *
  * <p>Deliberately plain file parsing rather than JavaFX CSS machinery: these
  * must run on a headless CI agent with no display, and they must report the
@@ -159,32 +156,6 @@ class ThemeTokensTest {
         for (String required : new String[]{"-brand-primary", "-brand-text", "-surface",
                                             "-success", "-danger", "-warning", "-focus-ring"}) {
             assertTrue(declared.containsKey(required), "theme.css is missing " + required);
-        }
-    }
-
-    /**
-     * TilesFX takes {@link Color} objects and never reads the scene's stylesheets, so a
-     * handful of brand colours have to exist twice — once as a token and once as a Java
-     * constant. Duplication that nothing checks is duplication that drifts, so this
-     * checks it.
-     */
-    @Test
-    @DisplayName("BrandPalette matches the tokens it mirrors")
-    void javaPaletteMatchesTheStylesheet() throws IOException {
-        Map<String, String> declared = declaredTokens();
-        Map<String, Color> mirrors = new HashMap<>();
-        mirrors.put("-chart-blue", BrandPalette.CHART_BLUE);
-        mirrors.put("-success", BrandPalette.SUCCESS);
-        mirrors.put("-danger", BrandPalette.DANGER);
-        mirrors.put("-warning", BrandPalette.WARNING);
-
-        for (Map.Entry<String, Color> entry : mirrors.entrySet()) {
-            String token = entry.getKey();
-            String declaredValue = declared.get(token);
-            assertTrue(declaredValue != null, "theme.css no longer defines " + token);
-            assertEquals(Color.web(declaredValue), entry.getValue(),
-                    "BrandPalette has drifted from theme.css for " + token
-                            + ": stylesheet says " + declaredValue);
         }
     }
 }

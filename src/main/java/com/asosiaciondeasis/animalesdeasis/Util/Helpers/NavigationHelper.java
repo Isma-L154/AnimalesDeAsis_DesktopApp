@@ -12,11 +12,13 @@ import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class NavigationHelper {
+public final class NavigationHelper {
     private static final Logger log = LoggerFactory.getLogger(NavigationHelper.class);
 
-
     private static final String COMPANY_ICON_PATH = "/images/AdeAsisLogo.png";
+
+    private NavigationHelper() {
+    }
 
     public static void goToAnimalModule(PortalController portalController) {
         if (portalController != null) {
@@ -161,7 +163,7 @@ public class NavigationHelper {
             Stage stage = (Stage) pane.getScene().getWindow();
             stage.getIcons().add(icon);
         } catch (Exception e) {
-            log.info("No se pudo cargar el icono de la ventana: {}", e.getMessage());
+            log.warn("Could not load the dialog icon", e);
         }
     }
 

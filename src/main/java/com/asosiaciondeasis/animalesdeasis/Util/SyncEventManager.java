@@ -27,11 +27,9 @@ import org.slf4j.LoggerFactory;
 public final class SyncEventManager {
     private static final Logger log = LoggerFactory.getLogger(SyncEventManager.class);
 
-
     private static final List<Runnable> listeners = new CopyOnWriteArrayList<>();
 
     private SyncEventManager() {
-        // Utility class.
     }
 
     /**
@@ -68,7 +66,7 @@ public final class SyncEventManager {
             try {
                 listener.run();
             } catch (Exception e) {
-                log.info("Error notifying sync listener: "+ e.getMessage());
+                log.warn("Sync listener failed", e);
             }
         }
     }

@@ -3,119 +3,115 @@ package com.asosiaciondeasis.animalesdeasis.DAO;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
+import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 
+/**
+ * Loads Costa Rica's provinces and cantons into the {@code provinces} and
+ * {@code places} tables. Runs once, on the first start: the application is
+ * offline-first and never needs the API again.
+ */
+public final class DataImporter {
 
-public class DataImporter {
-
-    //Base URL for the API of Costa Rica Geo
     private static final String BASE_API = "https://api-geo-cr.vercel.app";
 
     /**
-     * Fetches provinces and their corresponding cantons from the API,
-     * and populates the 'provinces' and 'places' tables in the local SQLite database.
-     * <p>
-     * This method is intended to be run only once during initial setup, because the whole desktop app
-     * is intended to be used offline.
+     * Bounds every request. Without it a stalled API held the splash screen
+     * forever, with nothing on screen to say why.
      */
+    private static final Duration TIMEOUT = Duration.ofSeconds(15);
 
-    public static void populateProvincesAndPlaces(Connection conn) {
+    private static final HttpClient HTTP = HttpClient.newBuilder()
+            .connectTimeout(TIMEOUT)
+            .build();
 
-        try {
-            /**
-             *  Fetch all provinces from the API
-             * URL -> https://api-geo-cr.vercel.app/provincias?limit=100&page=1
-             * */
-            JSONArray provinces = fetchJsonObject(BASE_API + "/provincias?limit=100&page=1");
+    record Province(int id, String name, List<String> cantons) {
+    }
 
-
-            for (int i = 0; i < provinces.length(); i++) {
-                JSONObject province = provinces.getJSONObject(i);
-                int provinceId = province.getInt("idProvincia");
-                String provinceName = province.getString("descripcion");
-
-                // Insert province into the database (ignore if already exists)
-                try (PreparedStatement ps = conn.prepareStatement(
-                        "INSERT OR IGNORE INTO provinces (id, name) VALUES (?, ?)")) {
-                    ps.setInt(1, provinceId);
-                    ps.setString(2, provinceName);
-                    ps.executeUpdate();
-                }
-
-
-                /**
-                 *  Fetch all the cantons from the API from the current province
-                 * URL -> https://api-geo-cr.vercel.app/provincias/{id}/cantones
-                 * */
-
-                // Fetch cantons for the current province
-                JSONArray cantones = fetchJsonObject(BASE_API + "/provincias/" + provinceId + "/cantones?limit=100&page=1");
-
-                for (int j = 0; j < cantones.length(); j++) {
-                    JSONObject canton = cantones.getJSONObject(j);
-                    String cantonName = canton.getString("descripcion");
-
-                    // Insert canton (place) into the database (linked to province)
-                    try (PreparedStatement ps = conn.prepareStatement(
-                            "INSERT OR IGNORE INTO places (name, province_id) VALUES (?, ?)")) {
-                        ps.setString(1, cantonName);
-                        ps.setInt(2, provinceId);
-                        ps.executeUpdate();
-                    }
-                }
-            }
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    private DataImporter() {
     }
 
     /**
-     * Makes a GET request to the given URL and returns the response as a JSONObject.
+     * Fetches everything first, then writes it in one transaction.
      *
-     * @param urlStr API endpoint URL
-     * @return JSONArray parsed from the JSON response
-     * @throws Exception on connection or parsing failure
+     * <p>Writing as it fetched meant a failure halfway left some provinces
+     * behind. The next start then saw a non-empty table, skipped the import, and
+     * the missing cantons never arrived - animals from those places could not be
+     * registered at all.</p>
      */
-    private static JSONArray fetchJsonObject(String urlStr) throws Exception {
+    public static void populateProvincesAndPlaces(Connection conn) throws Exception {
+        store(conn, fetchProvinces());
+    }
 
-        URL url = URI.create(urlStr).toURL();
-        HttpURLConnection con = (HttpURLConnection) url.openConnection();
-        con.setRequestProperty("Accept", "application/json");
-        con.setRequestMethod("GET");
+    private static List<Province> fetchProvinces() throws IOException, InterruptedException {
+        JSONArray provinces = parseData(get(BASE_API + "/provincias?limit=100&page=1"));
+        List<Province> result = new ArrayList<>();
+        for (int i = 0; i < provinces.length(); i++) {
+            JSONObject province = provinces.getJSONObject(i);
+            int id = province.getInt("idProvincia");
 
-
-        /**
-         * This line creates a reader that allows you to read the textual content sent by the server,
-         * line by line, with the correct encoding (UTF-8).
-         * */
-        BufferedReader in = new BufferedReader(
-                new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8));
-
-        /**
-         * Read the response content line by line
-         * */
-        StringBuilder content = new StringBuilder();
-        String line;
-
-        while ((line = in.readLine()) != null) {
-            content.append(line);
+            JSONArray cantons = parseData(get(BASE_API + "/provincias/" + id + "/cantones?limit=100&page=1"));
+            List<String> cantonNames = new ArrayList<>();
+            for (int j = 0; j < cantons.length(); j++) {
+                cantonNames.add(cantons.getJSONObject(j).getString("descripcion"));
+            }
+            result.add(new Province(id, province.getString("descripcion"), cantonNames));
         }
+        return result;
+    }
 
-        in.close();
-        con.disconnect();
+    static void store(Connection conn, List<Province> provinces) throws SQLException {
+        boolean previousAutoCommit = conn.getAutoCommit();
+        conn.setAutoCommit(false);
+        try (PreparedStatement insertProvince = conn.prepareStatement(
+                     "INSERT OR IGNORE INTO provinces (id, name) VALUES (?, ?)");
+             PreparedStatement insertPlace = conn.prepareStatement(
+                     "INSERT OR IGNORE INTO places (name, province_id) VALUES (?, ?)")) {
+            for (Province province : provinces) {
+                insertProvince.setInt(1, province.id());
+                insertProvince.setString(2, province.name());
+                insertProvince.executeUpdate();
 
-        /**
-         * Parse the JSON string into a JSONArray and return it
-         * */
-        JSONObject responseObject = new JSONObject(content.toString());
-        return responseObject.getJSONArray("data");
+                for (String canton : province.cantons()) {
+                    insertPlace.setString(1, canton);
+                    insertPlace.setInt(2, province.id());
+                    insertPlace.addBatch();
+                }
+            }
+            insertPlace.executeBatch();
+            conn.commit();
+        } catch (SQLException e) {
+            conn.rollback();
+            throw e;
+        } finally {
+            conn.setAutoCommit(previousAutoCommit);
+        }
+    }
+
+    private static String get(String url) throws IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+                .timeout(TIMEOUT)
+                .header("Accept", "application/json")
+                .GET()
+                .build();
+        HttpResponse<String> response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() != 200) {
+            throw new IOException("GET " + url + " returned HTTP " + response.statusCode());
+        }
+        return response.body();
+    }
+
+    /** The API wraps every list in {@code {"data": [...]}}. */
+    static JSONArray parseData(String json) {
+        return new JSONObject(json).getJSONArray("data");
     }
 }

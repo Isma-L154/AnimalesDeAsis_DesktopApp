@@ -1,5 +1,6 @@
 package com.asosiaciondeasis.animalesdeasis.Config;
 
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -22,12 +23,12 @@ import java.sql.Statement;
  */
 public class DatabaseConnection {
 
-    private static final String DB_PATH = System.getProperty("user.home") + "/.asociaciondeasis/AsociacionDeAsis.db";
-    private static final String DB_URL = "jdbc:sqlite:" + DB_PATH;
+    /** Also where the log files go, so a person can be asked for one folder and send both. */
+    static final Path DATA_DIR = Path.of(System.getProperty("user.home"), ".asociaciondeasis");
+    static final String DB_URL = "jdbc:sqlite:" + DATA_DIR.resolve("AsociacionDeAsis.db");
     private static Connection connection;
 
     private DatabaseConnection() {
-        // Private constructor to prevent instantiation
     }
 
     /**

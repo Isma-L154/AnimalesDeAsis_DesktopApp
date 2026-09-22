@@ -4,9 +4,10 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 
-import java.io.InputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.InputStream;
 
 /**
  * Brings up the Firebase Admin SDK, or explains why it could not.
@@ -21,15 +22,14 @@ import org.slf4j.LoggerFactory;
 public final class FirebaseConfig {
     private static final Logger log = LoggerFactory.getLogger(FirebaseConfig.class);
 
-
-    private static boolean initialized = false;
-    private static boolean firebaseAvailable = false;
-    private static String unavailableReason;
+    private static boolean initialized;
+    /** Read by the sync-status poller and the sync thread, written once at startup. */
+    private static volatile boolean firebaseAvailable;
 
     private FirebaseConfig() {
     }
 
-    public static boolean initialize() {
+    public static synchronized boolean initialize() {
         if (initialized) {
             return firebaseAvailable;
         }
@@ -41,20 +41,15 @@ public final class FirebaseConfig {
                     .build();
             FirebaseApp.initializeApp(options);
             firebaseAvailable = true;
-            unavailableReason = null;
-            log.info("Firebase inicializado: la sincronización está disponible.");
+            log.info("Firebase initialised: synchronisation is available");
             return true;
 
         } catch (CredentialsException e) {
-            firebaseAvailable = false;
-            unavailableReason = e.getMessage();
             report(e.reason(), e.getMessage());
             return false;
 
         } catch (Exception e) {
-            firebaseAvailable = false;
-            unavailableReason = "No se pudo inicializar Firebase: " + e.getMessage();
-            log.info("[Firebase] "+ unavailableReason);
+            log.warn("Could not initialise Firebase; synchronisation is disabled", e);
             return false;
         }
     }
@@ -75,27 +70,11 @@ public final class FirebaseConfig {
         // symptom is identical to having none - synchronisation simply never
         // happens. WARN so it stands out in a file someone is scrolling through
         // months later, asking why nothing reached the cloud.
-        log.warn("La sincronización está desactivada: {}", message);
-        log.warn("Los datos se guardan localmente y no salen de esta máquina.");
+        log.warn("Synchronisation is disabled: {}", message);
+        log.warn("Records are stored locally and do not leave this machine.");
     }
 
     public static boolean isFirebaseAvailable() {
         return firebaseAvailable;
-    }
-
-    /**
-     * Why synchronisation is off, or {@code null} when it is on. Exists so the
-     * interface can say more than "offline" — the header's chip already
-     * distinguishes having no credentials from having no connection.
-     */
-    public static String unavailableReason() {
-        return unavailableReason;
-    }
-
-    /** Resets the cached state. For tests, which must not inherit a previous run's. */
-    static void resetForTests() {
-        initialized = false;
-        firebaseAvailable = false;
-        unavailableReason = null;
     }
 }

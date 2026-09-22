@@ -1,77 +1,56 @@
 package com.asosiaciondeasis.animalesdeasis;
 
-import com.asosiaciondeasis.animalesdeasis.Config.DatabaseConnection;
 import com.asosiaciondeasis.animalesdeasis.Config.FirebaseConfig;
 import com.asosiaciondeasis.animalesdeasis.Config.SQLiteSetup;
+import com.asosiaciondeasis.animalesdeasis.Config.ServiceFactory;
 import com.asosiaciondeasis.animalesdeasis.Service.SyncService;
-import com.asosiaciondeasis.animalesdeasis.Util.NetworkUtils;
-
-import java.sql.Connection;
-import java.util.Timer;
-import java.util.TimerTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AppInitializer {
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+
+/** Prepares the database and, when credentials allow it, starts synchronisation. */
+public final class AppInitializer {
     private static final Logger log = LoggerFactory.getLogger(AppInitializer.class);
 
+    /** Sync once at startup, then every 24 hours for as long as the app stays open. */
+    private static final long SYNC_INTERVAL_MS = TimeUnit.HOURS.toMillis(24);
 
-    /**
-     * 24 Hours in milliseconds, because we need the sync with Firebase everytime the app initializes
-     * or every 24 hours.
-     */
-    private static final long SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000;
-    private static SyncService syncService;
-    private static boolean firebaseEnabled = false;
-
-    public static void initializeApp() {
-        try {
-            //Initialize db for the first time
-            SQLiteSetup.initializeDatabase();
-
-            //Initialize Firebase
-            firebaseEnabled = FirebaseConfig.initialize();
-
-            //SQLite Connection
-            Connection conn = DatabaseConnection.getConnection();
-
-            // Only initialize sync service if Firebase is available
-            if (firebaseEnabled) {
-                syncService = new SyncService(conn);
-
-                if (NetworkUtils.isInternetAvailable()) {
-                    syncService.sync();
-                } else {
-                    log.info("No internet connection available");
-                }
-
-                schedulePeriodicSync();
-            } else {
-                log.info("Running in offline-only mode - no sync available");
-            }
-
-            log.info("App Initialized");
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    private AppInitializer() {
     }
 
+    /**
+     * Blocks on disk and network: call it from a background thread.
+     *
+     * @param progress told what is happening, in words fit for the splash screen
+     */
+    public static void initializeApp(Consumer<String> progress) throws Exception {
+        progress.accept("Configurando base de datos...");
+        SQLiteSetup.initializeDatabase();
 
-    private static void schedulePeriodicSync() {
-        if (!firebaseEnabled) return;
-        Timer timer = new Timer(true);
+        progress.accept("Conectando con Firebase...");
+        if (!FirebaseConfig.initialize()) {
+            log.info("Running in offline-only mode - no sync available");
+            return;
+        }
+
+        progress.accept("Sincronizando datos...");
+        SyncService syncService = ServiceFactory.getSyncService();
+        syncService.sync();
+        schedulePeriodicSync(syncService);
+    }
+
+    private static void schedulePeriodicSync(SyncService syncService) {
+        // A daemon, so a pending run never keeps the application alive on exit.
+        Timer timer = new Timer("periodic-sync", true);
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                if (NetworkUtils.isInternetAvailable()) {
-                    syncService.sync();
-                } else {
-                    log.info("No internet connection available");
-                }
+                syncService.sync();
             }
-            // First run after 24h, then every 24h
         }, SYNC_INTERVAL_MS, SYNC_INTERVAL_MS);
-
     }
 }

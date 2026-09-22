@@ -69,12 +69,12 @@
         <dependency>
             <groupId>com.google.zxing</groupId>
             <artifactId>core</artifactId>
-            <version>3.5.0</version>
+            <version>3.5.4</version>
         </dependency>
         <dependency>
             <groupId>com.google.zxing</groupId>
             <artifactId>javase</artifactId>
-            <version>3.5.0</version>
+            <version>3.5.4</version>
         </dependency>
 
         <!-- Webcam Capture -->
@@ -92,7 +92,7 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.5.13</version>
+            <version>1.6.3</version>
         </dependency>
 
         <!-- PDF Generation. OpenPDF is LGPL 2.1 / MPL 2.0; iText, used before, is
@@ -242,7 +242,7 @@
                     <plugin>
                         <groupId>org.panteleyev</groupId>
                         <artifactId>jpackage-maven-plugin</artifactId>
-                        <version>1.6.5</version>
+                        <version>1.8.0</version>
                         <configuration>
                             <name>AnimalesDeAsis</name>
                             <appVersion>${app.version}</appVersion>
@@ -278,7 +278,7 @@
                     <plugin>
                         <groupId>org.panteleyev</groupId>
                         <artifactId>jpackage-maven-plugin</artifactId>
-                        <version>1.6.5</version>
+                        <version>1.8.0</version>
                         <configuration>
                             <name>AnimalesDeAsis</name>
                             <appVersion>${app.version}</appVersion>
@@ -309,7 +309,7 @@
                     <plugin>
                         <groupId>org.panteleyev</groupId>
                         <artifactId>jpackage-maven-plugin</artifactId>
-                        <version>1.6.5</version>
+                        <version>1.8.0</version>
                         <configuration>
                             <name>AnimalesDeAsis</name>
                             <appVersion>${app.version}</appVersion>

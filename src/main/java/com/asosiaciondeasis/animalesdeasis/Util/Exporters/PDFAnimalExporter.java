@@ -216,7 +216,7 @@ public class PDFAnimalExporter {
 
         if (place != null) {
             addDetailRow(table, "Lugar de Rescate:",
-                    place.getName() + ", " + place.getProvinceName(), fonts);
+                    place.name() + ", " + place.provinceName(), fonts);
         } else {
             addDetailRow(table, "Lugar de Rescate:", "Sin información", fonts);
         }

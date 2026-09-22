@@ -11,22 +11,29 @@ public class Vaccine {
     private boolean synced;
     private String lastModified;
 
+    /** Required by Firestore, which deserialises documents through it. */
+    public Vaccine() {
+    }
 
-    public Vaccine() {}
+    private Vaccine(String id) {
+        this.id = id;
+    }
 
-    private Vaccine(String id) {this.id = id;}
+    public static Vaccine createNew() {
+        return new Vaccine(UUID.randomUUID().toString());
+    }
 
-    public static Vaccine createNew() {return new Vaccine(UUID.randomUUID().toString());}
-
-    public static Vaccine fromExistingRecord(String id) {return new Vaccine(id);}
-
-
+    public static Vaccine fromExistingRecord(String id) {
+        return new Vaccine(id);
+    }
 
     public String getId() {
         return id;
     }
 
-    public String getAnimalRecordNumber() {return animalRecordNumber;}
+    public String getAnimalRecordNumber() {
+        return animalRecordNumber;
+    }
 
     public void setAnimalRecordNumber(String animalRecordNumber) {
         this.animalRecordNumber = animalRecordNumber;

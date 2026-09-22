@@ -1,10 +1,10 @@
 package com.asosiaciondeasis.animalesdeasis.Util.Helpers;
 
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 import java.util.LinkedHashMap;
@@ -132,7 +132,7 @@ public final class FieldValidation {
         if (index < 0) {
             return false;
         }
-        VBox.setMargin(label, new javafx.geometry.Insets(2, 0, 0, 0));
+        VBox.setMargin(label, new Insets(2, 0, 0, 0));
         box.getChildren().add(index + 1, label);
         return true;
     }
@@ -140,11 +140,5 @@ public final class FieldValidation {
     /** Fields whose value is a plain string, for the most common check of all. */
     public boolean requireText(Control field, String value, String reason) {
         return require(field, value != null && !value.isBlank(), reason);
-    }
-
-    /** Hides a node without leaving its space behind, used for optional hints. */
-    public static void setShown(Region node, boolean shown) {
-        node.setVisible(shown);
-        node.setManaged(shown);
     }
 }

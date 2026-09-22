@@ -36,7 +36,7 @@ updates:
           - "com.itextpdf:*"
     ignore:
       # JavaFX tracks the JDK it is built for, and this application targets
-      # Java 17. A major bump therefore ships class files a Java 17 runtime
+      # Java 21. A major bump therefore ships class files a Java 21 runtime
       # cannot load - and the failure hides, because CI uses a Full JDK whose
       # bundled JavaFX shadows the Maven artifact. Green CI on a build that
       # cannot start anywhere else is worse than a red one, so major updates

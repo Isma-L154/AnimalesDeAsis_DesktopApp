@@ -3,22 +3,16 @@ package com.asosiaciondeasis.animalesdeasis.Controller.Vaccine;
 import com.asosiaciondeasis.animalesdeasis.Model.Vaccine;
 import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.FieldValidation;
-import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
-import javafx.util.StringConverter;
 
-import java.net.URL;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ResourceBundle;
 import java.util.function.Consumer;
 
-public class CreateVaccineController implements Initializable{
+public class CreateVaccineController {
 
     @FXML private Label animalInfoLabel;
     @FXML private TextField vaccineNameField;
@@ -27,82 +21,31 @@ public class CreateVaccineController implements Initializable{
     private final FieldValidation validation = new FieldValidation();
 
     private String animalRecordNumber;
-    private String animalName;
     private Consumer<Vaccine> onVaccineCreated;
 
-    /**
-     * Initializes the controller and sets up the date picker format.
-     * Called automatically after FXML fields are injected.
-     *
-     * @param location The location used to resolve relative paths for the root object, or null if unknown.
-     * @param resources The resources used to localize the root object, or null if not localized.
-     */
-    @Override
-    public void initialize(URL location, ResourceBundle resources) {
-        setUpDatePickerFormat();
-    }
-
-    /**
-     * Configures the DatePicker to use the "dd-MM-yyyy" format and sets the default value to today.
-     */
-    private void setUpDatePickerFormat() {
-        // DatePicker is going to be in format dd-MM-yyyy, in here we set the converter
-        vaccinationDatePicker.setConverter(new StringConverter<LocalDate>() {
-            private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-
-            @Override
-            public String toString(LocalDate date) {
-                return (date != null) ? dateFormatter.format(date) : "";
-            }
-
-            @Override
-            public LocalDate fromString(String string) {
-                if (string != null && !string.isEmpty()) {
-                    try {
-                        return LocalDate.parse(string, dateFormatter);
-                    } catch (Exception e) {
-                        return null;
-                    }
-                }
-                return null;
-            }
-        });
-        //Set the default date to today
+    @FXML
+    public void initialize() {
+        VaccineForm.configureDatePicker(vaccinationDatePicker);
         vaccinationDatePicker.setValue(LocalDate.now());
     }
 
-    /**
-     * Sets the animal information (name and record number) to be displayed in the form.
-     *
-     * @param name The name of the animal.
-     * @param recordNumber The record number of the animal.
-     */
     public void setAnimalInfo(String name, String recordNumber) {
-        this.animalName = name;
         this.animalRecordNumber = recordNumber;
         animalInfoLabel.setText("Animal: " + name);
     }
 
-    /**
-     * Sets the callback to be invoked when a new vaccine is created.
-     *
-     * @param callback The Consumer that will handle the created Vaccine object.
-     */
+    /** Receives the new vaccine when the form is submitted; the caller persists it. */
     public void setOnVaccineCreated(Consumer<Vaccine> callback) {
         this.onVaccineCreated = callback;
     }
 
-    /**
-     * Handles the save action when the user submits the form.
-     * Validates the form, creates a new Vaccine object, invokes the callback, and closes the window.
-     */
     @FXML
     public void onSaveAction() {
-        if (!validateForm()) return;
+        if (!VaccineForm.validate(validation, vaccineNameField, vaccinationDatePicker)) {
+            return;
+        }
 
         Vaccine newVaccine = Vaccine.createNew();
-
-
         newVaccine.setAnimalRecordNumber(animalRecordNumber);
         newVaccine.setVaccineName(vaccineNameField.getText().trim());
         newVaccine.setVaccinationDate(DateUtils.localDateToUtcString(vaccinationDatePicker.getValue()));
@@ -114,52 +57,12 @@ public class CreateVaccineController implements Initializable{
         closeWindow();
     }
 
-
-
     @FXML
-    public void onCancelAction() {closeWindow();}
-
-    /**
-     * Checks the form and marks whatever is wrong, in place.
-     *
-     * <p>This used to gather every problem into a string and raise a dialog
-     * listing them. The dialog could say what was wrong but never <em>where</em>:
-     * you read it, dismissed it, and then went looking. Each message now sits
-     * under the field that caused it, and focus lands on the first one.</p>
-     *
-     * @return true if the form is valid
-     */
-    private boolean validateForm() {
-        validation.clear();
-        boolean valid = true;
-
-        String name = vaccineNameField.getText();
-        if (name == null || name.trim().isEmpty()) {
-            validation.reject(vaccineNameField, "El nombre de la vacuna es obligatorio");
-            valid = false;
-        } else if (name.trim().length() > 100) {
-            validation.reject(vaccineNameField,
-                    "No puede exceder 100 caracteres (van " + name.trim().length() + ")");
-            valid = false;
-        }
-
-        LocalDate date = vaccinationDatePicker.getValue();
-        if (date == null) {
-            validation.reject(vaccinationDatePicker, "La fecha de vacunación es obligatoria");
-            valid = false;
-        } else if (date.isAfter(LocalDate.now())) {
-            validation.reject(vaccinationDatePicker, "La fecha no puede ser futura");
-            valid = false;
-        }
-
-        if (!valid) {
-            validation.focusFirstError();
-        }
-        return valid;
+    public void onCancelAction() {
+        closeWindow();
     }
 
     private void closeWindow() {
-        Stage stage = (Stage) animalInfoLabel.getScene().getWindow();
-        stage.close();
+        ((Stage) animalInfoLabel.getScene().getWindow()).close();
     }
 }

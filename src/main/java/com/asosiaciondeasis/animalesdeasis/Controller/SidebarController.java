@@ -32,8 +32,8 @@ import java.util.Map;
 public class SidebarController {
 
     private static final String ACTIVE_CLASS = "active";
-    private static final double EXPANDED_WIDTH = 180;
-    private static final double COLLAPSED_WIDTH = 72;
+    static final double EXPANDED_WIDTH = 180;
+    static final double COLLAPSED_WIDTH = 72;
 
     private final Map<NavigationSection, Button> items = new EnumMap<>(NavigationSection.class);
     private final Map<NavigationSection.Group, Node> groupHeadings =

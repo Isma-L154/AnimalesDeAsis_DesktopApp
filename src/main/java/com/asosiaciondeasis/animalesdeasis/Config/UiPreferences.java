@@ -1,6 +1,5 @@
 package com.asosiaciondeasis.animalesdeasis.Config;
 
-import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 /**
@@ -27,7 +26,6 @@ public final class UiPreferences {
             Preferences.userNodeForPackage(UiPreferences.class);
 
     private UiPreferences() {
-        // Utility class.
     }
 
     public static boolean isRailCollapsed() {
@@ -66,15 +64,6 @@ public final class UiPreferences {
             }
         } catch (RuntimeException e) {
             // See above.
-        }
-    }
-
-    /** Clears everything stored here. Exists for tests, which must not inherit developer state. */
-    public static void clear() {
-        try {
-            PREFS.clear();
-        } catch (BackingStoreException | RuntimeException e) {
-            // Nothing useful to do.
         }
     }
 }

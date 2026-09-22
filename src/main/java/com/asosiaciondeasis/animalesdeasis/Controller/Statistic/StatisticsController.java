@@ -1,44 +1,40 @@
 package com.asosiaciondeasis.animalesdeasis.Controller.Statistic;
 
+import com.asosiaciondeasis.animalesdeasis.Abstraccions.IPortalAwareController;
+import com.asosiaciondeasis.animalesdeasis.Abstraccions.Statistics.IStatisticsService;
 import com.asosiaciondeasis.animalesdeasis.Config.ServiceFactory;
-import com.asosiaciondeasis.animalesdeasis.Service.Statistics.StatisticsService;
+import com.asosiaciondeasis.animalesdeasis.Controller.PortalController;
+import com.asosiaciondeasis.animalesdeasis.Util.ScreenTasks;
 import com.asosiaciondeasis.animalesdeasis.Util.Exporters.CsvStatisticsExporter;
-
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.EmptyState;
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.KpiCard;
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.concurrent.Task;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.Node;
-import javafx.scene.chart.*;
-import javafx.scene.control.*;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.PieChart;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-
-import javafx.stage.Window;
-import javafx.util.Duration;
-
-import java.net.URL;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class StatisticsController implements Initializable {
+import java.io.File;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+public class StatisticsController implements IPortalAwareController {
     private static final Logger log = LoggerFactory.getLogger(StatisticsController.class);
 
-
-    // FXML Components
     @FXML private ComboBox<Integer> yearComboBox;
     @FXML private Button refreshButton;
     @FXML private Button exportButton;
@@ -58,56 +54,29 @@ public class StatisticsController implements Initializable {
     private VBox originsEmpty;
     private VBox pieEmpty;
 
-    // Services
-    private StatisticsService statisticsService;
-    private CsvStatisticsExporter csvExporter;
+    private final IStatisticsService statisticsService = ServiceFactory.getStatisticsService();
+    private final CsvStatisticsExporter csvExporter = ServiceFactory.getCsvStatisticsExporter();
+    private final ScreenTasks tasks = new ScreenTasks("statistics");
     private int currentYear;
 
-    // Data storage
     private Map<String, Integer> monthlyData = new LinkedHashMap<>();
     private Map<String, Integer> originsData = new LinkedHashMap<>();
     private int totalAdmissions;
     private double adoptionRate;
 
-    @Override
-    /**
-     * Initializes the controller, sets up services, year selection, tiles, and charts,
-     * and loads the initial data with a slight delay for UI readiness.
-     *
-     * @param url Not used.
-     * @param resourceBundle Not used.
-     */
-    public void initialize(URL url, ResourceBundle resourceBundle) {
-        initializeServices();
+    /** Everything one refresh reads, handed to the interface thread in a single piece. */
+    private record YearStatistics(Map<String, Integer> monthly, Map<String, Integer> origins,
+                                  int totalAdmissions, double adoptionRate) {
+    }
 
+    @FXML
+    public void initialize() {
         setupYearComboBox();
-        setupTiles();
+        updateTiles();
         setupCharts();
-        Timeline initialLoadTimeline = new Timeline(new KeyFrame(Duration.millis(300), e -> {
-            loadInitialData();
-            updateLastUpdateTime();
-        }));
-        initialLoadTimeline.play();
-    }
-    /**
-     * Initializes the services required for this controller.
-     * This method is called during the initialization phase to set up the necessary services.
-     */
-    private void initializeServices() {
-        try {
-            this.statisticsService = ServiceFactory.getStatisticsService();
-            this.csvExporter = ServiceFactory.getCsvStatisticsExporter();
-
-        } catch (Exception e) {
-            updateStatus("Error al inicializar servicios: " + e.getMessage(), false);
-            log.error("Unexpected error", e);
-        }
+        refreshData();
     }
 
-    /**
-     * Handles the event when the year selection changes in the ComboBox.
-     * If a new year is selected, updates the current year and refreshes the data.
-     */
     @FXML
     private void onYearChanged() {
         Integer selectedYear = yearComboBox.getValue();
@@ -117,123 +86,83 @@ public class StatisticsController implements Initializable {
         }
     }
 
-    /**
-     * Refreshes all statistical data by fetching it from the service asynchronously.
-     * Updates the UI components (tiles, charts, labels) with the new data.
-     * Handles errors and disables/enables UI controls during the process.
-     */
+    /** Reloads the selected year's figures off the interface thread, then redraws. */
     @FXML
     public void refreshData() {
-        if (statisticsService == null) {
-            updateStatus("Error: Servicios no inicializados", false);
-            return;
-        }
         setUIEnabled(false);
         updateStatus("Cargando datos...", false);
 
-        Task<Void> loadDataTask = new Task<Void>() {
-            private Map<String, Integer> taskMonthlyData;
-            private Map<String, Integer> taskOriginsData;
-            private int taskTotalAdmissions;
-            private double taskAdoptionRate;
+        int year = currentYear;
+        tasks.submit(() -> new YearStatistics(
+                        statisticsService.getMonthlyAdmissions(year),
+                        statisticsService.getAnimalOrigins(year),
+                        statisticsService.getTotalAdmissions(year),
+                        statisticsService.getAdoptionRate(year)),
+                stats -> {
+                    monthlyData = stats.monthly();
+                    originsData = stats.origins();
+                    totalAdmissions = stats.totalAdmissions();
+                    adoptionRate = stats.adoptionRate();
 
-            @Override
-            protected Void call() throws Exception {
-                try {
-                    taskMonthlyData = statisticsService.getMonthlyAdmissions(currentYear);
-                    taskTotalAdmissions = statisticsService.getTotalAdmissions(currentYear);
-                    taskAdoptionRate = statisticsService.getAdoptionRate(currentYear);
-                    taskOriginsData = statisticsService.getAnimalOrigins(currentYear);
-
-                    Platform.runLater(() -> {
-                        monthlyData = taskMonthlyData != null ? taskMonthlyData : new LinkedHashMap<>();
-                        originsData = taskOriginsData != null ? taskOriginsData : new LinkedHashMap<>();
-                        totalAdmissions = taskTotalAdmissions;
-                        adoptionRate = taskAdoptionRate;
-
-                        updateTiles();
-                        updateCharts();
-                        updateStatus("Datos cargados correctamente", true);
-                        updateLastUpdateTime();
-                        setUIEnabled(true);
-                    });
-
-                } catch (Exception e) {
-                    Platform.runLater(() -> {
-                        updateStatus("Error al cargar datos: " + e.getMessage(), false);
-                        NavigationHelper.showErrorAlert("Error", "Error al cargar datos", e.getMessage());
-                        setUIEnabled(true);
-                    });
-                    throw e;
-                }
-                return null;
-            }
-        };
-
-        Thread loadThread = new Thread(loadDataTask);
-        loadThread.setDaemon(true);
-        loadThread.start();
+                    updateTiles();
+                    updateCharts();
+                    updateStatus("Datos cargados correctamente", true);
+                    updateLastUpdateTime();
+                    setUIEnabled(true);
+                },
+                cause -> {
+                    log.error("Could not load statistics for {}", year, cause);
+                    updateStatus("Error al cargar datos: " + cause.getMessage(), false);
+                    NavigationHelper.showErrorAlert("Error", "Error al cargar datos", cause.getMessage());
+                    setUIEnabled(true);
+                });
     }
 
     /**
-     * Exports the current statistics to a CSV file using the CsvStatisticsExporter.
-     * Handles UI state and error reporting during the export process.
+     * Exports the selected year to CSV. The destination is chosen here, on the
+     * interface thread; the queries and the write run in the background. The
+     * previous version wrapped all of it in a task that immediately posted back
+     * with {@code Platform.runLater}, so the work still ran on the interface
+     * thread.
      */
     @FXML
     private void exportToCSV() {
-        if (csvExporter == null) {
-            updateStatus("Error: Exportador no inicializado", false);
+        int year = currentYear;
+        File file = csvExporter.chooseFile(year, exportButton.getScene().getWindow());
+        if (file == null) {
+            updateStatus("Exportación cancelada", false);
             return;
         }
 
         setUIEnabled(false);
         updateStatus("Exportando datos...", false);
 
-        Task<Void> exportTask = new Task<Void>() {
-            @Override
-            protected Void call() throws Exception {
-                try {
-                    Platform.runLater(() -> {
-                        try {
-                            Window window = exportButton.getScene().getWindow();
-                            boolean exported = csvExporter.export(currentYear, window);
-
-                            if (exported) {
-                                updateStatus("Exportación completada", true);
-                                NavigationHelper.showSuccessAlert("Éxito", "Exportación completada");
-                            } else {
-                                updateStatus("Exportación cancelada", false);
-                            }
-                        } catch (Exception e) {
-                            updateStatus("Error al exportar: " + e.getMessage(), false);
-                            NavigationHelper.showErrorAlert("Error", "Error al exportar datos", e.getMessage());
-                        } finally {
-                            setUIEnabled(true);
-                        }
-                    });
-
-                } catch (Exception e) {
-                    Platform.runLater(() -> {
-                        updateStatus("Error al exportar: " + e.getMessage(), false);
-                        setUIEnabled(true);
-                    });
-                    throw e;
-                }
-                return null;
-            }
-        };
-
-        Thread exportThread = new Thread(exportTask);
-        exportThread.setDaemon(true);
-        exportThread.start();
+        tasks.submit(() -> {
+                    csvExporter.exportToFile(file, year);
+                    return null;
+                },
+                done -> {
+                    updateStatus("Exportación completada", true);
+                    NavigationHelper.showSuccessAlert("Éxito", "Exportación completada");
+                    setUIEnabled(true);
+                },
+                cause -> {
+                    log.error("Could not export statistics for {}", year, cause);
+                    updateStatus("Error al exportar: " + cause.getMessage(), false);
+                    NavigationHelper.showErrorAlert("Error", "Error al exportar datos", cause.getMessage());
+                    setUIEnabled(true);
+                });
     }
 
-    /**
-     * Loads the initial data for the current year.
-     * This is called once after the controller is initialized.
-     */
-    private void loadInitialData() {
-        refreshData();
+    /** Nothing here navigates; the portal reference is not needed. */
+    @Override
+    public void setPortalController(PortalController controller) {
+    }
+
+    /** Stops a pending load or export from redrawing this screen after it has been replaced. */
+    @Override
+    public void cleanup() {
+        tasks.close();
     }
 
     /**
@@ -241,28 +170,14 @@ public class StatisticsController implements Initializable {
      */
     private void setupYearComboBox() {
         ObservableList<Integer> years = FXCollections.observableArrayList();
-        int currentYear = LocalDateTime.now().getYear();
-        //Show only the last 5 years
-        for (int i = currentYear; i >= currentYear - 4; i--) {
+        int thisYear = LocalDateTime.now().getYear();
+        for (int i = thisYear; i >= thisYear - 4; i--) {
             years.add(i);
         }
 
         yearComboBox.setItems(years);
-        yearComboBox.setValue(currentYear);
-        this.currentYear = currentYear;
-    }
-
-    /**
-     * Configures and creates the TilesFX tiles for total admissions, adoption rate, and monthly average.
-     * Adds the tiles to the tiles container in the UI.
-     */
-    /**
-     * Nothing to build up front: the cards are rebuilt from the current figures
-     * each time data arrives, which is cheaper than it sounds and removes the
-     * "created empty, mutated later" split that TilesFX required.
-     */
-    private void setupTiles() {
-        updateTiles();
+        yearComboBox.setValue(thisYear);
+        currentYear = thisYear;
     }
 
     /**
@@ -311,7 +226,7 @@ public class StatisticsController implements Initializable {
 
         } catch (Exception e) {
             updateStatus("Error al configurar gráficos: " + e.getMessage(), false);
-            log.error("No se pudieron configurar los gráficos", e);
+            log.error("Could not configure the charts", e);
         }
     }
 
@@ -352,7 +267,8 @@ public class StatisticsController implements Initializable {
     }
 
     /**
-     * Updates the values displayed in the TilesFX tiles based on the latest data.
+     * Rebuilds the headline cards from the current figures. Cheaper than it
+     * sounds, and it keeps them free of a "created empty, mutated later" state.
      */
     private void updateTiles() {
         double monthlyAverage = monthlyData.isEmpty() ? 0
@@ -417,7 +333,7 @@ public class StatisticsController implements Initializable {
 
         } catch (Exception e) {
             updateStatus("Error al actualizar gráfico mensual: " + e.getMessage(), false);
-            log.error("Unexpected error", e);
+            log.error("Could not update the monthly chart", e);
         }
     }
 
@@ -453,7 +369,7 @@ public class StatisticsController implements Initializable {
 
         } catch (Exception e) {
             updateStatus("Error al actualizar gráfico de orígenes: " + e.getMessage(), false);
-            log.error("Unexpected error", e);
+            log.error("Could not update the origins chart", e);
         }
     }
 
@@ -483,7 +399,7 @@ public class StatisticsController implements Initializable {
 
         } catch (Exception e) {
             updateStatus("Error al actualizar gráfico circular: " + e.getMessage(), false);
-            log.error("Unexpected error", e);
+            log.error("Could not update the adoption chart", e);
         }
     }
 

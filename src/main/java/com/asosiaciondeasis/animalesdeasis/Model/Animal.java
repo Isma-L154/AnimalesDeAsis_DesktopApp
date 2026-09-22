@@ -10,7 +10,7 @@ public class Animal {
     private String recordNumber; // UUID
     private String chipNumber;
     private String barcode;
-    private String admissionDate; // Format: DD-MM-YYYY
+    private String admissionDate; // ISO 8601: yyyy-MM-ddTHH:mm:ss
     private String collectedBy;
     private int placeId;
     private String reasonForRescue;
@@ -19,13 +19,13 @@ public class Animal {
     private String sex; // 'Macho' or 'Hembra'
     private String name;
     private String ailments;
-    private String neuteringDate;  // Format: DD-MM-YYYY
+    private String neuteringDate; // ISO 8601: yyyy-MM-ddTHH:mm:ss
     private boolean adopted;
     private boolean active = true;
     private boolean synced;
     private String lastModified;
 
-
+    /** Required by Firestore, which deserialises documents through it. */
     public Animal() {
     }
 
@@ -33,15 +33,14 @@ public class Animal {
         this.recordNumber = recordNumber;
     }
 
-    public static Animal createNew() {return new Animal(UUID.randomUUID().toString());}
+    public static Animal createNew() {
+        return new Animal(UUID.randomUUID().toString());
+    }
 
     public static Animal fromExistingRecord(String recordNumber) {
         return new Animal(recordNumber);
     }
 
-    /**
-     * Getters and Setters
-     */
     public String getRecordNumber() {
         return recordNumber;
     }

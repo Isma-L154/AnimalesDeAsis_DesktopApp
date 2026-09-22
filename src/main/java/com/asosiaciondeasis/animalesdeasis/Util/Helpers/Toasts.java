@@ -12,6 +12,7 @@ import javafx.scene.layout.Pane;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 
+import java.lang.ref.WeakReference;
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -69,8 +70,7 @@ public final class Toasts {
      * must not be kept alive by a static field. Callers that do have a node
      * should pass it — this is the fallback, not the intended route.</p>
      */
-    private static java.lang.ref.WeakReference<Scene> defaultScene =
-            new java.lang.ref.WeakReference<>(null);
+    private static WeakReference<Scene> defaultScene = new WeakReference<>(null);
 
     private Toasts() {
     }
@@ -79,23 +79,8 @@ public final class Toasts {
     public static void register(Scene scene, Pane layer) {
         if (scene != null && layer != null) {
             LAYERS.put(scene, layer);
-            defaultScene = new java.lang.ref.WeakReference<>(scene);
+            defaultScene = new WeakReference<>(scene);
         }
-    }
-
-    /** Success on the main window, for callers without a node to hand. */
-    public static void success(String message) {
-        showOnDefault(message, Kind.SUCCESS);
-    }
-
-    /** Information on the main window, for callers without a node to hand. */
-    public static void info(String message) {
-        showOnDefault(message, Kind.INFO);
-    }
-
-    /** A caution on the main window, for callers without a node to hand. */
-    public static void warning(String message) {
-        showOnDefault(message, Kind.WARNING);
     }
 
     /**

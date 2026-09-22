@@ -4,42 +4,45 @@ import com.asosiaciondeasis.animalesdeasis.Abstraccions.IPortalAwareController;
 import com.asosiaciondeasis.animalesdeasis.Config.ServiceFactory;
 import com.asosiaciondeasis.animalesdeasis.Controller.PortalController;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
-import com.asosiaciondeasis.animalesdeasis.Service.SyncService;
 import com.asosiaciondeasis.animalesdeasis.Util.BarcodeScannerUtil;
 import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
+import com.asosiaciondeasis.animalesdeasis.Util.ScreenTasks;
 import com.asosiaciondeasis.animalesdeasis.Util.SyncEventManager;
 import javafx.animation.FadeTransition;
 import javafx.application.Platform;
-import javafx.concurrent.Task;
 import javafx.beans.property.ReadOnlyStringWrapper;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
-import javafx.scene.Parent;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.DatePicker;
+import javafx.scene.control.Label;
+import javafx.scene.control.Pagination;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.util.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.Consumer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class AnimalManagementController implements IPortalAwareController {
     private static final Logger log = LoggerFactory.getLogger(AnimalManagementController.class);
 
+    private static final int ROWS_PER_PAGE = 20;
+    private static final String ALL_SPECIES = "Todas";
 
-    private final int ROWS_PER_PAGE = 20;
-    // Table components
     @FXML private TableView<Animal> animalTable;
     @FXML private TableColumn<Animal, String> idAdmissionDate;
     @FXML private TableColumn<Animal, String> nameColumn;
@@ -48,206 +51,133 @@ public class AnimalManagementController implements IPortalAwareController {
     @FXML private TableColumn<Animal, String> adoptedColumn;
     @FXML private TableColumn<Animal, Void> actionsColumn;
     @FXML private Pagination pagination;
-    @FXML private Button CreateAnimal;
 
-    // Filter components
     @FXML private Button toggleFiltersBtn;
     @FXML private HBox filtersBox;
     @FXML private ComboBox<String> speciesFilter;
     @FXML private DatePicker startDateFilter;
     @FXML private DatePicker endDateFilter;
     @FXML private CheckBox inactiveFilter;
-    @FXML private Button applyFiltersBtn;
-    @FXML private Button clearFiltersBtn;
     @FXML private Label resultsCountLabel;
     @FXML private TextField chipNumberFilter;
-    @FXML private Button scanChipButton;
 
     private final BarcodeScannerUtil scannerUtil = new BarcodeScannerUtil();
-    private String scannedChipNumber = null;
+    private String scannedChipNumber;
     private PortalController portalController;
-    private List<Animal> allAnimals;
-    private List<Animal> filteredAnimals;
-    private boolean filtersVisible = false;
+    private List<Animal> filteredAnimals = Collections.emptyList();
+    private boolean filtersVisible;
     private Runnable syncListener;
-    private ExecutorService executor;
+    private final ScreenTasks tasks = new ScreenTasks("animal-list");
 
     @Override
     public void setPortalController(PortalController portalController) {
         this.portalController = portalController;
     }
 
-    /**
-     * Loads and initializes the controller, setting up the animal table, filters, pagination, and sync listener.
-     */
     @FXML
     public void initialize() {
         // Nothing here touches the database. This method runs on the JavaFX
         // application thread, and it used to open with getActiveAnimals(), so the
-        // window froze until the query returned - the exact rule the project sets
-        // out not to break. The table is built empty and filled from a background
-        // task instead.
-        executor = Executors.newSingleThreadExecutor(r -> {
-            Thread t = new Thread(r, "animal-list");
-            // Daemon: a query still in flight must not keep the application alive
-            // once the window is gone.
-            t.setDaemon(true);
-            return t;
-        });
-
-        allAnimals = Collections.emptyList();
-        filteredAnimals = Collections.emptyList();
-
-        initializeComboBoxes();
+        // window froze until the query returned. The table is built empty and
+        // filled from a background task instead.
+        speciesFilter.getItems().setAll(ALL_SPECIES, "Perro", "Gato");
+        speciesFilter.setValue(ALL_SPECIES);
         setUpTables();
         addActionButtons();
         animalTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         animalTable.setPlaceholder(new Label("Cargando animales…"));
         setUpPagination();
         updateResultsCount();
-        setupSyncListener();
 
-        loadInBackground(() -> ServiceFactory.getAnimalService().getActiveAnimals(),
-                animals -> {
-                    allAnimals = animals;
-                    filteredAnimals = animals;
-                    applyLoadedAnimals();
-                });
+        // SyncEventManager notifies from the synchronisation thread, and the
+        // refresh touches the table, the pagination and the labels, so it has to
+        // hop to the interface thread.
+        syncListener = () -> Platform.runLater(this::refreshAnimalList);
+        SyncEventManager.addListener(syncListener);
+
+        refreshAnimalList();
     }
 
     /**
      * Runs a query off the interface thread and applies its result back on it.
      *
-     * <p>Every database call in this screen goes through here. Doing it in one
+     * <p>Every database read in this screen goes through here. Doing it in one
      * place is what stops the next one from quietly being written inline again,
      * and it is also where the empty-table message is kept honest: "loading",
      * then either rows or a reason there are none.</p>
      */
     private void loadInBackground(Callable<List<Animal>> query, Consumer<List<Animal>> onLoaded) {
-        if (executor == null || executor.isShutdown()) {
-            return;
-        }
-        Task<List<Animal>> task = new Task<>() {
-            @Override
-            protected List<Animal> call() throws Exception {
-                return query.call();
-            }
-        };
-        task.setOnSucceeded(e -> onLoaded.accept(task.getValue()));
-        task.setOnFailed(e -> {
-            Throwable cause = task.getException();
+        tasks.submit(query, onLoaded, cause -> {
+            log.error("Could not load animals", cause);
             animalTable.setPlaceholder(new Label("No se pudieron cargar los animales"));
             NavigationHelper.showErrorAlert("Error", "No se pudieron cargar los animales",
                     cause == null ? "Error desconocido" : cause.getMessage());
         });
-        executor.submit(task);
     }
 
-    /** Repaints the table from {@code filteredAnimals}. Interface thread only. */
-    private void applyLoadedAnimals() {
-        animalTable.setPlaceholder(new Label(
-                "No hay animales que coincidan con los filtros"));
+    /** Shows {@code animals} from the first page. Interface thread only. */
+    private void showAnimals(List<Animal> animals) {
+        filteredAnimals = animals;
+        animalTable.setPlaceholder(new Label("No hay animales que coincidan con los filtros"));
         setUpPagination();
         updateResultsCount();
         animalTable.refresh();
     }
 
-    /**
-     * Configures the table columns for displaying animal data.
-     * Sets up value factories for each column, including formatting for names and dates.
-     */
     private void setUpTables() {
-        // Initialize the table columns and pagination
-
         nameColumn.setCellValueFactory(cellData -> {
             String name = cellData.getValue().getName();
-            return new ReadOnlyStringWrapper((name == null || name.trim().isEmpty()) ? "N/A" : name);
+            return new ReadOnlyStringWrapper((name == null || name.isBlank()) ? "N/A" : name);
         });
         speciesColumn.setCellValueFactory(new PropertyValueFactory<>("species"));
-
-        idAdmissionDate.setCellValueFactory(cellData -> {
-            String utcDate = cellData.getValue().getAdmissionDate();
-            String formattedDate = DateUtils.formatUtcForDisplay(utcDate);
-            return new SimpleStringProperty(formattedDate);
-        });
-
+        idAdmissionDate.setCellValueFactory(cellData -> new ReadOnlyStringWrapper(
+                DateUtils.formatUtcForDisplay(cellData.getValue().getAdmissionDate())));
         sexColumn.setCellValueFactory(new PropertyValueFactory<>("sex"));
-
-        adoptedColumn.setCellValueFactory(new PropertyValueFactory<>("adopted"));
-        adoptedColumn.setCellValueFactory(cellData -> {
-            boolean isAdopted = cellData.getValue().isAdopted();
-            String status = isAdopted ? "✅ Adoptado" : "❌ No";
-            return new ReadOnlyStringWrapper(status);
-        });
+        adoptedColumn.setCellValueFactory(cellData -> new ReadOnlyStringWrapper(
+                cellData.getValue().isAdopted() ? "✅ Adoptado" : "❌ No"));
     }
 
-    /**
-     * Loads the animals for the specified page index and updates the table view.
-     *
-     * @param pageIndex The index of the page to load.
-     */
     private void loadAnimals(int pageIndex) {
-        // Load animals for the specified page index
         int fromIndex = pageIndex * ROWS_PER_PAGE;
         int toIndex = Math.min(fromIndex + ROWS_PER_PAGE, filteredAnimals.size());
 
         if (fromIndex < filteredAnimals.size()) {
-            List<Animal> pageAnimals = filteredAnimals.subList(fromIndex, toIndex);
-            animalTable.getItems().setAll(pageAnimals);
+            animalTable.getItems().setAll(filteredAnimals.subList(fromIndex, toIndex));
         } else {
             animalTable.getItems().clear();
         }
     }
 
-    /**
-     * Sets up the pagination control for the animal table.
-     * Calculates the total number of pages and configures the page factory.
-     */
     private void setUpPagination() {
-        int totalAnimals = filteredAnimals.size();
-        int totalPages = (int) Math.ceil((double) totalAnimals / ROWS_PER_PAGE);
-
+        int totalPages = (int) Math.ceil((double) filteredAnimals.size() / ROWS_PER_PAGE);
         pagination.setPageCount(Math.max(totalPages, 1));
         pagination.setCurrentPageIndex(0);
 
-        // Fix: Return the actual table instead of a Label
+        // The table sits outside the Pagination, which is used only for its page
+        // controls: the factory fills the table and hands back an empty node.
+        // It runs on every page change, so no index listener is needed - adding
+        // one here stacked another on each reload.
         pagination.setPageFactory(pageIndex -> {
             loadAnimals(pageIndex);
-            return new Label(); // Return the table itself
+            return new Label();
         });
-
-        pagination.currentPageIndexProperty().addListener((obs, oldIndex, newIndex) -> {
-            if (newIndex != null) {
-                loadAnimals(newIndex.intValue());
-            }
-        });
-
         loadAnimals(0);
     }
 
-    /**
-     * Updates the label that displays the total number of animals currently shown.
-     */
     private void updateResultsCount() {
         resultsCountLabel.setText("Total: " + filteredAnimals.size() + " animales");
     }
 
-    /**
-     * Initiates the barcode scanner to scan a chip number and sets the result in the filter field.
-     */
     @FXML
     public void handleScanChip() {
+        // The scanner invokes this on the JavaFX application thread.
         scannerUtil.startScanning(code -> {
-            this.scannedChipNumber = code;
-            Platform.runLater(() -> {
-                chipNumberFilter.setText(code);
-            });
+            scannedChipNumber = code;
+            chipNumberFilter.setText(code);
         });
     }
 
-    /**
-     * Toggles the visibility of the filter section with a fade transition.
-     */
+    /** Shows or hides the filter row with a fade. */
     @FXML
     public void handleToggleFilters() {
         filtersVisible = !filtersVisible;
@@ -273,90 +203,61 @@ public class AnimalManagementController implements IPortalAwareController {
         fadeTransition.play();
     }
 
-    /**
-     * Applies the selected filters to the animal list and updates the table and pagination.
-     * Shows an alert with the result of the filtering operation.
-     */
+    /** Applies the selected filters and reports how many animals matched. */
     @FXML
     public void handleApplyFilters() {
-        try {
-            String species = getFilterValue(speciesFilter.getValue());
-            LocalDate startDate = startDateFilter.getValue();
-            LocalDate endDate = endDateFilter.getValue();
-
-            String chipNumber = null;
-            if (scannedChipNumber != null && !scannedChipNumber.trim().isEmpty()) {
-                chipNumber = scannedChipNumber.trim();
-            } else {
-                chipNumber = getFilterValue(chipNumberFilter.getText());
-            }
-
-            // Fix: Convert LocalDate to String properly
-            String startDateStr = startDate != null ? startDate.toString() : null;
-            String endDateStr = endDate != null ? endDate.toString() : null;
-
-            Boolean showInactive = inactiveFilter.isSelected();
-
-            // Validate date range
-            if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
-                NavigationHelper.showErrorAlert("Error de fechas",
-                        "La fecha de inicio no puede ser posterior a la fecha de fin",
-                        "Por favor, selecciona un rango de fechas válido.");
-                return;
-            }
-
-            final String finalSpecies = species;
-            final String finalChip = chipNumber;
-            final String finalStart = startDateStr;
-            final String finalEnd = endDateStr;
-            final Boolean finalInactive = showInactive;
-
-            animalTable.setPlaceholder(new Label("Buscando…"));
-            loadInBackground(
-                    () -> ServiceFactory.getAnimalService().findByFilters(
-                            finalSpecies, finalStart, finalEnd, finalChip, finalInactive),
-                    animals -> {
-                        filteredAnimals = animals;
-                        applyLoadedAnimals();
-                        String message = animals.isEmpty()
-                                ? "No se encontraron animales con los filtros seleccionados."
-                                : "Se encontraron " + animals.size() + " animales.";
-                        NavigationHelper.showSuccessAlert("Filtros aplicados", message);
-                    });
-
-        } catch (Exception e) {
-            NavigationHelper.showErrorAlert("Error aplicando filtros",
-                    "No se pudieron aplicar los filtros", e.getMessage());
+        LocalDate startDate = startDateFilter.getValue();
+        LocalDate endDate = endDateFilter.getValue();
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            NavigationHelper.showErrorAlert("Error de fechas",
+                    "La fecha de inicio no puede ser posterior a la fecha de fin",
+                    "Por favor, selecciona un rango de fechas válido.");
+            return;
         }
+
+        animalTable.setPlaceholder(new Label("Buscando…"));
+        loadInBackground(filteredQuery(), animals -> {
+            showAnimals(animals);
+            NavigationHelper.showSuccessAlert("Filtros aplicados", animals.isEmpty()
+                    ? "No se encontraron animales con los filtros seleccionados."
+                    : "Se encontraron " + animals.size() + " animales.");
+        });
     }
 
     /**
-     * Clears all filter fields and resets the animal list to show all animals.
-     * Updates the table and pagination accordingly.
+     * The query the filter fields describe, with their values read now so the
+     * background task touches no controls.
      */
+    private Callable<List<Animal>> filteredQuery() {
+        String species = getFilterValue(speciesFilter.getValue());
+        String chipNumber = (scannedChipNumber != null && !scannedChipNumber.isBlank())
+                ? scannedChipNumber.trim()
+                : getFilterValue(chipNumberFilter.getText());
+        LocalDate startDate = startDateFilter.getValue();
+        LocalDate endDate = endDateFilter.getValue();
+        String start = startDate != null ? startDate.toString() : null;
+        String end = endDate != null ? endDate.toString() : null;
+        boolean showInactive = inactiveFilter.isSelected();
+
+        return () -> ServiceFactory.getAnimalService()
+                .findByFilters(species, start, end, chipNumber, showInactive);
+    }
+
+    /** Clears every filter and shows all active animals again. */
     @FXML
     public void handleClearFilters() {
-
-        speciesFilter.setValue("Todas");
+        speciesFilter.setValue(ALL_SPECIES);
         startDateFilter.setValue(null);
         endDateFilter.setValue(null);
         inactiveFilter.setSelected(false);
         chipNumberFilter.clear();
         scannedChipNumber = null;
 
-        loadInBackground(() -> ServiceFactory.getAnimalService().getActiveAnimals(),
-                animals -> {
-                    allAnimals = animals;
-                    filteredAnimals = animals;
-                    applyLoadedAnimals();
-                });
+        refreshAnimalList();
 
         NavigationHelper.showInfoAlert("Filtros limpiados", "Se han eliminado todos los filtros. Mostrando todos los animales.");
     }
 
-    /**
-     * Loads the CreateAnimal view in the portal when the create button is pressed.
-     */
     @FXML
     public void handleCreateAnimal() {
         if (portalController != null) {
@@ -364,11 +265,8 @@ public class AnimalManagementController implements IPortalAwareController {
         }
     }
 
-    /**
-     * Adds action buttons (edit, delete, detail, reactivate) to each row in the actions column of the table.
-     * Configures the button actions for editing, deleting, viewing details, and reactivating animals.
-     */
-    private void addActionButtons(){
+    /** Adds the per-row buttons: detail, edit and delete, or detail and reactivate for inactive animals. */
+    private void addActionButtons() {
         actionsColumn.setCellFactory(col -> new TableCell<>() {
             private final Button editBtn = createButton("Editar", "edit-btn", "Editar");
             private final Button deleteBtn = createButton("Eliminar", "delete-btn", "Desactivar");
@@ -376,27 +274,28 @@ public class AnimalManagementController implements IPortalAwareController {
             private final Button reactivateBtn = createButton("Activar", "reactivate-btn", "Reactivar animal");
 
             {
-                editBtn.setOnAction(event -> handleEditAnimal());
-                deleteBtn.setOnAction(event -> handleDeleteAnimal());
-                detailBtn.setOnAction(event -> handleDetailAnimal());
-                reactivateBtn.setOnAction(event -> handleReactivateAnimal());
+                editBtn.setOnAction(event -> openEdit(rowAnimal()));
+                deleteBtn.setOnAction(event -> deleteAnimal(rowAnimal()));
+                detailBtn.setOnAction(event -> openDetail(rowAnimal()));
+                reactivateBtn.setOnAction(event -> reactivateAnimal(rowAnimal()));
             }
+
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty) {
                     setGraphic(null);
-                } else {
-                    HBox buttonBox;
-                    if (inactiveFilter.isSelected()) {
-                        buttonBox = new HBox(5, detailBtn, reactivateBtn);
-                    } else {
-                        buttonBox = new HBox(5, detailBtn, editBtn, deleteBtn);
-                    }
-
-                    buttonBox.setAlignment(Pos.CENTER);
-                    setGraphic(buttonBox);
+                    return;
                 }
+                HBox buttonBox = inactiveFilter.isSelected()
+                        ? new HBox(5, detailBtn, reactivateBtn)
+                        : new HBox(5, detailBtn, editBtn, deleteBtn);
+                buttonBox.setAlignment(Pos.CENTER);
+                setGraphic(buttonBox);
+            }
+
+            private Animal rowAnimal() {
+                return getTableView().getItems().get(getIndex());
             }
 
             private Button createButton(String text, String styleClass, String tooltipText) {
@@ -405,185 +304,88 @@ public class AnimalManagementController implements IPortalAwareController {
                 button.getStyleClass().add(styleClass);
                 return button;
             }
-            private void handleEditAnimal() {
-                Animal animal = getTableView().getItems().get(getIndex());
-                if (portalController != null) {
-                    try {
-                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Animal/EditAnimal.fxml"));
-                        Parent root = loader.load();
-                        EditAnimalController editController = loader.getController();
-                        editController.setPortalController(portalController);
-                        editController.setAnimalData(animal);
-                        portalController.setContent(root);
-                    } catch (Exception e) {
-                        NavigationHelper.showErrorAlert("Error", "No se pudo cargar el formulario de edición", e.getMessage());
-                    }
-                }
-            }
-            private void handleDeleteAnimal() {
-                Animal animal = getTableView().getItems().get(getIndex());
-
-                boolean confirmed = NavigationHelper.showConfirmationAlert("Confirmar eliminación",
-                        "¿Estás seguro de que deseas eliminar este animal?",
-                        "Animal: " + animal.getName() + " - " + animal.getSpecies());
-
-                if (confirmed) {
-                    try {
-                        ServiceFactory.getAnimalService().deleteAnimal(animal.getRecordNumber());
-                        refreshAnimalList();
-                        NavigationHelper.showSuccessAlert("Éxito", "Animal eliminado correctamente.");
-                    } catch (Exception e) {
-                        NavigationHelper.showErrorAlert("Error", "No se pudo eliminar el animal", e.getMessage());
-                    }
-                }
-            }
-            private void handleDetailAnimal() {
-                Animal animal = getTableView().getItems().get(getIndex());
-                if (portalController != null) {
-                    try {
-                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Animal/DetailAnimal.fxml"));
-                        Parent root = loader.load();
-                        DetailAnimalController detailController = loader.getController();
-                        detailController.setPortalController(portalController);
-                        detailController.setAnimalDetails(animal, ServiceFactory.getPlaceService().getAllPlaces());
-                        portalController.setContent(root);
-                    } catch (Exception e) {
-                        NavigationHelper.showErrorAlert("Error", "No se pudo cargar los detalles del animal", e.getMessage());
-                    }
-                }
-            }
-            private void handleReactivateAnimal() {
-                Animal animal = getTableView().getItems().get(getIndex());
-                boolean confirmed = NavigationHelper.showConfirmationAlert("Confirmar reactivación",
-                        "¿Estás seguro de que deseas reactivar este animal?",
-                        "Animal: " + animal.getName() + " - " + animal.getSpecies());
-                if (confirmed) {
-                    try {
-                        ServiceFactory.getAnimalService().reactivateAnimal(animal.getRecordNumber());
-                        refreshAnimalList();
-                        NavigationHelper.showSuccessAlert("Éxito", "Animal reactivado correctamente.");
-                    } catch (Exception e) {
-                        NavigationHelper.showErrorAlert("Error", "No se pudo reactivar el animal", e.getMessage());
-                    }
-                }
-            }
         });
     }
 
-    /**
-     * Returns the filter value if it is not null, empty, or "Todas"; otherwise returns null.
-     *
-     * @param value The filter value to check.
-     * @return The processed filter value or null.
-     */
-    private String getFilterValue(String value) {
-        return (value != null && !value.trim().isEmpty() && !"Todas".equals(value)) ? value : null;
-    }
-
-    /**
-     * Checks if any filter is currently active.
-     *
-     * @return true if any filter is active, false otherwise.
-     */
-    private boolean hasActiveFilters() {
-        return (speciesFilter.getValue() != null && !speciesFilter.getValue().isEmpty()) ||
-                startDateFilter.getValue() != null ||
-                endDateFilter.getValue() != null ||
-                (chipNumberFilter.getText() != null && !chipNumberFilter.getText().trim().isEmpty()) ||
-                (scannedChipNumber != null && !scannedChipNumber.trim().isEmpty()) ||
-                inactiveFilter.isSelected();
-    }
-
-    /**
-     * Refreshes the animal list based on the current filters and updates the table and pagination.
-     * Called after applying filters, clearing filters, deleting, or reactivating an animal.
-     *
-     * @throws Exception if there is an error retrieving animal data.
-     */
-    private void refreshAnimalList() throws Exception {
-        if (hasActiveFilters()) {
-            String species = getFilterValue(speciesFilter.getValue());
-            LocalDate startDate = startDateFilter.getValue();
-            LocalDate endDate = endDateFilter.getValue();
-            String chipNumber = null;
-            if (scannedChipNumber != null && !scannedChipNumber.trim().isEmpty()) {
-                chipNumber = scannedChipNumber.trim();
-            } else {
-                chipNumber = getFilterValue(chipNumberFilter.getText().trim());
-            }
-            String startDateStr = startDate != null ? startDate.toString() : null;
-            String endDateStr = endDate != null ? endDate.toString() : null;
-            Boolean showInactive = inactiveFilter.isSelected();
-
-            final String finalSpecies = species;
-            final String finalChip = chipNumber;
-            final String finalStart = startDateStr;
-            final String finalEnd = endDateStr;
-            final Boolean finalInactive = showInactive;
-
-            loadInBackground(
-                    () -> ServiceFactory.getAnimalService().findByFilters(
-                            finalSpecies, finalStart, finalEnd, finalChip, finalInactive),
-                    animals -> {
-                        filteredAnimals = animals;
-                        applyLoadedAnimals();
-                    });
-        } else {
-            loadInBackground(() -> ServiceFactory.getAnimalService().getActiveAnimals(),
-                    animals -> {
-                        allAnimals = animals;
-                        filteredAnimals = animals;
-                        applyLoadedAnimals();
-                    });
+    private void openEdit(Animal animal) {
+        if (portalController != null) {
+            portalController.<EditAnimalController>openScreen("/fxml/Animal/EditAnimal.fxml",
+                    edit -> edit.setAnimalData(animal));
         }
     }
 
-    /**
-     * Initializes the species filter ComboBox with default values.
-     * This is necessary because default values cannot be set in FXML for ComboBoxes.
-     */
-    private void initializeComboBoxes() {
-
-        speciesFilter.getItems().clear();
-        speciesFilter.getItems().addAll("Todas", "Perro", "Gato");
-        speciesFilter.setValue("Todas");
+    private void openDetail(Animal animal) {
+        if (portalController != null) {
+            portalController.<DetailAnimalController>openScreen("/fxml/Animal/DetailAnimal.fxml",
+                    detail -> detail.setAnimalDetails(animal));
+        }
     }
 
-    /**
-     * Sets up a listener for synchronization events to refresh the animal list automatically when a sync occurs.
-     */
-    private void setupSyncListener() {
-        // SyncEventManager notifies from the synchronisation thread, and
-        // refreshAnimalList touches the table, the pagination and the labels.
-        // Calling it straight from here mutated the scene graph off the interface
-        // thread, which JavaFX does not allow and does not always fail loudly
-        // about. The hop is what makes it legal.
-        syncListener = () -> Platform.runLater(() -> {
-            try {
-                refreshAnimalList();
-            } catch (Exception e) {
-                log.info("Error actualizando tabla después del sync: "+ e.getMessage());
-            }
-        });
-
-        SyncEventManager.addListener(syncListener);
+    private void deleteAnimal(Animal animal) {
+        boolean confirmed = NavigationHelper.showConfirmationAlert("Confirmar eliminación",
+                "¿Estás seguro de que deseas eliminar este animal?",
+                "Animal: " + animal.getName() + " - " + animal.getSpecies());
+        if (!confirmed) {
+            return;
+        }
+        try {
+            ServiceFactory.getAnimalService().deleteAnimal(animal.getRecordNumber());
+            refreshAnimalList();
+            NavigationHelper.showSuccessAlert("Éxito", "Animal eliminado correctamente.");
+        } catch (Exception e) {
+            log.error("Could not delete animal {}", animal.getRecordNumber(), e);
+            NavigationHelper.showErrorAlert("Error", "No se pudo eliminar el animal", e.getMessage());
+        }
     }
 
-    /**
-     * Cleans up the sync listener when the controller is disposed.
-     * Removes the listener from the SyncEventManager.
-     */
+    private void reactivateAnimal(Animal animal) {
+        boolean confirmed = NavigationHelper.showConfirmationAlert("Confirmar reactivación",
+                "¿Estás seguro de que deseas reactivar este animal?",
+                "Animal: " + animal.getName() + " - " + animal.getSpecies());
+        if (!confirmed) {
+            return;
+        }
+        try {
+            ServiceFactory.getAnimalService().reactivateAnimal(animal.getRecordNumber());
+            refreshAnimalList();
+            NavigationHelper.showSuccessAlert("Éxito", "Animal reactivado correctamente.");
+        } catch (Exception e) {
+            log.error("Could not reactivate animal {}", animal.getRecordNumber(), e);
+            NavigationHelper.showErrorAlert("Error", "No se pudo reactivar el animal", e.getMessage());
+        }
+    }
+
+    /** @return the value, or {@code null} when it is blank or the "all" option */
+    private String getFilterValue(String value) {
+        return (value != null && !value.isBlank() && !ALL_SPECIES.equals(value)) ? value : null;
+    }
+
+    private boolean hasActiveFilters() {
+        return getFilterValue(speciesFilter.getValue()) != null
+                || startDateFilter.getValue() != null
+                || endDateFilter.getValue() != null
+                || getFilterValue(chipNumberFilter.getText()) != null
+                || (scannedChipNumber != null && !scannedChipNumber.isBlank())
+                || inactiveFilter.isSelected();
+    }
+
+    /** Reloads the table with whatever the filter fields currently describe. */
+    private void refreshAnimalList() {
+        loadInBackground(hasActiveFilters()
+                        ? filteredQuery()
+                        : () -> ServiceFactory.getAnimalService().getActiveAnimals(),
+                this::showAnimals);
+    }
+
     @Override
     public void cleanup() {
         if (syncListener != null) {
             SyncEventManager.removeListener(syncListener);
             syncListener = null;
         }
-        if (executor != null) {
-            // Stops an in-flight query from completing into a table that is no
-            // longer on screen.
-            executor.shutdownNow();
-            executor = null;
-        }
+        // Stops an in-flight query from completing into a table that is no
+        // longer on screen.
+        tasks.close();
+        scannerUtil.stopScanning();
     }
 }

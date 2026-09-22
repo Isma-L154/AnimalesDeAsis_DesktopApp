@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
 public class WelcomeController implements Initializable {
     private static final Logger log = LoggerFactory.getLogger(WelcomeController.class);
 
-
     /**
      * Share of the window height taken by the artwork. Driving the image from the
      * height (rather than the width) keeps the dog the same visual size on any
@@ -142,10 +141,9 @@ public class WelcomeController implements Initializable {
         try {
             boolean wasMaximized = stage.isMaximized();
 
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/PortalView.fxml"));
-            PortalController portalController;
+            FXMLLoader loader = new FXMLLoader(WelcomeController.class.getResource("/fxml/PortalView.fxml"));
             Scene scene = new Scene(loader.load());
-            portalController = loader.getController();
+            PortalController portalController = loader.getController();
 
             // Was 1036x798, which is taller than the usable area of a 1366x768
             // laptop - the size the association actually runs this on - so the
@@ -173,7 +171,7 @@ public class WelcomeController implements Initializable {
             }
 
         } catch (IOException e) {
-            log.error("Unexpected error", e);
+            log.error("Could not open the portal", e);
         }
     }
 }

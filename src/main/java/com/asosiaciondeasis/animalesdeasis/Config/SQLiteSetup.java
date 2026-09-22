@@ -1,81 +1,51 @@
 package com.asosiaciondeasis.animalesdeasis.Config;
 
 import com.asosiaciondeasis.animalesdeasis.DAO.DataImporter;
-
-import java.io.File;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SQLiteSetup {
+import java.nio.file.Files;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+/** Creates the database on first run and keeps its schema current. */
+public final class SQLiteSetup {
     private static final Logger log = LoggerFactory.getLogger(SQLiteSetup.class);
 
+    private SQLiteSetup() {
+    }
 
     /**
-     * Initializes the SQLite database by creating the necessary folder, database file,
-     * and tables if they do not already exist.
+     * Creates the data folder, the database file and every table if they do not
+     * exist, then imports Costa Rica's provinces and cantons if they are missing.
+     *
+     * @throws Exception when the database cannot be prepared; the application
+     *         cannot run without it
      */
+    public static void initializeDatabase() throws Exception {
+        Files.createDirectories(DatabaseConnection.DATA_DIR);
 
-    public static void initializeDatabase() {
-        try {
+        // A dedicated connection, closed on every path. The shared one is opened
+        // later, once the schema is known to exist.
+        try (Connection conn = DriverManager.getConnection(DatabaseConnection.DB_URL)) {
+            DatabaseConnection.applyPragmas(conn);
+            createSchema(conn);
 
-            // Get the user's home directory path
-            String userHome = System.getProperty("user.home");
-
-            // Define the hidden folder path inside the user's home directory
-            File dir = new File(userHome, ".asociaciondeasis");
-
-            // Create the directory if it doesn't exist
-            if (!dir.exists()) {
-                dir.mkdirs();
-                log.info("Directory created: "+ dir.getAbsolutePath());
+            if (isEmpty(conn, "SELECT COUNT(*) FROM provinces")) {
+                log.info("Provinces table empty, importing places from the API");
+                DataImporter.populateProvincesAndPlaces(conn);
             }
+        }
+        log.info("Database ready at {}", DatabaseConnection.DB_URL);
+    }
 
-            // Define the database file inside the directory
-            File dbFile = new File(dir, "AsociacionDeAsis.db");
-
-            // Create the JDBC URL pointing to the SQLite database file
-            String url = "jdbc:sqlite:" + dbFile.getAbsolutePath();
-
-            // Establish a connection to the SQLite database (creates the file if it doesn't exist)
-            Connection conn = DriverManager.getConnection(url);
-
-            if (conn != null) {
-                log.info("Database connected at: " + dbFile.getAbsolutePath());
-
-                // Enforce the schema's foreign keys (off by default in SQLite).
-                DatabaseConnection.applyPragmas(conn);
-
-                // Create tables + indexes (idempotent, shared with the test suite).
-                createSchema(conn);
-
-                try (Statement stmt = conn.createStatement()) {
-                    /*
-                     * Check if the province table is empty; if so, call the API to import the
-                     * geographic data (provinces/places) of Costa Rica.
-                     */
-                    ResultSet rs = stmt.executeQuery("SELECT COUNT(*) AS count FROM provinces");
-                    if (rs.next() && rs.getInt("count") == 0) {
-                        log.info("Provinces table empty, importing data from API...");
-                        DataImporter.populateProvincesAndPlaces(conn);
-                        log.info("Data imported successfully.");
-                    } else {
-                        log.info("Provinces table already populated.");
-                    }
-                }
-                conn.close();
-
-                log.info("Tables created or verified successfully.");
-            }
-
-        } catch (Exception e) {
-            // The cause travels with the exception rather than being logged here.
-            // Logging and rethrowing records one failure twice, and the previous
-            // throw discarded the cause entirely.
-            throw new RuntimeException("Error initializing the database.", e);
+    private static boolean isEmpty(Connection conn, String countSql) throws SQLException {
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(countSql)) {
+            return rs.next() && rs.getInt(1) == 0;
         }
     }
 
@@ -86,7 +56,7 @@ public class SQLiteSetup {
      *
      * @param conn an open connection (with {@code foreign_keys} already enabled)
      */
-    public static void createSchema(Connection conn) throws java.sql.SQLException {
+    public static void createSchema(Connection conn) throws SQLException {
         String createProvinces = """
                 CREATE TABLE IF NOT EXISTS provinces (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -108,7 +78,7 @@ public class SQLiteSetup {
                     record_number TEXT PRIMARY KEY, -- UUID
                     chip_number TEXT UNIQUE,
                     barcode TEXT UNIQUE,
-                    admission_date TEXT NOT NULL, -- Format: DD-MM-YYYY
+                    admission_date TEXT NOT NULL, -- ISO 8601: yyyy-MM-ddTHH:mm:ss
                     collected_by TEXT,
                     place_id INTEGER NOT NULL,
                     reason_for_rescue TEXT,

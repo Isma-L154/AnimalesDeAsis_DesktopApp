@@ -10,23 +10,7 @@ import javafx.stage.Stage;
 
 import java.util.Objects;
 
-/**
- * The JavaFX application itself.
- *
- * <p>Separate from {@link Main} on purpose. The JavaFX launcher refuses to start
- * when the class holding {@code main} extends {@code Application} and the JavaFX
- * modules arrive on the classpath rather than the module path — which is exactly
- * how an IDE runs a class:</p>
- *
- * <pre>
- * Error: JavaFX runtime components are missing, and are required to run this
- * application
- * </pre>
- *
- * <p>Keeping the entry point in a class that does not extend {@code Application}
- * sidesteps that check entirely, so pressing Run in VS Code, IntelliJ or Eclipse
- * works with no launch configuration at all.</p>
- */
+/** The JavaFX application itself. See {@link Main} for why it is not the entry point. */
 public class AsisApplication extends Application {
 
     @Override

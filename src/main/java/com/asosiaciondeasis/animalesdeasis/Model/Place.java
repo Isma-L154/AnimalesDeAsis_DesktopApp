@@ -1,53 +1,11 @@
 package com.asosiaciondeasis.animalesdeasis.Model;
 
-public class Place {
+/** A canton an animal can be rescued from, with the province it belongs to. */
+public record Place(int id, String name, String provinceName) {
 
-    private int id;
-    private String name;
-    private String provinceId;
-    private String provinceName;
-
-    public Place(int id, String name, String provinceId, String provinceName) {
-        this.id = id;
-        this.name = name;
-        this.provinceId = provinceId;
-        this.provinceName = provinceName;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getProvinceId() {
-        return provinceId;
-    }
-
-    public void setProvinceId(String provinceId) {
-        this.provinceId = provinceId;
-    }
-
-    public String getProvinceName() {
-        return provinceName;
-    }
-
-    public void setProvinceName(String provinceName) {
-        this.provinceName = provinceName;
-    }
-
+    /** What a ComboBox shows. */
     @Override
     public String toString() {
-        return name; // Display name in ComboBox
+        return name;
     }
 }

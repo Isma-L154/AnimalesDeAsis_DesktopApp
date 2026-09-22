@@ -1,92 +1,57 @@
 package com.asosiaciondeasis.animalesdeasis.Util.Exporters;
 
-
-import com.asosiaciondeasis.animalesdeasis.DAO.Statistics.StatisticsDAO;
+import com.asosiaciondeasis.animalesdeasis.Abstraccions.Statistics.IStatisticsDAO;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
 
-import javax.swing.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
+import java.time.format.TextStyle;
 import java.util.Locale;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * CsvStatisticsExporter is responsible for exporting statistics data to a CSV file.
- * It provides methods to export data for a specific year, either through a GUI file chooser
- * or directly to a specified file path.
+ * Exports a year's statistics to a CSV file that opens in Excel, LibreOffice,
+ * Google Sheets or any text editor.
  *
- * The exported CSV file is compatible with Excel, LibreOffice, Google Sheets, and any text editor.
- * It includes comprehensive statistics including monthly admissions, adoption rates, and animal origins.
+ * <p>Split in two because the halves belong on different threads: the file
+ * chooser must run on the JavaFX application thread, while the queries and the
+ * write must not.</p>
  */
 public class CsvStatisticsExporter {
-    private static final Logger log = LoggerFactory.getLogger(CsvStatisticsExporter.class);
 
+    private static final Locale SPANISH = Locale.of("es", "ES");
 
-    private final StatisticsDAO statisticsDAO;
+    private final IStatisticsDAO statisticsDAO;
 
-    /**
-     * Constructor that initializes the exporter with a StatisticsDAO instance.
-     *
-     * @param statisticsDAO The data access object used to retrieve statistics from the database
-     */
-    public CsvStatisticsExporter(StatisticsDAO statisticsDAO) {
+    public CsvStatisticsExporter(IStatisticsDAO statisticsDAO) {
         this.statisticsDAO = statisticsDAO;
     }
 
     /**
-     * Exports statistics data to a CSV file for the specified year using a file chooser dialog.
+     * Asks where to save. JavaFX application thread only.
      *
-     * This method:
-     * 1. Opens a file chooser dialog for the user to select save location
-     * 2. Sets default filename with year suffix
-     * 3. Ensures .csv extension is added if not provided
-     * 4. Calls exportToFile() to generate the actual CSV content
-     *
-     * @param year The year for which to export statistics
-     * @param ownerWindow The parent window for the file chooser dialog
-     * @return true if export was successful, false if canceled by user
-     * @throws Exception if there's an error during the export process
+     * @return the chosen file, with a {@code .csv} extension, or {@code null} if cancelled
      */
-    public boolean export(int year, Window ownerWindow) throws Exception {
+    public File chooseFile(int year, Window ownerWindow) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Guardar estadísticas como CSV");
         fileChooser.setInitialFileName("Estadisticas_" + year + ".csv");
-
-        FileChooser.ExtensionFilter csvFilter =
-                new FileChooser.ExtensionFilter("Archivos CSV (*.csv)", "*.csv");
-        fileChooser.getExtensionFilters().add(csvFilter);
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Archivos CSV (*.csv)", "*.csv"));
 
         File selectedFile = fileChooser.showSaveDialog(ownerWindow);
-
-        if (selectedFile == null) {
-            log.info("Exportación cancelada por el usuario.");
-            return false;
+        if (selectedFile == null || selectedFile.getName().toLowerCase().endsWith(".csv")) {
+            return selectedFile;
         }
-
-        if (!selectedFile.getName().toLowerCase().endsWith(".csv")) {
-            selectedFile = new File(selectedFile.getAbsolutePath() + ".csv");
-        }
-
-        exportToFile(selectedFile, year);
-        return true;
-    }
-
-    /**
-     * Method overload to use in non-GUI contexts, exports using a default file path.
-     * This is a convenience method that calls the main export method with null parent window.
-     *
-     * @param year The year for which to export statistics
-     * @throws Exception if there's an error during the export process
-     */
-    public void export(int year) throws Exception {
-        export(year, null);
+        return new File(selectedFile.getAbsolutePath() + ".csv");
     }
 
     /**
@@ -103,14 +68,15 @@ public class CsvStatisticsExporter {
      * Uses UTF-8 encoding to ensure proper character display across different systems.
      * Handles comma escaping in location names to prevent CSV parsing issues.
      *
+     * <p>Queries the database and writes the file: call it off the interface thread.</p>
+     *
      * @param file The target file where CSV content will be written
      * @param year The year for which to generate statistics
-     * @throws Exception if there's an I/O error during file writing
+     * @throws Exception if the statistics cannot be read or the file cannot be written
      */
-    private void exportToFile(File file, int year) throws Exception {
+    public void exportToFile(File file, int year) throws Exception {
         try (PrintWriter writer = new PrintWriter(
                 new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
-
 
             writer.println("# ARCHIVO CSV - Compatible con Excel, LibreOffice, Google Sheets y cualquier editor de texto");
             writer.println("# Para abrir: Haga doble clic o abra con Excel, Notepad, Word, etc.");
@@ -122,11 +88,9 @@ public class CsvStatisticsExporter {
             writer.println("=".repeat(60));
             writer.println();
 
-
             Map<String, Integer> monthlyAdmissions = statisticsDAO.getMonthlyAdmissions(year);
             int totalAdmissions = statisticsDAO.getTotalAdmissions(year);
             double adoptionRate = statisticsDAO.getAdoptionRate(year);
-
 
             writer.println("RESUMEN EJECUTIVO");
             writer.println("Indicador,Valor");
@@ -146,7 +110,6 @@ public class CsvStatisticsExporter {
             writer.println("=".repeat(60));
             writer.println();
 
-
             writer.println("ADMISIONES MENSUALES DETALLADAS");
             writer.println("Mes,Número,Nombre del Mes");
 
@@ -160,7 +123,6 @@ public class CsvStatisticsExporter {
             writer.println();
             writer.println("=".repeat(60));
             writer.println();
-
 
             writer.println("ANÁLISIS DE ADOPCIONES");
             writer.println("Concepto,Cantidad,Porcentaje");
@@ -213,47 +175,20 @@ public class CsvStatisticsExporter {
             writer.println("Total de Registros Procesados," + totalAdmissions);
 
         } catch (IOException e) {
-            throw new Exception("Error al escribir el archivo CSV: " + e.getMessage(), e);
+            throw new IOException("Could not write CSV file " + file + ": " + e.getMessage(), e);
         }
     }
 
-    /**
-     * Converts a numeric month string to its full Spanish name.
-     *
-     * Uses Java's Month enum with Spanish locale to get proper month names.
-     * Handles invalid month numbers gracefully by returning a default message.
-     *
-     * @param monthNumber String representation of month number (1-12)
-     * @return Full Spanish month name or "Mes desconocido" if invalid
-     */
+    /** Full Spanish month name for {@code "01"}..{@code "12"}, or a placeholder for anything else. */
     private String monthNumberToName(String monthNumber) {
         try {
             int month = Integer.parseInt(monthNumber);
             if (month >= 1 && month <= 12) {
-                return Month.of(month).getDisplayName(
-                        java.time.format.TextStyle.FULL,
-                        new Locale("es", "ES"));
+                return Month.of(month).getDisplayName(TextStyle.FULL, SPANISH);
             }
         } catch (NumberFormatException e) {
-            // Log error if needed
+            // Falls through to the placeholder; the row is still worth writing.
         }
         return "Mes desconocido";
-    }
-
-    /**
-     * Validates if there is exportable data available for the specified year.
-     *
-     * This method is useful for UI components to determine whether to enable
-     * export functionality or show appropriate messages to users.
-     *
-     * @param year The year to check for available data
-     * @return true if there are admissions data for the year, false otherwise
-     */
-    public boolean hasDataToExport(int year) {
-        try {
-            return statisticsDAO.getTotalAdmissions(year) > 0;
-        } catch (Exception e) {
-            return false;
-        }
     }
 }

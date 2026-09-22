@@ -9,6 +9,7 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -23,7 +24,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.kordamp.ikonli.javafx.FontIcon;
 
-import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
  */
 public class PortalController {
     private static final Logger log = LoggerFactory.getLogger(PortalController.class);
-
 
     /** Horizontal overhang of the collapse button, half its width. */
     private static final double COLLAPSE_BUTTON_OVERHANG = -13;
@@ -50,7 +49,6 @@ public class PortalController {
     private SyncStatusIndicator syncIndicator;
     private Button collapseButton;
     private FontIcon collapseIcon;
-    private NavigationSection currentSection;
 
     @FXML
     public void initialize() {
@@ -151,7 +149,7 @@ public class PortalController {
      * same, or the layout keeps the old column and leaves a gap.
      */
     private void applyRailWidth(boolean collapsed) {
-        double width = collapsed ? 72 : 180;
+        double width = collapsed ? SidebarController.COLLAPSED_WIDTH : SidebarController.EXPANDED_WIDTH;
         sidebarInclude.setPrefWidth(width);
         sidebarInclude.setMinWidth(width);
         sidebarInclude.setMaxWidth(width);
@@ -162,7 +160,6 @@ public class PortalController {
         if (!loadContent(section.fxmlPath())) {
             return;
         }
-        currentSection = section;
         sidebar.markActive(section);
         if (sectionTitle != null) {
             sectionTitle.setText(section.label());
@@ -170,60 +167,69 @@ public class PortalController {
         UiPreferences.setLastSection(section.id());
     }
 
-    public NavigationSection getCurrentSection() {
-        return currentSection;
+    /** Opens a screen that needs nothing beyond the portal itself. */
+    public boolean loadContent(String fxmlPath) {
+        return openScreen(fxmlPath, controller -> { });
+    }
+
+    @FunctionalInterface
+    public interface ScreenSetup<C> {
+        void accept(C controller) throws Exception;
     }
 
     /**
-     * Replaces the centre content, giving the outgoing screen a chance to release
-     * what it holds.
+     * Loads a screen into the centre, hands it the data it needs, and only then
+     * gives the outgoing screen a chance to release what it holds.
      *
-     * <p>The cleanup call used to be guarded by
-     * {@code instanceof AnimalManagementController}, so exactly one screen was
-     * ever told it was going away and every other one leaked its sync listener on
-     * each navigation. It is part of {@link IPortalAwareController} now, so a new
-     * screen cannot be left out by omission.</p>
+     * <p>Every screen goes through here. Screens that opened a detail or edit
+     * view used to swap the content directly, skipping the outgoing screen's
+     * {@link IPortalAwareController#cleanup()}, so the animal list and the home
+     * panel left their sync listener registered - and the home panel its worker
+     * thread - on every such navigation.</p>
      *
-     * @return whether the content was loaded
+     * @param setup receives the new screen's controller before it is shown
+     * @return whether the screen was opened; on failure the current one stays
      */
-    public boolean loadContent(String fxmlPath) {
-        cleanUpCurrentScreen();
+    public <C> boolean openScreen(String fxmlPath, ScreenSetup<C> setup) {
+        FXMLLoader loader = new FXMLLoader(PortalController.class.getResource(fxmlPath));
+        Parent content;
+        C controller = null;
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
-            Parent content = loader.load();
-
-            Object controller = loader.getController();
+            content = loader.load();
+            controller = loader.getController();
             if (controller instanceof IPortalAwareController portalAware) {
                 portalAware.setPortalController(this);
             }
-            content.setUserData(controller);
-
-            StackPane.setAlignment(content, Pos.CENTER);
-            // Replace only the screen. The collapse button is a permanent child of
-            // this pane and has to survive, so it is re-added on top.
-            contentPane.getChildren().removeIf(node -> node != collapseButton);
-            contentPane.getChildren().add(0, content);
-            return true;
-        } catch (IOException e) {
-            NavigationHelper.showErrorAlert("Error", "No se pudo cargar el contenido",
-                    "Error al cargar el archivo FXML: " + fxmlPath + "\n" + e.getMessage());
+            setup.accept(controller);
+        } catch (Exception e) {
+            if (controller instanceof IPortalAwareController abandoned) {
+                abandoned.cleanup();
+            }
+            log.error("Could not open {}", fxmlPath, e);
+            NavigationHelper.showErrorAlert("Error", "No se pudo abrir la pantalla", e.getMessage());
             return false;
         }
+
+        cleanUpCurrentScreen();
+        content.setUserData(controller);
+        StackPane.setAlignment(content, Pos.CENTER);
+        // Replace only the screen. The collapse button is a permanent child of
+        // this pane and has to survive, so it stays on top.
+        contentPane.getChildren().removeIf(node -> node != collapseButton);
+        contentPane.getChildren().add(0, content);
+        return true;
     }
 
     private void cleanUpCurrentScreen() {
-        for (javafx.scene.Node node : contentPane.getChildren()) {
-            if (node == collapseButton) {
-                continue;
-            }
-            if (node.getUserData() instanceof IPortalAwareController controller) {
+        for (Node node : contentPane.getChildren()) {
+            if (node != collapseButton && node.getUserData() instanceof IPortalAwareController controller) {
                 try {
                     controller.cleanup();
                 } catch (Exception e) {
                     // A screen that fails to tidy up must not block the one
                     // replacing it; the alternative is an application that cannot
                     // navigate away from a broken screen.
-                    log.info("Error during screen cleanup: "+ e.getMessage());
+                    log.warn("Error during screen cleanup", e);
                 }
             }
         }
@@ -239,10 +245,5 @@ public class PortalController {
         if (syncIndicator != null) {
             syncIndicator.dispose();
         }
-    }
-
-    public void setContent(Parent node) {
-        contentPane.getChildren().removeIf(child -> child != collapseButton);
-        contentPane.getChildren().add(0, node);
     }
 }

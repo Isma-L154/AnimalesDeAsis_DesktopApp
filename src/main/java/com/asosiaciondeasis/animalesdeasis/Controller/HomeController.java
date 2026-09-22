@@ -7,14 +7,12 @@ import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Model.NavigationSection;
 import com.asosiaciondeasis.animalesdeasis.Model.ShelterSummary;
 import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
-import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
+import com.asosiaciondeasis.animalesdeasis.Util.Helpers.KpiCard;
+import com.asosiaciondeasis.animalesdeasis.Util.ScreenTasks;
 import com.asosiaciondeasis.animalesdeasis.Util.SyncEventManager;
 import javafx.application.Platform;
-import javafx.concurrent.Task;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
-import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
@@ -25,8 +23,9 @@ import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.time.LocalTime;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The home panel: what the shelter looks like right now.
@@ -42,6 +41,7 @@ import java.util.concurrent.Executors;
  * everything at once, and the results are applied in a single hop back.</p>
  */
 public class HomeController implements IPortalAwareController {
+    private static final Logger log = LoggerFactory.getLogger(HomeController.class);
 
     private static final int SKELETON_ROWS = 4;
 
@@ -53,22 +53,13 @@ public class HomeController implements IPortalAwareController {
     @FXML private HBox errorBanner;
 
     private PortalController portalController;
-    private ExecutorService executor;
+    private final ScreenTasks tasks = new ScreenTasks("home-panel");
     private Runnable syncListener;
 
     @FXML
     public void initialize() {
         greetingLabel.setText(greeting());
         subtitleLabel.setText("Cargando el estado del albergue…");
-
-        // A daemon thread: an in-flight query must never keep the application
-        // alive after the window is closed.
-        executor = Executors.newSingleThreadExecutor(r -> {
-            Thread t = new Thread(r, "home-panel");
-            t.setDaemon(true);
-            return t;
-        });
-
         showSkeleton();
 
         // A completed sync can change every figure on this panel, so it reloads
@@ -92,18 +83,7 @@ public class HomeController implements IPortalAwareController {
     // -------------------------------------------------------------------------
 
     private void reload() {
-        if (executor == null || executor.isShutdown()) {
-            return;
-        }
-        Task<ShelterSummary> task = new Task<>() {
-            @Override
-            protected ShelterSummary call() throws Exception {
-                return ServiceFactory.getShelterSummaryService().load();
-            }
-        };
-        task.setOnSucceeded(e -> render(task.getValue()));
-        task.setOnFailed(e -> showError(task.getException()));
-        executor.submit(task);
+        tasks.submit(() -> ServiceFactory.getShelterSummaryService().load(), this::render, this::showError);
     }
 
     private void render(ShelterSummary summary) {
@@ -115,12 +95,12 @@ public class HomeController implements IPortalAwareController {
                 : summary.inShelter() + " animales en el albergue");
 
         kpiRow.getChildren().setAll(
-                kpi("fas-home", "En el albergue", String.valueOf(summary.inShelter()),
+                KpiCard.create("fas-home", "En el albergue", String.valueOf(summary.inShelter()),
                         null, false),
-                kpi("fas-heart", "Adoptados " + summary.year(),
+                KpiCard.create("fas-heart", "Adoptados " + summary.year(),
                         String.valueOf(summary.adoptedThisYear()),
                         String.format("%.0f%% de los atendidos", summary.adoptionRate()), false),
-                kpi("fas-syringe", "Sin vacunas",
+                KpiCard.create("fas-syringe", "Sin vacunas",
                         String.valueOf(summary.missingVaccines().size()),
                         summary.missingVaccines().isEmpty() ? "todo al día" : "requieren atención",
                         !summary.missingVaccines().isEmpty()));
@@ -191,31 +171,6 @@ public class HomeController implements IPortalAwareController {
     // -------------------------------------------------------------------------
     //  Building blocks
     // -------------------------------------------------------------------------
-
-    private VBox kpi(String icon, String caption, String value, String note, boolean warn) {
-        FontIcon glyph = new FontIcon(icon);
-        glyph.getStyleClass().add("kpi-icon");
-
-        Label captionLabel = new Label(caption, glyph);
-        captionLabel.getStyleClass().add("kpi-caption");
-
-        Label valueLabel = new Label(value);
-        valueLabel.getStyleClass().add("kpi-value");
-
-        VBox card = new VBox(2, captionLabel, valueLabel);
-        card.getStyleClass().addAll("kpi-card", "surface-card");
-        if (warn) {
-            card.getStyleClass().add("kpi-warn");
-        }
-        if (note != null) {
-            Label noteLabel = new Label(note);
-            noteLabel.getStyleClass().add("kpi-note");
-            card.getChildren().add(noteLabel);
-        }
-        HBox.setHgrow(card, Priority.ALWAYS);
-        card.setMaxWidth(Double.MAX_VALUE);
-        return card;
-    }
 
     private HBox panelHeading(String title, NavigationSection linkTo) {
         Label label = new Label(title);
@@ -311,7 +266,6 @@ public class HomeController implements IPortalAwareController {
         Region bar = new Region();
         bar.getStyleClass().add("skeleton-bar");
         bar.setMaxWidth(Double.MAX_VALUE);
-        bar.scaleXProperty().set(1);
         VBox.setVgrow(bar, Priority.NEVER);
         bar.prefWidthProperty().bind(
                 recentPanel.widthProperty().multiply(widthRatio));
@@ -319,23 +273,9 @@ public class HomeController implements IPortalAwareController {
     }
 
     private void openDetail(Animal animal) {
-        if (portalController == null) {
-            return;
-        }
-        try {
-            // The class literal rather than getClass(): the latter resolves the path
-            // against whatever the runtime type is, so a subclass in another
-            // package would look for the resource somewhere else entirely.
-            FXMLLoader loader = new FXMLLoader(
-                    HomeController.class.getResource("/fxml/Animal/DetailAnimal.fxml"));
-            Parent root = loader.load();
-            DetailAnimalController detail = loader.getController();
-            detail.setPortalController(portalController);
-            detail.setAnimalDetails(animal, ServiceFactory.getPlaceService().getAllPlaces());
-            portalController.setContent(root);
-        } catch (Exception e) {
-            NavigationHelper.showErrorAlert("Error", "No se pudo abrir la ficha del animal",
-                    e.getMessage());
+        if (portalController != null) {
+            portalController.<DetailAnimalController>openScreen("/fxml/Animal/DetailAnimal.fxml",
+                    detail -> detail.setAnimalDetails(animal));
         }
     }
 
@@ -345,6 +285,7 @@ public class HomeController implements IPortalAwareController {
      * dismissed before anything can be seen is the wrong first thing to meet.
      */
     private void showError(Throwable cause) {
+        log.error("Could not load the home panel", cause);
         subtitleLabel.setText("No se pudo cargar el estado del albergue");
 
         FontIcon icon = new FontIcon("fas-exclamation-triangle");
@@ -383,9 +324,6 @@ public class HomeController implements IPortalAwareController {
             SyncEventManager.removeListener(syncListener);
             syncListener = null;
         }
-        if (executor != null) {
-            executor.shutdownNow();
-            executor = null;
-        }
+        tasks.close();
     }
 }

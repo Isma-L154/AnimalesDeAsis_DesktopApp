@@ -8,9 +8,9 @@ import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Model.Vaccine;
 import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
+import com.asosiaciondeasis.animalesdeasis.Util.ScreenTasks;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
-import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
@@ -48,6 +48,7 @@ public class VaccineManagementController implements IPortalAwareController {
     @FXML private Label totalVaccinesLabel;
     @FXML private Label lastVaccineLabel;
 
+    private final ScreenTasks tasks = new ScreenTasks("vaccines");
     private PortalController portalController;
     private Animal currentAnimal;
 
@@ -192,27 +193,19 @@ public class VaccineManagementController implements IPortalAwareController {
      */
     private void onDeleteVaccine(Vaccine vaccine) {
         vaccineTable.setDisable(true);
-        Task<Void> delete = new Task<>() {
-            @Override
-            protected Void call() throws Exception {
-                ServiceFactory.getSyncService().deleteVaccineAndSync(vaccine);
-                return null;
-            }
-        };
-        delete.setOnSucceeded(e -> {
-            vaccineTable.setDisable(false);
-            saveAndReload(() -> { }, "Vacuna eliminada correctamente.", "No se pudo recargar las vacunas");
-        });
-        delete.setOnFailed(e -> {
-            vaccineTable.setDisable(false);
-            log.error("Could not delete vaccine {}", vaccine.getId(), delete.getException());
-            NavigationHelper.showErrorAlert("Error", "No se pudo eliminar la vacuna",
-                    delete.getException().getMessage());
-        });
-
-        Thread worker = new Thread(delete, "vaccine-delete");
-        worker.setDaemon(true);
-        worker.start();
+        tasks.submit(() -> {
+                    ServiceFactory.getSyncService().deleteVaccineAndSync(vaccine);
+                    return null;
+                },
+                done -> {
+                    vaccineTable.setDisable(false);
+                    saveAndReload(() -> { }, "Vacuna eliminada correctamente.", "No se pudo recargar las vacunas");
+                },
+                cause -> {
+                    vaccineTable.setDisable(false);
+                    log.error("Could not delete vaccine {}", vaccine.getId(), cause);
+                    NavigationHelper.showErrorAlert("Error", "No se pudo eliminar la vacuna", cause.getMessage());
+                });
     }
 
     @FXML
@@ -226,5 +219,15 @@ public class VaccineManagementController implements IPortalAwareController {
     @Override
     public void setPortalController(PortalController controller) {
         this.portalController = controller;
+    }
+
+    /**
+     * Keeps a pending deletion from reloading this table and raising its dialog
+     * over the screen that replaced it. The deletion itself is already committed
+     * locally by then; only the confirmation is dropped.
+     */
+    @Override
+    public void cleanup() {
+        tasks.close();
     }
 }

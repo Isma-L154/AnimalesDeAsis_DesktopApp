@@ -7,11 +7,11 @@ import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Util.BarcodeScannerUtil;
 import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
+import com.asosiaciondeasis.animalesdeasis.Util.ScreenTasks;
 import com.asosiaciondeasis.animalesdeasis.Util.SyncEventManager;
 import javafx.animation.FadeTransition;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringWrapper;
-import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -35,8 +35,6 @@ import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 public class AnimalManagementController implements IPortalAwareController {
@@ -69,7 +67,7 @@ public class AnimalManagementController implements IPortalAwareController {
     private List<Animal> filteredAnimals = Collections.emptyList();
     private boolean filtersVisible;
     private Runnable syncListener;
-    private ExecutorService executor;
+    private final ScreenTasks tasks = new ScreenTasks("animal-list");
 
     @Override
     public void setPortalController(PortalController portalController) {
@@ -80,17 +78,8 @@ public class AnimalManagementController implements IPortalAwareController {
     public void initialize() {
         // Nothing here touches the database. This method runs on the JavaFX
         // application thread, and it used to open with getActiveAnimals(), so the
-        // window froze until the query returned - the exact rule the project sets
-        // out not to break. The table is built empty and filled from a background
-        // task instead.
-        executor = Executors.newSingleThreadExecutor(r -> {
-            Thread t = new Thread(r, "animal-list");
-            // Daemon: a query still in flight must not keep the application alive
-            // once the window is gone.
-            t.setDaemon(true);
-            return t;
-        });
-
+        // window froze until the query returned. The table is built empty and
+        // filled from a background task instead.
         speciesFilter.getItems().setAll(ALL_SPECIES, "Perro", "Gato");
         speciesFilter.setValue(ALL_SPECIES);
         setUpTables();
@@ -118,24 +107,12 @@ public class AnimalManagementController implements IPortalAwareController {
      * then either rows or a reason there are none.</p>
      */
     private void loadInBackground(Callable<List<Animal>> query, Consumer<List<Animal>> onLoaded) {
-        if (executor == null || executor.isShutdown()) {
-            return;
-        }
-        Task<List<Animal>> task = new Task<>() {
-            @Override
-            protected List<Animal> call() throws Exception {
-                return query.call();
-            }
-        };
-        task.setOnSucceeded(e -> onLoaded.accept(task.getValue()));
-        task.setOnFailed(e -> {
-            Throwable cause = task.getException();
+        tasks.submit(query, onLoaded, cause -> {
             log.error("Could not load animals", cause);
             animalTable.setPlaceholder(new Label("No se pudieron cargar los animales"));
             NavigationHelper.showErrorAlert("Error", "No se pudieron cargar los animales",
                     cause == null ? "Error desconocido" : cause.getMessage());
         });
-        executor.submit(task);
     }
 
     /** Shows {@code animals} from the first page. Interface thread only. */
@@ -406,12 +383,9 @@ public class AnimalManagementController implements IPortalAwareController {
             SyncEventManager.removeListener(syncListener);
             syncListener = null;
         }
-        if (executor != null) {
-            // Stops an in-flight query from completing into a table that is no
-            // longer on screen.
-            executor.shutdownNow();
-            executor = null;
-        }
+        // Stops an in-flight query from completing into a table that is no
+        // longer on screen.
+        tasks.close();
         scannerUtil.stopScanning();
     }
 }

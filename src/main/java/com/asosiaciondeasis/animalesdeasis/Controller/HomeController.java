@@ -8,9 +8,9 @@ import com.asosiaciondeasis.animalesdeasis.Model.NavigationSection;
 import com.asosiaciondeasis.animalesdeasis.Model.ShelterSummary;
 import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.KpiCard;
+import com.asosiaciondeasis.animalesdeasis.Util.ScreenTasks;
 import com.asosiaciondeasis.animalesdeasis.Util.SyncEventManager;
 import javafx.application.Platform;
-import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -23,8 +23,6 @@ import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.time.LocalTime;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,22 +53,13 @@ public class HomeController implements IPortalAwareController {
     @FXML private HBox errorBanner;
 
     private PortalController portalController;
-    private ExecutorService executor;
+    private final ScreenTasks tasks = new ScreenTasks("home-panel");
     private Runnable syncListener;
 
     @FXML
     public void initialize() {
         greetingLabel.setText(greeting());
         subtitleLabel.setText("Cargando el estado del albergue…");
-
-        // A daemon thread: an in-flight query must never keep the application
-        // alive after the window is closed.
-        executor = Executors.newSingleThreadExecutor(r -> {
-            Thread t = new Thread(r, "home-panel");
-            t.setDaemon(true);
-            return t;
-        });
-
         showSkeleton();
 
         // A completed sync can change every figure on this panel, so it reloads
@@ -94,18 +83,7 @@ public class HomeController implements IPortalAwareController {
     // -------------------------------------------------------------------------
 
     private void reload() {
-        if (executor == null || executor.isShutdown()) {
-            return;
-        }
-        Task<ShelterSummary> task = new Task<>() {
-            @Override
-            protected ShelterSummary call() throws Exception {
-                return ServiceFactory.getShelterSummaryService().load();
-            }
-        };
-        task.setOnSucceeded(e -> render(task.getValue()));
-        task.setOnFailed(e -> showError(task.getException()));
-        executor.submit(task);
+        tasks.submit(() -> ServiceFactory.getShelterSummaryService().load(), this::render, this::showError);
     }
 
     private void render(ShelterSummary summary) {
@@ -346,9 +324,6 @@ public class HomeController implements IPortalAwareController {
             SyncEventManager.removeListener(syncListener);
             syncListener = null;
         }
-        if (executor != null) {
-            executor.shutdownNow();
-            executor = null;
-        }
+        tasks.close();
     }
 }

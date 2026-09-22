@@ -1,14 +1,16 @@
 package com.asosiaciondeasis.animalesdeasis.Controller.Statistic;
 
+import com.asosiaciondeasis.animalesdeasis.Abstraccions.IPortalAwareController;
 import com.asosiaciondeasis.animalesdeasis.Abstraccions.Statistics.IStatisticsService;
 import com.asosiaciondeasis.animalesdeasis.Config.ServiceFactory;
+import com.asosiaciondeasis.animalesdeasis.Controller.PortalController;
+import com.asosiaciondeasis.animalesdeasis.Util.ScreenTasks;
 import com.asosiaciondeasis.animalesdeasis.Util.Exporters.CsvStatisticsExporter;
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.EmptyState;
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.KpiCard;
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.chart.BarChart;
@@ -30,7 +32,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class StatisticsController {
+public class StatisticsController implements IPortalAwareController {
     private static final Logger log = LoggerFactory.getLogger(StatisticsController.class);
 
     @FXML private ComboBox<Integer> yearComboBox;
@@ -54,6 +56,7 @@ public class StatisticsController {
 
     private final IStatisticsService statisticsService = ServiceFactory.getStatisticsService();
     private final CsvStatisticsExporter csvExporter = ServiceFactory.getCsvStatisticsExporter();
+    private final ScreenTasks tasks = new ScreenTasks("statistics");
     private int currentYear;
 
     private Map<String, Integer> monthlyData = new LinkedHashMap<>();
@@ -90,38 +93,29 @@ public class StatisticsController {
         updateStatus("Cargando datos...", false);
 
         int year = currentYear;
-        Task<YearStatistics> loadDataTask = new Task<>() {
-            @Override
-            protected YearStatistics call() throws Exception {
-                return new YearStatistics(
+        tasks.submit(() -> new YearStatistics(
                         statisticsService.getMonthlyAdmissions(year),
                         statisticsService.getAnimalOrigins(year),
                         statisticsService.getTotalAdmissions(year),
-                        statisticsService.getAdoptionRate(year));
-            }
-        };
-        loadDataTask.setOnSucceeded(e -> {
-            YearStatistics stats = loadDataTask.getValue();
-            monthlyData = stats.monthly();
-            originsData = stats.origins();
-            totalAdmissions = stats.totalAdmissions();
-            adoptionRate = stats.adoptionRate();
+                        statisticsService.getAdoptionRate(year)),
+                stats -> {
+                    monthlyData = stats.monthly();
+                    originsData = stats.origins();
+                    totalAdmissions = stats.totalAdmissions();
+                    adoptionRate = stats.adoptionRate();
 
-            updateTiles();
-            updateCharts();
-            updateStatus("Datos cargados correctamente", true);
-            updateLastUpdateTime();
-            setUIEnabled(true);
-        });
-        loadDataTask.setOnFailed(e -> {
-            Throwable cause = loadDataTask.getException();
-            log.error("Could not load statistics for {}", year, cause);
-            updateStatus("Error al cargar datos: " + cause.getMessage(), false);
-            NavigationHelper.showErrorAlert("Error", "Error al cargar datos", cause.getMessage());
-            setUIEnabled(true);
-        });
-
-        startDaemon(loadDataTask, "statistics-load");
+                    updateTiles();
+                    updateCharts();
+                    updateStatus("Datos cargados correctamente", true);
+                    updateLastUpdateTime();
+                    setUIEnabled(true);
+                },
+                cause -> {
+                    log.error("Could not load statistics for {}", year, cause);
+                    updateStatus("Error al cargar datos: " + cause.getMessage(), false);
+                    NavigationHelper.showErrorAlert("Error", "Error al cargar datos", cause.getMessage());
+                    setUIEnabled(true);
+                });
     }
 
     /**
@@ -143,33 +137,32 @@ public class StatisticsController {
         setUIEnabled(false);
         updateStatus("Exportando datos...", false);
 
-        Task<Void> exportTask = new Task<>() {
-            @Override
-            protected Void call() throws Exception {
-                csvExporter.exportToFile(file, year);
-                return null;
-            }
-        };
-        exportTask.setOnSucceeded(e -> {
-            updateStatus("Exportación completada", true);
-            NavigationHelper.showSuccessAlert("Éxito", "Exportación completada");
-            setUIEnabled(true);
-        });
-        exportTask.setOnFailed(e -> {
-            Throwable cause = exportTask.getException();
-            log.error("Could not export statistics for {}", year, cause);
-            updateStatus("Error al exportar: " + cause.getMessage(), false);
-            NavigationHelper.showErrorAlert("Error", "Error al exportar datos", cause.getMessage());
-            setUIEnabled(true);
-        });
-
-        startDaemon(exportTask, "statistics-export");
+        tasks.submit(() -> {
+                    csvExporter.exportToFile(file, year);
+                    return null;
+                },
+                done -> {
+                    updateStatus("Exportación completada", true);
+                    NavigationHelper.showSuccessAlert("Éxito", "Exportación completada");
+                    setUIEnabled(true);
+                },
+                cause -> {
+                    log.error("Could not export statistics for {}", year, cause);
+                    updateStatus("Error al exportar: " + cause.getMessage(), false);
+                    NavigationHelper.showErrorAlert("Error", "Error al exportar datos", cause.getMessage());
+                    setUIEnabled(true);
+                });
     }
 
-    private static void startDaemon(Task<?> task, String name) {
-        Thread thread = new Thread(task, name);
-        thread.setDaemon(true);
-        thread.start();
+    /** Nothing here navigates; the portal reference is not needed. */
+    @Override
+    public void setPortalController(PortalController controller) {
+    }
+
+    /** Stops a pending load or export from redrawing this screen after it has been replaced. */
+    @Override
+    public void cleanup() {
+        tasks.close();
     }
 
     /**

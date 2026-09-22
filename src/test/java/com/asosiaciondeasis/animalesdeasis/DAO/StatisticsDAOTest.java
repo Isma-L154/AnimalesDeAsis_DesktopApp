@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class StatisticsDAOTest {
 
+    private TestSupport.TestDatabase db;
     private Connection conn;
     private AnimalDAO animalDAO;
     private StatisticsDAO statisticsDAO;
@@ -22,15 +23,16 @@ class StatisticsDAOTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        conn = TestSupport.newInMemoryDatabase();
+        db = TestSupport.newDatabase();
+        conn = db.connection();
         placeId = TestSupport.seedPlace(conn);
-        animalDAO = new AnimalDAO(conn);
-        statisticsDAO = new StatisticsDAO(conn);
+        animalDAO = new AnimalDAO(db.dataSource());
+        statisticsDAO = new StatisticsDAO(db.dataSource());
     }
 
     @AfterEach
     void tearDown() throws Exception {
-        conn.close();
+        db.close();
     }
 
     private void admit(String admissionDate, boolean adopted) throws Exception {

@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Files;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -26,12 +25,9 @@ public final class SQLiteSetup {
      *         cannot run without it
      */
     public static void initializeDatabase() throws Exception {
-        Files.createDirectories(DatabaseConnection.DATA_DIR);
+        Files.createDirectories(Database.DATA_DIR);
 
-        // A dedicated connection, closed on every path. The shared one is opened
-        // later, once the schema is known to exist.
-        try (Connection conn = DriverManager.getConnection(DatabaseConnection.DB_URL)) {
-            DatabaseConnection.applyPragmas(conn);
+        try (Connection conn = Database.dataSource().getConnection()) {
             createSchema(conn);
 
             if (isEmpty(conn, "SELECT COUNT(*) FROM provinces")) {
@@ -39,7 +35,7 @@ public final class SQLiteSetup {
                 DataImporter.populateProvincesAndPlaces(conn);
             }
         }
-        log.info("Database ready at {}", DatabaseConnection.DB_URL);
+        log.info("Database ready in {}", Database.DATA_DIR);
     }
 
     private static boolean isEmpty(Connection conn, String countSql) throws SQLException {
@@ -54,7 +50,7 @@ public final class SQLiteSetup {
      * exist. Extracted so both the production bootstrap and the test suite build an
      * identical schema from a single source of truth.
      *
-     * @param conn an open connection (with {@code foreign_keys} already enabled)
+     * @param conn an open connection with {@code foreign_keys} enabled
      */
     public static void createSchema(Connection conn) throws SQLException {
         String createProvinces = """

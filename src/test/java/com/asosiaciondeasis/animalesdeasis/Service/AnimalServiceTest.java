@@ -57,7 +57,7 @@ class AnimalServiceTest {
         // up by the next sync. Only the sync itself writes a remote timestamp.
         service.updateAnimal(animal);
 
-        verify(animalDAO).updateAnimal(animal, true);
+        verify(animalDAO).updateAnimal(animal);
     }
 
     @Test

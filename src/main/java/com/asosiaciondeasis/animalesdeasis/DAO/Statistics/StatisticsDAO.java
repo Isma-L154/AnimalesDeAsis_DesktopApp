@@ -2,6 +2,7 @@ package com.asosiaciondeasis.animalesdeasis.DAO.Statistics;
 
 import com.asosiaciondeasis.animalesdeasis.Abstraccions.Statistics.IStatisticsDAO;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -19,10 +20,10 @@ import java.util.Map;
  */
 public class StatisticsDAO implements IStatisticsDAO {
 
-    private final Connection conn;
+    private final DataSource dataSource;
 
-    public StatisticsDAO(Connection conn) {
-        this.conn = conn;
+    public StatisticsDAO(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     @Override
@@ -34,7 +35,8 @@ public class StatisticsDAO implements IStatisticsDAO {
                 GROUP BY month ORDER BY month
                 """;
         Map<String, Integer> result = new LinkedHashMap<>();
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, String.valueOf(year));
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
@@ -59,7 +61,8 @@ public class StatisticsDAO implements IStatisticsDAO {
                 ORDER BY count DESC
                 """;
         Map<String, Integer> result = new LinkedHashMap<>();
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, String.valueOf(year));
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
@@ -76,7 +79,8 @@ public class StatisticsDAO implements IStatisticsDAO {
     @Override
     public int getTotalAdmissions(int year) throws Exception {
         String sql = "SELECT COUNT(*) FROM animals WHERE strftime('%Y', admission_date) = ?";
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, String.valueOf(year));
             try (ResultSet rs = pstmt.executeQuery()) {
                 return rs.next() ? rs.getInt(1) : 0;
@@ -94,7 +98,8 @@ public class StatisticsDAO implements IStatisticsDAO {
                 FROM animals
                 WHERE strftime('%Y', admission_date) = ?
                 """;
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, String.valueOf(year));
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (!rs.next() || rs.getInt("total") == 0) {

@@ -1,18 +1,21 @@
 package com.asosiaciondeasis.animalesdeasis;
 
-import com.asosiaciondeasis.animalesdeasis.Config.DatabaseConnection;
+import com.asosiaciondeasis.animalesdeasis.Config.Database;
 import com.asosiaciondeasis.animalesdeasis.Config.SQLiteSetup;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Model.Vaccine;
 
+import javax.sql.DataSource;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
 /**
- * Shared helpers for the test suite: builds an isolated in-memory SQLite database
- * (schema + PRAGMAs identical to production) and small object factories.
+ * Shared helpers for the test suite: isolated databases with the production
+ * schema and settings, and small object factories.
  */
 public final class TestSupport {
 
@@ -20,19 +23,38 @@ public final class TestSupport {
     }
 
     /**
-     * Opens a fresh in-memory SQLite connection with foreign keys enabled and the
-     * full application schema created. Each call is fully isolated.
+     * A scratch database in a temporary file, opened through the same data
+     * source settings as production.
+     *
+     * <p>A file rather than {@code :memory:}: the DAOs open a connection per
+     * call, and every connection to {@code :memory:} is a separate, empty
+     * database. A file also exercises WAL and locking as they really behave.</p>
+     *
+     * @param dataSource what the code under test should use
+     * @param connection an open connection for the test's own setup and checks
      */
-    public static Connection newInMemoryDatabase() throws SQLException {
-        Connection conn = DriverManager.getConnection("jdbc:sqlite::memory:");
-        DatabaseConnection.applyPragmas(conn);
-        SQLiteSetup.createSchema(conn);
-        return conn;
+    public record TestDatabase(DataSource dataSource, Connection connection, Path file) implements AutoCloseable {
+
+        @Override
+        public void close() throws SQLException, IOException {
+            connection.close();
+            Files.deleteIfExists(file);
+            Files.deleteIfExists(Path.of(file + "-wal"));
+            Files.deleteIfExists(Path.of(file + "-shm"));
+        }
+    }
+
+    public static TestDatabase newDatabase() throws SQLException, IOException {
+        Path file = Files.createTempFile("animalesdeasis-test", ".db");
+        DataSource dataSource = Database.newDataSource(file);
+        Connection connection = dataSource.getConnection();
+        SQLiteSetup.createSchema(connection);
+        return new TestDatabase(dataSource, connection, file);
     }
 
     /**
      * Inserts a province + place and returns the generated place id, so animals
-     * (whose {@code place_id} FK is now enforced) can be inserted in tests.
+     * (whose {@code place_id} FK is enforced) can be inserted in tests.
      */
     public static int seedPlace(Connection conn) throws SQLException {
         try (Statement stmt = conn.createStatement()) {

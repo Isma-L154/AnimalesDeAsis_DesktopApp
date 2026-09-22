@@ -2,17 +2,22 @@ package com.asosiaciondeasis.animalesdeasis.DAO.Animals;
 
 import com.asosiaciondeasis.animalesdeasis.Abstraccions.Animals.DuplicateChipException;
 import com.asosiaciondeasis.animalesdeasis.Abstraccions.Animals.IAnimalDAO;
+import com.asosiaciondeasis.animalesdeasis.DAO.Transactions;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
- * SQLite implementation of {@link IAnimalDAO}.
+ * SQLite implementation of {@link IAnimalDAO}. Each call opens its own
+ * connection.
  *
  * <p>{@code admission_date} is stored as ISO 8601 ({@code 2025-09-02T00:00:00}),
  * which is why {@code ORDER BY} on the raw column sorts chronologically and why
@@ -20,46 +25,28 @@ import java.util.List;
  */
 public class AnimalDAO implements IAnimalDAO {
 
-    private final Connection conn;
+    /** Every column, in the order {@link #bind} fills them. */
+    private static final String COLUMNS = """
+            record_number, chip_number, barcode, admission_date,
+            collected_by, place_id, reason_for_rescue, species,
+            approximate_age, sex, name, ailments, neutering_date, adopted,
+            synced, active, last_modified""";
 
-    public AnimalDAO(Connection conn) {
-        this.conn = conn;
+    /** A missing timestamp is stamped now rather than breaking {@code NOT NULL}. */
+    private static final String VALUES =
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, datetime('now', 'utc')))";
+
+    private final DataSource dataSource;
+
+    public AnimalDAO(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
-    /**
-     * Inserts a new animal. The record number is assigned by the model before this
-     * is called; {@code last_modified} is kept when the record comes from Firebase
-     * and stamped now otherwise.
-     */
     @Override
     public void insertAnimal(Animal animal) throws Exception {
-        String sql = """
-                INSERT INTO animals (
-                    record_number, chip_number, barcode, admission_date,
-                    collected_by, place_id, reason_for_rescue, species,
-                    approximate_age, sex, name, ailments, neutering_date, adopted,
-                    synced, active, last_modified
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, datetime('now', 'utc')))
-                """;
-
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, animal.getRecordNumber());
-            pstmt.setString(2, animal.getChipNumber());
-            pstmt.setString(3, animal.getBarcode());
-            pstmt.setString(4, animal.getAdmissionDate());
-            pstmt.setString(5, animal.getCollectedBy());
-            pstmt.setInt(6, animal.getPlaceId());
-            pstmt.setString(7, animal.getReasonForRescue());
-            pstmt.setString(8, animal.getSpecies());
-            pstmt.setInt(9, animal.getApproximateAge());
-            pstmt.setString(10, animal.getSex());
-            pstmt.setString(11, animal.getName());
-            pstmt.setString(12, animal.getAilments());
-            pstmt.setString(13, animal.getNeuteringDate());
-            pstmt.setInt(14, animal.isAdopted() ? 1 : 0);
-            pstmt.setInt(15, animal.isSynced() ? 1 : 0);
-            pstmt.setInt(16, animal.isActive() ? 1 : 0);
-            pstmt.setString(17, blankToNull(animal.getLastModified()));
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement("INSERT INTO animals (" + COLUMNS + ") " + VALUES)) {
+            bind(pstmt, animal);
             pstmt.executeUpdate();
         } catch (SQLException e) {
             throw translate(e, "Error inserting animal " + animal.getRecordNumber());
@@ -71,16 +58,10 @@ public class AnimalDAO implements IAnimalDAO {
         return queryAnimals("SELECT * FROM animals WHERE active = 1 ORDER BY admission_date DESC");
     }
 
-    /** @return the animal, or {@code null} when no record has that number */
     @Override
     public Animal findByRecordNumber(String recordNumber) throws Exception {
-        String sql = "SELECT * FROM animals WHERE record_number = ?";
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, recordNumber);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                return rs.next() ? mapResultSetToAnimal(rs) : null;
-            }
-        }
+        List<Animal> found = queryAnimals("SELECT * FROM animals WHERE record_number = ?", recordNumber);
+        return found.isEmpty() ? null : found.get(0);
     }
 
     /**
@@ -89,67 +70,41 @@ public class AnimalDAO implements IAnimalDAO {
      */
     @Override
     public List<Animal> findByFilters(String species, String startDate, String endDate, String chipNumber, Boolean showInactive) throws Exception {
-        List<Animal> animals = new ArrayList<>();
         StringBuilder sql = new StringBuilder("SELECT * FROM animals WHERE 1=1");
+        List<Object> params = new ArrayList<>();
 
         sql.append(Boolean.TRUE.equals(showInactive) ? " AND active = 0" : " AND active = 1");
-
-        boolean bySpecies = species != null && !species.isBlank();
-        boolean byDates = startDate != null && endDate != null;
-        boolean byChip = chipNumber != null && !chipNumber.isBlank();
-
-        if (bySpecies) {
+        if (species != null && !species.isBlank()) {
             sql.append(" AND species = ?");
+            params.add(species);
         }
-        if (byDates) {
+        if (startDate != null && endDate != null) {
             sql.append(" AND admission_date BETWEEN ? AND ?");
+            params.add(startDate);
+            params.add(endDate);
         }
-        if (byChip) {
+        if (chipNumber != null && !chipNumber.isBlank()) {
             sql.append(" AND chip_number LIKE ?");
+            params.add("%" + chipNumber + "%");
         }
         sql.append(" ORDER BY admission_date DESC");
 
-        try (PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
-            int index = 1;
-            if (bySpecies) {
-                pstmt.setString(index++, species);
-            }
-            if (byDates) {
-                pstmt.setString(index++, startDate);
-                pstmt.setString(index++, endDate);
-            }
-            if (byChip) {
-                pstmt.setString(index, "%" + chipNumber + "%");
-            }
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    animals.add(mapResultSetToAnimal(rs));
-                }
-            }
-        } catch (SQLException e) {
-            throw new Exception("Error fetching animals by filters", e);
-        }
-        return animals;
+        return queryAnimals(sql.toString(), params.toArray());
     }
 
-    /**
-     * @param timestamp {@code true} for a local edit, which stamps
-     *                  {@code last_modified} now so the next sync pushes it;
-     *                  {@code false} when applying a record pulled from Firebase,
-     *                  which keeps the remote timestamp so the two stay comparable
-     */
     @Override
-    public void updateAnimal(Animal animal, boolean timestamp) throws Exception {
+    public void updateAnimal(Animal animal) throws Exception {
         String sql = """
                 UPDATE animals
                 SET chip_number = ?, barcode = ?, admission_date = ?, collected_by = ?, place_id = ?,
                     reason_for_rescue = ?, species = ?, approximate_age = ?, sex = ?, name = ?,
                     ailments = ?, neutering_date = ?, adopted = ?, active = ?, synced = ?,
-                    last_modified = COALESCE(?, datetime('now', 'utc'))
+                    last_modified = datetime('now', 'utc')
                 WHERE record_number = ?
                 """;
 
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, animal.getChipNumber());
             pstmt.setString(2, animal.getBarcode());
             pstmt.setString(3, animal.getAdmissionDate());
@@ -165,8 +120,7 @@ public class AnimalDAO implements IAnimalDAO {
             pstmt.setInt(13, animal.isAdopted() ? 1 : 0);
             pstmt.setInt(14, animal.isActive() ? 1 : 0);
             pstmt.setInt(15, animal.isSynced() ? 1 : 0);
-            pstmt.setString(16, timestamp ? null : blankToNull(animal.getLastModified()));
-            pstmt.setString(17, animal.getRecordNumber());
+            pstmt.setString(16, animal.getRecordNumber());
 
             if (pstmt.executeUpdate() == 0) {
                 throw new Exception("No animal found with record number " + animal.getRecordNumber());
@@ -190,7 +144,8 @@ public class AnimalDAO implements IAnimalDAO {
     private void setActive(String recordNumber, boolean active) throws Exception {
         String sql = "UPDATE animals SET active = ?, synced = 0, last_modified = datetime('now', 'utc') "
                 + "WHERE record_number = ?";
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, active ? 1 : 0);
             pstmt.setString(2, recordNumber);
             if (pstmt.executeUpdate() == 0) {
@@ -199,9 +154,100 @@ public class AnimalDAO implements IAnimalDAO {
         }
     }
 
+    // -------------------------------------------------------------------------
+    //  Synchronisation
+    // -------------------------------------------------------------------------
+
     @Override
     public List<Animal> getUnsyncedAnimals() throws Exception {
         return queryAnimals("SELECT * FROM animals WHERE synced = 0");
+    }
+
+    @Override
+    public Map<String, String> getLastModifiedByRecordNumber() throws Exception {
+        Map<String, String> result = new HashMap<>();
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement("SELECT record_number, last_modified FROM animals");
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                result.put(rs.getString(1), rs.getString(2));
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public void saveFromRemote(List<Animal> animals, Map<String, String> expectedLastModified) throws Exception {
+        if (animals.isEmpty()) {
+            return;
+        }
+        String sql = "INSERT INTO animals (" + COLUMNS + ") " + VALUES + """
+
+                ON CONFLICT(record_number) DO UPDATE SET
+                    chip_number = excluded.chip_number, barcode = excluded.barcode,
+                    admission_date = excluded.admission_date, collected_by = excluded.collected_by,
+                    place_id = excluded.place_id, reason_for_rescue = excluded.reason_for_rescue,
+                    species = excluded.species, approximate_age = excluded.approximate_age,
+                    sex = excluded.sex, name = excluded.name, ailments = excluded.ailments,
+                    neutering_date = excluded.neutering_date, adopted = excluded.adopted,
+                    synced = excluded.synced, active = excluded.active,
+                    last_modified = excluded.last_modified
+                WHERE animals.last_modified IS ?
+                """;
+        Transactions.inTransaction(dataSource, conn -> {
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                for (Animal animal : animals) {
+                    bind(pstmt, animal);
+                    pstmt.setString(18, expectedLastModified.get(animal.getRecordNumber()));
+                    pstmt.addBatch();
+                }
+                pstmt.executeBatch();
+            }
+            return null;
+        });
+    }
+
+    @Override
+    public int markSynced(List<Animal> pushed) throws Exception {
+        if (pushed.isEmpty()) {
+            return 0;
+        }
+        // IS rather than = so that NULL matches NULL.
+        String sql = """
+                UPDATE animals SET synced = 1
+                WHERE record_number = ? AND chip_number IS ? AND barcode IS ? AND admission_date IS ?
+                  AND collected_by IS ? AND place_id IS ? AND reason_for_rescue IS ? AND species IS ?
+                  AND approximate_age IS ? AND sex IS ? AND name IS ? AND ailments IS ?
+                  AND neutering_date IS ? AND adopted IS ? AND active IS ? AND last_modified IS ?
+                """;
+        return Transactions.inTransaction(dataSource, conn -> {
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                for (Animal animal : pushed) {
+                    pstmt.setString(1, animal.getRecordNumber());
+                    pstmt.setString(2, animal.getChipNumber());
+                    pstmt.setString(3, animal.getBarcode());
+                    pstmt.setString(4, animal.getAdmissionDate());
+                    pstmt.setString(5, animal.getCollectedBy());
+                    pstmt.setInt(6, animal.getPlaceId());
+                    pstmt.setString(7, animal.getReasonForRescue());
+                    pstmt.setString(8, animal.getSpecies());
+                    pstmt.setInt(9, animal.getApproximateAge());
+                    pstmt.setString(10, animal.getSex());
+                    pstmt.setString(11, animal.getName());
+                    pstmt.setString(12, animal.getAilments());
+                    pstmt.setString(13, animal.getNeuteringDate());
+                    pstmt.setInt(14, animal.isAdopted() ? 1 : 0);
+                    pstmt.setInt(15, animal.isActive() ? 1 : 0);
+                    pstmt.setString(16, animal.getLastModified());
+                    pstmt.addBatch();
+                }
+                int marked = 0;
+                for (int count : pstmt.executeBatch()) {
+                    marked += Math.max(count, 0);
+                }
+                return marked;
+            }
+        });
     }
 
     // -------------------------------------------------------------------------
@@ -218,14 +264,8 @@ public class AnimalDAO implements IAnimalDAO {
 
     @Override
     public int countAdoptedInYear(int year) throws Exception {
-        String sql = "SELECT COUNT(*) FROM animals "
-                   + "WHERE adopted = 1 AND strftime('%Y', admission_date) = ?";
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, String.valueOf(year));
-            try (ResultSet rs = pstmt.executeQuery()) {
-                return rs.next() ? rs.getInt(1) : 0;
-            }
-        }
+        return count("SELECT COUNT(*) FROM animals WHERE adopted = 1 AND strftime('%Y', admission_date) = ?",
+                String.valueOf(year));
     }
 
     @Override
@@ -270,19 +310,21 @@ public class AnimalDAO implements IAnimalDAO {
         return count("SELECT COUNT(*) FROM animals WHERE synced = 0 AND active = 1");
     }
 
-    private int count(String sql) throws SQLException {
-        try (PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
-            return rs.next() ? rs.getInt(1) : 0;
+    private int count(String sql, Object... params) throws SQLException {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            setParams(pstmt, params);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
         }
     }
 
     private List<Animal> queryAnimals(String sql, Object... params) throws SQLException {
         List<Animal> animals = new ArrayList<>();
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            for (int i = 0; i < params.length; i++) {
-                pstmt.setObject(i + 1, params[i]);
-            }
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            setParams(pstmt, params);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     animals.add(mapResultSetToAnimal(rs));
@@ -290,6 +332,33 @@ public class AnimalDAO implements IAnimalDAO {
             }
         }
         return animals;
+    }
+
+    private static void setParams(PreparedStatement pstmt, Object[] params) throws SQLException {
+        for (int i = 0; i < params.length; i++) {
+            pstmt.setObject(i + 1, params[i]);
+        }
+    }
+
+    /** Fills parameters 1-17 in {@link #COLUMNS} order. */
+    private static void bind(PreparedStatement pstmt, Animal animal) throws SQLException {
+        pstmt.setString(1, animal.getRecordNumber());
+        pstmt.setString(2, animal.getChipNumber());
+        pstmt.setString(3, animal.getBarcode());
+        pstmt.setString(4, animal.getAdmissionDate());
+        pstmt.setString(5, animal.getCollectedBy());
+        pstmt.setInt(6, animal.getPlaceId());
+        pstmt.setString(7, animal.getReasonForRescue());
+        pstmt.setString(8, animal.getSpecies());
+        pstmt.setInt(9, animal.getApproximateAge());
+        pstmt.setString(10, animal.getSex());
+        pstmt.setString(11, animal.getName());
+        pstmt.setString(12, animal.getAilments());
+        pstmt.setString(13, animal.getNeuteringDate());
+        pstmt.setInt(14, animal.isAdopted() ? 1 : 0);
+        pstmt.setInt(15, animal.isSynced() ? 1 : 0);
+        pstmt.setInt(16, animal.isActive() ? 1 : 0);
+        pstmt.setString(17, blankToNull(animal.getLastModified()));
     }
 
     /** Surfaces a chip collision as its own type; everything else keeps its cause. */

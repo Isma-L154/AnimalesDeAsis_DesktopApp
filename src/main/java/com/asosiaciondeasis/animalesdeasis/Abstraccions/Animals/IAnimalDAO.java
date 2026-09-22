@@ -3,6 +3,7 @@ package com.asosiaciondeasis.animalesdeasis.Abstraccions.Animals;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 
 import java.util.List;
+import java.util.Map;
 
 /** Persistence of animals. Every failure is thrown; nothing reports success it did not have. */
 public interface IAnimalDAO {
@@ -23,19 +24,43 @@ public interface IAnimalDAO {
     List<Animal> findByFilters(String species, String startDate, String endDate, String chipNumber, Boolean showInactive) throws Exception;
 
     /**
-     * @param timestamp {@code true} stamps {@code last_modified} now (a local
-     *                  edit); {@code false} keeps the animal's own value (a record
-     *                  applied from Firebase)
+     * Saves a local edit and stamps {@code last_modified} now, so the next sync
+     * pushes it.
+     *
      * @throws DuplicateChipException when the chip number or barcode is already taken
      */
-    void updateAnimal(Animal animal, boolean timestamp) throws Exception;
+    void updateAnimal(Animal animal) throws Exception;
 
     /** Logical delete: the record is flagged inactive and queued for sync. */
     void deleteAnimal(String recordNumber) throws Exception;
 
     void reactivateAnimal(String recordNumber) throws Exception;
 
+    // --- Synchronisation ------------------------------------------------------
+
     List<Animal> getUnsyncedAnimals() throws Exception;
+
+    /** {@code last_modified} of every animal, active or not, keyed by record number. */
+    Map<String, String> getLastModifiedByRecordNumber() throws Exception;
+
+    /**
+     * Inserts or replaces records pulled from Firebase, in one transaction.
+     *
+     * <p>An existing row is replaced only while its {@code last_modified} still
+     * equals {@code expectedLastModified.get(recordNumber)} - the value the caller
+     * compared against. An edit saved locally in the meantime is kept, and the
+     * next sync resolves it.</p>
+     */
+    void saveFromRemote(List<Animal> animals, Map<String, String> expectedLastModified) throws Exception;
+
+    /**
+     * Marks pushed records as synced, in one transaction, but only rows that still
+     * hold exactly what was pushed. A row edited while the upload was in flight
+     * stays unsynced, so the edit is pushed next time instead of being lost.
+     *
+     * @return how many rows were marked
+     */
+    int markSynced(List<Animal> pushed) throws Exception;
 
     // --- Home panel ---------------------------------------------------------
     // These count and cap in SQL rather than loading every row and measuring it

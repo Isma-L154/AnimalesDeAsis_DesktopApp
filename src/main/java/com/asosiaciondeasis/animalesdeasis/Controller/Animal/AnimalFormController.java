@@ -11,6 +11,7 @@ import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.DatePickers;
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.FieldValidation;
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
+import com.asosiaciondeasis.animalesdeasis.Util.ScreenTasks;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
@@ -55,6 +56,12 @@ public abstract class AnimalFormController implements IPortalAwareController {
 
     protected final FieldValidation validation = new FieldValidation();
     private final BarcodeScannerUtil scannerUtil = new BarcodeScannerUtil();
+    private final ScreenTasks tasks = new ScreenTasks("animal-form");
+
+    /** A place to select once the list arrives, when a record is shown before it does. */
+    private Integer pendingPlaceId;
+    /** Guards against a second click submitting the form again while it saves. */
+    private boolean saving;
 
     /** The code read by the scanner in this session, which is saved as the barcode too. */
     protected String scannedChipNumber;
@@ -73,13 +80,28 @@ public abstract class AnimalFormController implements IPortalAwareController {
         DatePickers.disableFutureDates(admissionDatePicker);
 
         placeComboBox.setEditable(false);
-        try {
-            placeComboBox.setItems(FXCollections.observableArrayList(
-                    ServiceFactory.getPlaceService().getAllPlaces()));
-        } catch (Exception e) {
-            log.error("Could not load places", e);
-            NavigationHelper.showErrorAlert("Error", "No se pudieron cargar los lugares", e.getMessage());
+        tasks.submit(() -> ServiceFactory.getPlaceService().getAllPlaces(),
+                places -> {
+                    placeComboBox.setItems(FXCollections.observableArrayList(places));
+                    selectPendingPlace();
+                },
+                e -> {
+                    log.error("Could not load places", e);
+                    NavigationHelper.showErrorAlert("Error", "No se pudieron cargar los lugares", e.getMessage());
+                });
+    }
+
+    private void selectPendingPlace() {
+        if (pendingPlaceId == null) {
+            return;
         }
+        placeComboBox.getItems().stream()
+                .filter(place -> place.id() == pendingPlaceId)
+                .findFirst()
+                .ifPresent(place -> {
+                    placeComboBox.setValue(place);
+                    pendingPlaceId = null;
+                });
     }
 
     private static void limitLength(TextArea area, int max) {
@@ -148,10 +170,8 @@ public abstract class AnimalFormController implements IPortalAwareController {
         neuteringDatePicker.setValue(DateUtils.utcStringToLocalDate(animal.getNeuteringDate()));
         rescueReasonArea.setText(animal.getReasonForRescue());
         ailmentsArea.setText(animal.getAilments());
-        placeComboBox.getItems().stream()
-                .filter(place -> place.id() == animal.getPlaceId())
-                .findFirst()
-                .ifPresent(placeComboBox::setValue);
+        pendingPlaceId = animal.getPlaceId();
+        selectPendingPlace();
     }
 
     @FunctionalInterface
@@ -160,24 +180,34 @@ public abstract class AnimalFormController implements IPortalAwareController {
     }
 
     /**
-     * Runs the save and reports the outcome: a duplicate chip is marked on the
-     * chip field, any other failure is an error dialog, and success returns to
-     * the animal list.
+     * Saves in the background and reports the outcome: a duplicate chip is marked
+     * on the chip field, any other failure is an error dialog, and success
+     * returns to the animal list.
      */
     protected void persist(Save save, String successMessage) {
-        try {
-            save.run();
-        } catch (DuplicateChipException e) {
-            validation.reject(chipNumberField, "Ya existe un animal con este número de chip");
-            validation.focusFirstError();
-            return;
-        } catch (Exception e) {
-            log.error("Could not save animal", e);
-            NavigationHelper.showErrorAlert("Error", "No se pudo guardar el animal", e.getMessage());
+        if (saving) {
             return;
         }
-        NavigationHelper.showSuccessAlert("Éxito", successMessage);
-        goToAnimalModule();
+        saving = true;
+        tasks.submit(() -> {
+                    save.run();
+                    return null;
+                },
+                done -> {
+                    saving = false;
+                    NavigationHelper.showSuccessAlert("Éxito", successMessage);
+                    goToAnimalModule();
+                },
+                e -> {
+                    saving = false;
+                    if (e instanceof DuplicateChipException) {
+                        validation.reject(chipNumberField, "Ya existe un animal con este número de chip");
+                        validation.focusFirstError();
+                        return;
+                    }
+                    log.error("Could not save animal", e);
+                    NavigationHelper.showErrorAlert("Error", "No se pudo guardar el animal", e.getMessage());
+                });
     }
 
     protected static String text(TextField field) {
@@ -199,9 +229,10 @@ public abstract class AnimalFormController implements IPortalAwareController {
         NavigationHelper.goToAnimalModule(portalController);
     }
 
-    /** Releases the camera if the user leaves mid-scan. */
+    /** Releases the camera if the user leaves mid-scan, and drops pending results. */
     @Override
     public void cleanup() {
+        tasks.close();
         scannerUtil.stopScanning();
     }
 }

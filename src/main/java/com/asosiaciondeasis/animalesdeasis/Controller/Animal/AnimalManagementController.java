@@ -328,14 +328,18 @@ public class AnimalManagementController implements IPortalAwareController {
         if (!confirmed) {
             return;
         }
-        try {
-            ServiceFactory.getAnimalService().deleteAnimal(animal.getRecordNumber());
-            refreshAnimalList();
-            NavigationHelper.showSuccessAlert("Éxito", "Animal eliminado correctamente.");
-        } catch (Exception e) {
-            log.error("Could not delete animal {}", animal.getRecordNumber(), e);
-            NavigationHelper.showErrorAlert("Error", "No se pudo eliminar el animal", e.getMessage());
-        }
+        tasks.submit(() -> {
+                    ServiceFactory.getAnimalService().deleteAnimal(animal.getRecordNumber());
+                    return null;
+                },
+                done -> {
+                    refreshAnimalList();
+                    NavigationHelper.showSuccessAlert("Éxito", "Animal eliminado correctamente.");
+                },
+                e -> {
+                    log.error("Could not delete animal {}", animal.getRecordNumber(), e);
+                    NavigationHelper.showErrorAlert("Error", "No se pudo eliminar el animal", e.getMessage());
+                });
     }
 
     private void reactivateAnimal(Animal animal) {
@@ -345,14 +349,18 @@ public class AnimalManagementController implements IPortalAwareController {
         if (!confirmed) {
             return;
         }
-        try {
-            ServiceFactory.getAnimalService().reactivateAnimal(animal.getRecordNumber());
-            refreshAnimalList();
-            NavigationHelper.showSuccessAlert("Éxito", "Animal reactivado correctamente.");
-        } catch (Exception e) {
-            log.error("Could not reactivate animal {}", animal.getRecordNumber(), e);
-            NavigationHelper.showErrorAlert("Error", "No se pudo reactivar el animal", e.getMessage());
-        }
+        tasks.submit(() -> {
+                    ServiceFactory.getAnimalService().reactivateAnimal(animal.getRecordNumber());
+                    return null;
+                },
+                done -> {
+                    refreshAnimalList();
+                    NavigationHelper.showSuccessAlert("Éxito", "Animal reactivado correctamente.");
+                },
+                e -> {
+                    log.error("Could not reactivate animal {}", animal.getRecordNumber(), e);
+                    NavigationHelper.showErrorAlert("Error", "No se pudo reactivar el animal", e.getMessage());
+                });
     }
 
     /** @return the value, or {@code null} when it is blank or the "all" option */

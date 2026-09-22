@@ -33,6 +33,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
 public class VaccineManagementController implements IPortalAwareController {
@@ -64,16 +65,17 @@ public class VaccineManagementController implements IPortalAwareController {
         addActionsButtons();
     }
 
-    public void setCurrentAnimal(Animal animal) throws Exception {
+    public void setCurrentAnimal(Animal animal) {
         this.currentAnimal = animal;
         animalInfoLabel.setText("Animal: " + animal.getName());
-        loadVaccinesForAnimal();
+        run(this::fetchVaccines, null, "No se pudieron cargar las vacunas");
     }
 
-    private void loadVaccinesForAnimal() throws Exception {
-        List<Vaccine> vaccines = ServiceFactory.getVaccineService()
-                .getVaccinesByAnimal(currentAnimal.getRecordNumber());
+    private List<Vaccine> fetchVaccines() throws Exception {
+        return ServiceFactory.getVaccineService().getVaccinesByAnimal(currentAnimal.getRecordNumber());
+    }
 
+    private void showVaccines(List<Vaccine> vaccines) {
         vaccineTable.setItems(FXCollections.observableArrayList(vaccines));
         totalVaccinesLabel.setText(String.valueOf(vaccines.size()));
         lastVaccineLabel.setText(vaccines.stream()
@@ -130,9 +132,10 @@ public class VaccineManagementController implements IPortalAwareController {
     public void onCreateNewVaccine() {
         openModal("/fxml/Vaccine/CreateVaccine.fxml", "Nueva Vacuna", (CreateVaccineController controller) -> {
             controller.setAnimalInfo(currentAnimal.getName(), currentAnimal.getRecordNumber());
-            controller.setOnVaccineCreated(vaccine -> saveAndReload(
-                    () -> ServiceFactory.getVaccineService().registerVaccine(vaccine),
-                    "Vacuna registrada correctamente", "No se pudo registrar la vacuna"));
+            controller.setOnVaccineCreated(vaccine -> run(() -> {
+                ServiceFactory.getVaccineService().registerVaccine(vaccine);
+                return fetchVaccines();
+            }, "Vacuna registrada correctamente", "No se pudo registrar la vacuna"));
         });
     }
 
@@ -140,9 +143,10 @@ public class VaccineManagementController implements IPortalAwareController {
         openModal("/fxml/Vaccine/EditVaccine.fxml", "Editar Vacuna", (EditVaccineController controller) -> {
             controller.setAnimalInfo(currentAnimal.getName());
             controller.setVaccineData(vaccine);
-            controller.setOnVaccineUpdated(updated -> saveAndReload(
-                    () -> ServiceFactory.getVaccineService().updateVaccine(updated),
-                    "Vacuna actualizada correctamente", "No se pudo actualizar la vacuna"));
+            controller.setOnVaccineUpdated(updated -> run(() -> {
+                ServiceFactory.getVaccineService().updateVaccine(updated);
+                return fetchVaccines();
+            }, "Vacuna actualizada correctamente", "No se pudo actualizar la vacuna"));
         });
     }
 
@@ -171,41 +175,36 @@ public class VaccineManagementController implements IPortalAwareController {
         }
     }
 
-    @FunctionalInterface
-    private interface Save {
-        void run() throws Exception;
-    }
-
-    private void saveAndReload(Save save, String successMessage, String failureHeader) {
-        try {
-            save.run();
-            loadVaccinesForAnimal();
-            NavigationHelper.showSuccessAlert("Éxito", successMessage);
-        } catch (Exception e) {
-            log.error(failureHeader, e);
-            NavigationHelper.showErrorAlert("Error", failureHeader, e.getMessage());
-        }
-    }
-
     /**
-     * Deletes off the interface thread: the remote half waits on Firestore, and
-     * awaiting it here froze the window for as long as the network took.
+     * Runs {@code work} off the interface thread - it ends by returning the
+     * refreshed list - then redraws the table. The table is disabled meanwhile so
+     * a second action cannot start on rows that are about to change.
+     *
+     * @param successMessage confirmation to show, or {@code null} for none
      */
-    private void onDeleteVaccine(Vaccine vaccine) {
+    private void run(Callable<List<Vaccine>> work, String successMessage, String failureHeader) {
         vaccineTable.setDisable(true);
-        tasks.submit(() -> {
-                    ServiceFactory.getSyncService().deleteVaccineAndSync(vaccine);
-                    return null;
-                },
-                done -> {
+        tasks.submit(work,
+                vaccines -> {
                     vaccineTable.setDisable(false);
-                    saveAndReload(() -> { }, "Vacuna eliminada correctamente.", "No se pudo recargar las vacunas");
+                    showVaccines(vaccines);
+                    if (successMessage != null) {
+                        NavigationHelper.showSuccessAlert("Éxito", successMessage);
+                    }
                 },
                 cause -> {
                     vaccineTable.setDisable(false);
-                    log.error("Could not delete vaccine {}", vaccine.getId(), cause);
-                    NavigationHelper.showErrorAlert("Error", "No se pudo eliminar la vacuna", cause.getMessage());
+                    log.error(failureHeader, cause);
+                    NavigationHelper.showErrorAlert("Error", failureHeader, cause.getMessage());
                 });
+    }
+
+    /** The remote half waits on Firestore, which is why this must never run on the interface thread. */
+    private void onDeleteVaccine(Vaccine vaccine) {
+        run(() -> {
+            ServiceFactory.getSyncService().deleteVaccineAndSync(vaccine);
+            return fetchVaccines();
+        }, "Vacuna eliminada correctamente.", "No se pudo eliminar la vacuna");
     }
 
     @FXML

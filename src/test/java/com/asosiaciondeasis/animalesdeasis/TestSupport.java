@@ -59,10 +59,10 @@ public final class TestSupport {
     public static int seedPlace(Connection conn) throws SQLException {
         try (Statement stmt = conn.createStatement()) {
             stmt.executeUpdate("INSERT INTO provinces (name) VALUES ('San José')");
-            stmt.executeUpdate("INSERT INTO places (name, province_id) VALUES ('Central', 1)");
-            try (var rs = stmt.executeQuery("SELECT id FROM places LIMIT 1")) {
+            stmt.executeUpdate("INSERT INTO places (name, province_id) VALUES ('Central', last_insert_rowid())");
+            try (var rs = stmt.executeQuery("SELECT last_insert_rowid()")) {
                 rs.next();
-                return rs.getInt("id");
+                return rs.getInt(1);
             }
         }
     }

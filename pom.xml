@@ -37,19 +37,10 @@
             <artifactId>javafx-fxml</artifactId>
             <version>${javafx.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-web</artifactId>
-            <version>${javafx.version}</version>
-        </dependency>
+        <!-- SwingFXUtils, which turns webcam frames into JavaFX images. -->
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-swing</artifactId>
-            <version>${javafx.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-media</artifactId>
             <version>${javafx.version}</version>
         </dependency>
 
@@ -105,17 +96,17 @@
         </dependency>
 
         <!-- PDF Generation -->
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>kernel</artifactId>
+            <version>9.7.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>layout</artifactId>
+            <version>9.7.1</version>
+        </dependency>
 
-            <dependency>
-                <groupId>com.itextpdf</groupId>
-                <artifactId>kernel</artifactId>
-                <version>9.7.1</version>
-            </dependency>
-            <dependency>
-                <groupId>com.itextpdf</groupId>
-                <artifactId>layout</artifactId>
-                <version>9.7.1</version>
-            </dependency>
         <!-- Icons -->
         <dependency>
             <groupId>org.kordamp.ikonli</groupId>

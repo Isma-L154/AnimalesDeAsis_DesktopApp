@@ -51,8 +51,9 @@ The goal of this project is to provide a **comprehensive offline-first solution*
   - Every 24 hours (automated scheduler).
 - Sync process:
   - **Push**: Uploads unsynced local data to Firebase.
-  - **Pull**: Downloads new Firebase data if not found locally.
-- Local-first logic to avoid data overwrites.
+  - **Pull**: Downloads Firebase records that are missing locally or newer than the local copy.
+- The most recent `last_modified` wins, so offline edits are not overwritten by older remote data.
+- Deletions made offline are kept as tombstones until they reach Firebase.
 
 ### 📊 Statistics & Reporting
 - Monthly admissions by year.
@@ -144,8 +145,8 @@ src
 ├── Abstraccions/         # Interfaces for DAOs and Services (Animals, Places, Statistics, Vaccines)
 ├── Config/               # Configuration (DB, Firebase, Credentials, Factories)
 ├── Controller/           # JavaFX Controllers (Portal, Sidebar, Animal, Statistic, Vaccine)
-├── DAO/                  # Data Access Objects (Importers, Animals, Places, Statistics, Vaccine)
-├── Model/                # Data Models (Animal, Place, Vaccine)
+├── DAO/                  # Data Access Objects (Importer, Animals, Places, Statistics, Vaccine)
+├── Model/                # Data Models (Animal, Place, Vaccine, NavigationSection, ShelterSummary)
 ├── Service/              # Business Logic (SyncService, Animal, Place, Statistics, Vaccine)
 └── Util/                 # Utilities (Barcode, Date, Network, Exporters, Helpers)
 ```

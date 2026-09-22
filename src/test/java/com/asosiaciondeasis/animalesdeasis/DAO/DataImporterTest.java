@@ -15,16 +15,18 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class DataImporterTest {
 
+    private TestSupport.TestDatabase db;
     private Connection conn;
 
     @BeforeEach
     void setUp() throws Exception {
-        conn = TestSupport.newInMemoryDatabase();
+        db = TestSupport.newDatabase();
+        conn = db.connection();
     }
 
     @AfterEach
     void tearDown() throws Exception {
-        conn.close();
+        db.close();
     }
 
     @Test

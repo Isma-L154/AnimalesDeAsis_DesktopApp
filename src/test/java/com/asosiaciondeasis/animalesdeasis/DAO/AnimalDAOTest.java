@@ -10,25 +10,28 @@ import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class AnimalDAOTest {
 
+    private TestSupport.TestDatabase db;
     private Connection conn;
     private AnimalDAO dao;
     private int placeId;
 
     @BeforeEach
     void setUp() throws Exception {
-        conn = TestSupport.newInMemoryDatabase();
+        db = TestSupport.newDatabase();
+        conn = db.connection();
         placeId = TestSupport.seedPlace(conn);
-        dao = new AnimalDAO(conn);
+        dao = new AnimalDAO(db.dataSource());
     }
 
     @AfterEach
     void tearDown() throws Exception {
-        conn.close();
+        db.close();
     }
 
     @Test
@@ -138,26 +141,138 @@ class AnimalDAOTest {
     }
 
     @Test
-    void remoteUpdateKeepsTheRemoteTimestamp() throws Exception {
+    void localUpdateStampsLastModified() throws Exception {
         Animal animal = TestSupport.newAnimal(placeId);
+        animal.setLastModified("2020-01-01 00:00:00");
         dao.insertAnimal(animal);
 
-        animal.setLastModified("2020-01-01 00:00:00");
-        dao.updateAnimal(animal, false);
+        animal.setName("Toby");
+        dao.updateAnimal(animal);
 
-        assertEquals("2020-01-01 00:00:00", dao.findByRecordNumber(animal.getRecordNumber()).getLastModified());
+        Animal stored = dao.findByRecordNumber(animal.getRecordNumber());
+        assertEquals("Toby", stored.getName());
+        assertNotEquals("2020-01-01 00:00:00", stored.getLastModified());
+    }
+
+    // --- Records pulled from Firebase ------------------------------------------
+
+    @Test
+    void remoteRecordsAreInsertedAndReplacedInOneCall() throws Exception {
+        Animal existing = TestSupport.newAnimal(placeId);
+        existing.setLastModified("2020-01-01 00:00:00");
+        dao.insertAnimal(existing);
+
+        Animal newer = dao.findByRecordNumber(existing.getRecordNumber());
+        newer.setName("Actualizado");
+        newer.setLastModified("2021-01-01 00:00:00");
+        newer.setSynced(true);
+        Animal brandNew = TestSupport.newAnimal(placeId);
+        brandNew.setLastModified("2021-01-01 00:00:00");
+
+        dao.saveFromRemote(List.of(newer, brandNew), dao.getRowVersions());
+
+        Animal replaced = dao.findByRecordNumber(existing.getRecordNumber());
+        assertEquals("Actualizado", replaced.getName());
+        assertEquals("2021-01-01 00:00:00", replaced.getLastModified(), "the remote timestamp is kept");
+        assertTrue(replaced.isSynced());
+        assertNotNull(dao.findByRecordNumber(brandNew.getRecordNumber()));
     }
 
     /** A document pulled from Firebase with no timestamp used to break last_modified's NOT NULL. */
     @Test
-    void remoteUpdateWithoutTimestampIsStampedInsteadOfFailing() throws Exception {
+    void remoteRecordWithoutTimestampIsStampedInsteadOfFailing() throws Exception {
         Animal animal = TestSupport.newAnimal(placeId);
-        dao.insertAnimal(animal);
-
         animal.setLastModified(null);
-        dao.updateAnimal(animal, false);
+
+        dao.saveFromRemote(List.of(animal), Map.of());
 
         assertNotNull(dao.findByRecordNumber(animal.getRecordNumber()).getLastModified());
+    }
+
+    /**
+     * The pull compares timestamps, then writes. An edit saved in between used to
+     * be overwritten by the remote copy; the write now re-checks the row.
+     */
+    @Test
+    void remoteRecordDoesNotOverwriteAnEditMadeAfterTheComparison() throws Exception {
+        Animal animal = TestSupport.newAnimal(placeId);
+        animal.setLastModified("2020-01-01 00:00:00");
+        dao.insertAnimal(animal);
+        var readBeforeTheEdit = dao.getRowVersions();
+
+        animal.setName("Editado aquí");
+        dao.updateAnimal(animal);
+
+        Animal remoteCopy = Animal.fromExistingRecord(animal.getRecordNumber());
+        remoteCopy.setAdmissionDate(animal.getAdmissionDate());
+        remoteCopy.setPlaceId(placeId);
+        remoteCopy.setSpecies("Perro");
+        remoteCopy.setName("Versión remota");
+        remoteCopy.setLastModified("2021-01-01 00:00:00");
+
+        dao.saveFromRemote(List.of(remoteCopy), readBeforeTheEdit);
+
+        assertEquals("Editado aquí", dao.findByRecordNumber(animal.getRecordNumber()).getName());
+    }
+
+    /**
+     * last_modified has one-second precision, so an edit saved in the same second
+     * as the pull's snapshot leaves it unchanged. The edit still flips synced to
+     * 0, which is what the guard has to notice.
+     */
+    @Test
+    void remoteRecordDoesNotOverwriteAnEditMadeInTheSameSecondAsTheSnapshot() throws Exception {
+        Animal animal = TestSupport.newAnimal(placeId);
+        animal.setSynced(true);
+        animal.setLastModified("2020-01-01 00:00:00");
+        dao.insertAnimal(animal);
+        var readBeforeTheEdit = dao.getRowVersions();
+
+        try (var stmt = conn.createStatement()) {
+            stmt.executeUpdate("UPDATE animals SET name = 'Editado en el mismo segundo', synced = 0 "
+                    + "WHERE record_number = '" + animal.getRecordNumber() + "'");
+        }
+
+        Animal remoteCopy = dao.findByRecordNumber(animal.getRecordNumber());
+        remoteCopy.setName("Versión remota");
+        remoteCopy.setLastModified("2021-01-01 00:00:00");
+        remoteCopy.setSynced(true);
+        dao.saveFromRemote(List.of(remoteCopy), readBeforeTheEdit);
+
+        assertEquals("Editado en el mismo segundo", dao.findByRecordNumber(animal.getRecordNumber()).getName());
+    }
+
+    // --- Marking pushed records -------------------------------------------------
+
+    @Test
+    void markSyncedMarksRowsThatAreUnchanged() throws Exception {
+        dao.insertAnimal(TestSupport.newAnimal(placeId));
+        dao.insertAnimal(TestSupport.newAnimal(placeId));
+        List<Animal> pushed = dao.getUnsyncedAnimals();
+
+        assertEquals(2, dao.markSynced(pushed));
+        assertTrue(dao.getUnsyncedAnimals().isEmpty());
+    }
+
+    /**
+     * The regression. Push rewrote each pushed row from the copy it had read, so
+     * an edit saved while the upload was in flight was overwritten with the old
+     * values and marked synced: gone locally, and never uploaded.
+     */
+    @Test
+    void markSyncedLeavesAnEditMadeDuringTheUploadQueued() throws Exception {
+        Animal animal = TestSupport.newAnimal(placeId);
+        dao.insertAnimal(animal);
+        List<Animal> pushed = dao.getUnsyncedAnimals();
+
+        Animal edited = dao.findByRecordNumber(animal.getRecordNumber());
+        edited.setName("Editado durante la subida");
+        dao.updateAnimal(edited);
+
+        assertEquals(0, dao.markSynced(pushed));
+        Animal stored = dao.findByRecordNumber(animal.getRecordNumber());
+        assertEquals("Editado durante la subida", stored.getName());
+        assertFalse(stored.isSynced(), "the edit must be pushed next time");
     }
 
     @Test
@@ -170,6 +285,6 @@ class AnimalDAOTest {
         dao.insertAnimal(b);
 
         b.setChipNumber("CHIP-1"); // collide with a
-        assertThrows(DuplicateChipException.class, () -> dao.updateAnimal(b, true));
+        assertThrows(DuplicateChipException.class, () -> dao.updateAnimal(b));
     }
 }

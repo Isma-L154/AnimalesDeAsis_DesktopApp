@@ -22,8 +22,12 @@ public final class UiPreferences {
     private static final String KEY_RAIL_COLLAPSED = "railCollapsed";
     private static final String KEY_LAST_SECTION = "lastSection";
 
-    private static final Preferences PREFS =
-            Preferences.userNodeForPackage(UiPreferences.class);
+    /**
+     * Overridable so tests do not write into the developer's own preferences. The
+     * default is the node these settings have always lived in.
+     */
+    private static final Preferences PREFS = Preferences.userRoot().node(
+            System.getProperty("animalesdeasis.prefs.node", "/com/asosiaciondeasis/animalesdeasis/Config"));
 
     private UiPreferences() {
     }

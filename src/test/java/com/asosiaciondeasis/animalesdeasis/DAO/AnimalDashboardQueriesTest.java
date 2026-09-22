@@ -30,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class AnimalDashboardQueriesTest {
 
+    private TestSupport.TestDatabase db;
     private Connection conn;
     private AnimalDAO dao;
     private VaccineDAO vaccineDAO;
@@ -37,15 +38,16 @@ class AnimalDashboardQueriesTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        conn = TestSupport.newInMemoryDatabase();
+        db = TestSupport.newDatabase();
+        conn = db.connection();
         placeId = TestSupport.seedPlace(conn);
-        dao = new AnimalDAO(conn);
-        vaccineDAO = new VaccineDAO(conn);
+        dao = new AnimalDAO(db.dataSource());
+        vaccineDAO = new VaccineDAO(db.dataSource());
     }
 
     @AfterEach
     void tearDown() throws Exception {
-        conn.close();
+        db.close();
     }
 
     private Animal insert(String name, boolean adopted, boolean active, String admission)
@@ -162,14 +164,8 @@ class AnimalDashboardQueriesTest {
         insert("Pendiente", false, true, "2025-01-10T00:00:00");
         Animal sent = insert("Enviado", false, true, "2025-02-10T00:00:00");
 
-        // Read back before updating, which is what SyncService does: it marks the
-        // rows returned by getUnsyncedAnimals(). It matters because
-        // updateAnimal(animal, false) writes last_modified straight from the
-        // object, and an in-memory animal that has never been read has none - the
-        // update then fails on a NOT NULL constraint rather than saying so.
-        Animal stored = dao.findByRecordNumber(sent.getRecordNumber());
-        stored.setSynced(true);
-        dao.updateAnimal(stored, false);
+        // Marked the way SyncService does after a push: from the stored row.
+        dao.markSynced(List.of(dao.findByRecordNumber(sent.getRecordNumber())));
 
         assertEquals(1, dao.countUnsynced());
         assertFalse(dao.findByRecordNumber(

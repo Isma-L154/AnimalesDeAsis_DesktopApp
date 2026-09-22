@@ -36,7 +36,7 @@ public class AnimalService implements IAnimalService {
 
     @Override
     public void updateAnimal(Animal animal) throws Exception {
-        animalDAO.updateAnimal(animal, true);
+        animalDAO.updateAnimal(animal);
     }
 
     @Override

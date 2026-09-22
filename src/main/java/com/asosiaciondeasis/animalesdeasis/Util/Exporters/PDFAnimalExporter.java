@@ -4,348 +4,276 @@ import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Model.Place;
 import com.asosiaciondeasis.animalesdeasis.Model.Vaccine;
 import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
-import com.itextpdf.io.font.constants.StandardFonts;
-import com.itextpdf.kernel.colors.ColorConstants;
-import com.itextpdf.kernel.colors.DeviceRgb;
-import com.itextpdf.kernel.font.PdfFont;
-import com.itextpdf.kernel.font.PdfFontFactory;
-import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfWriter;
-import com.itextpdf.layout.Document;
-import com.itextpdf.layout.element.*;
-import com.itextpdf.layout.properties.TextAlignment;
-import com.itextpdf.layout.properties.UnitValue;
-import com.itextpdf.layout.borders.SolidBorder;
 import javafx.application.Platform;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.openpdf.text.Document;
+import org.openpdf.text.DocumentException;
+import org.openpdf.text.Element;
+import org.openpdf.text.Font;
+import org.openpdf.text.FontFactory;
+import org.openpdf.text.Paragraph;
+import org.openpdf.text.Phrase;
+import org.openpdf.text.Rectangle;
+import org.openpdf.text.pdf.ColumnText;
+import org.openpdf.text.pdf.PdfPCell;
+import org.openpdf.text.pdf.PdfPTable;
+import org.openpdf.text.pdf.PdfPageEventHelper;
+import org.openpdf.text.pdf.PdfWriter;
 
+import java.awt.Color;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Service responsible for exporting animal medical records to PDF format.
- * Generates comprehensive reports including animal details and vaccination history.
- * Includes file selection dialog functionality.
+ * Exports an animal's record - details and vaccination history - to PDF.
+ *
+ * <p>Built on OpenPDF (LGPL/MPL) rather than iText, whose AGPL licence does not
+ * fit an MIT project that publishes installers. Helvetica is one of the PDF
+ * base-14 fonts, so nothing gets embedded and the file stays small, and its
+ * WinAnsi encoding covers the Spanish accents and the "N°" sign the report uses.</p>
  */
 public class PDFAnimalExporter {
 
-    private static final DeviceRgb HEADER_COLOR = new DeviceRgb(52, 73, 94);
-    private static final DeviceRgb ACCENT_COLOR = new DeviceRgb(52, 152, 219);
-    private static final DeviceRgb LIGHT_GRAY = new DeviceRgb(236, 240, 241);
+    private static final Color HEADER_COLOR = new Color(52, 73, 94);
+    private static final Color ACCENT_COLOR = new Color(52, 152, 219);
+    private static final Color LIGHT_GRAY = new Color(236, 240, 241);
+    private static final Color BORDER_GRAY = new Color(211, 211, 211);
+
+    private static final String NO_INFO = "Sin información";
 
     /**
-     * The emphasised fonts used across the report.
+     * Asks where to save, then writes the PDF in the background. The file chooser
+     * runs on the JavaFX application thread whichever thread this is called from.
      *
-     * <p>iText 8 removed the {@code setBold()} / {@code setItalic()} shortcuts, so emphasis is now
-     * expressed by handing the element the matching font program. Helvetica is one of the PDF
-     * base-14 fonts: nothing gets embedded, so the exported file stays small, and its default
-     * WinAnsi encoding still covers the Spanish accents and the "N°" sign this report uses.
-     *
-     * <p>A {@link PdfFont} is bound to the document that first draws with it, so a fresh instance
-     * is created per export instead of being cached in a field. That also keeps the exporter safe
-     * to reuse from several background threads.
-     */
-    private record ReportFonts(PdfFont bold, PdfFont italic) {
-
-        static ReportFonts create() throws IOException {
-            return new ReportFonts(
-                    PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD),
-                    PdfFontFactory.createFont(StandardFonts.HELVETICA_OBLIQUE));
-        }
-    }
-
-    /**
-     * Exports an animal's complete medical record to PDF format with file selection dialog.
-     * This method handles thread safety by ensuring UI operations run on JavaFX Application Thread.
-     *
-     * @param animal The animal whose record will be exported
-     * @param place The place where the animal was rescued
-     * @param vaccines List of vaccines administered to the animal
-     * @param parentStage Parent stage for the file chooser dialog
-     * @return CompletableFuture that completes with the file path where the PDF was saved, or null if user cancelled
+     * @return completes with the saved file's path, or {@code null} if the user cancelled
      */
     public CompletableFuture<String> exportAnimalRecordWithDialog(Animal animal, Place place, List<Vaccine> vaccines, Stage parentStage) {
         CompletableFuture<String> future = new CompletableFuture<>();
-
-        // Ensure FileChooser runs on JavaFX Application Thread
         if (Platform.isFxApplicationThread()) {
-            // Already on FX thread, execute directly
             handleFileSelection(animal, place, vaccines, parentStage, future);
         } else {
-            // Not on FX thread, switch to it
             Platform.runLater(() -> handleFileSelection(animal, place, vaccines, parentStage, future));
         }
-
         return future;
     }
 
-    /**
-     * Handles the file selection dialog and PDF generation
-     */
     private void handleFileSelection(Animal animal, Place place, List<Vaccine> vaccines, Stage parentStage, CompletableFuture<String> future) {
         try {
             FileChooser fileChooser = new FileChooser();
             fileChooser.setTitle("Guardar Expediente del Animal");
-            fileChooser.getExtensionFilters().add(
-                    new FileChooser.ExtensionFilter("PDF files (*.pdf)", "*.pdf")
-            );
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF files (*.pdf)", "*.pdf"));
 
-            // Create default filename
-            String animalName = animal.getName() != null && !animal.getName().trim().isEmpty()
+            String animalName = animal.getName() != null && !animal.getName().isBlank()
                     ? animal.getName().replaceAll("[^a-zA-Z0-9]", "_")
                     : "Animal";
-            String defaultFileName = "Expediente_" + animalName + "_" + animal.getRecordNumber() + ".pdf";
-            fileChooser.setInitialFileName(defaultFileName);
+            fileChooser.setInitialFileName("Expediente_" + animalName + "_" + animal.getRecordNumber() + ".pdf");
 
-            // Show save dialog
             File file = fileChooser.showSaveDialog(parentStage);
-
-            if (file != null) {
-                // Generate PDF in background thread
-                CompletableFuture.runAsync(() -> {
-                    try {
-                        exportAnimalRecord(animal, place, vaccines, file.getAbsolutePath());
-                        future.complete(file.getAbsolutePath());
-                    } catch (Exception e) {
-                        future.completeExceptionally(e);
-                    }
-                });
-            } else {
-                future.complete(null); // User cancelled
+            if (file == null) {
+                future.complete(null);
+                return;
             }
+            CompletableFuture.runAsync(() -> {
+                try {
+                    exportAnimalRecord(animal, place, vaccines, file.getAbsolutePath());
+                    future.complete(file.getAbsolutePath());
+                } catch (Exception e) {
+                    future.completeExceptionally(e);
+                }
+            });
         } catch (Exception e) {
             future.completeExceptionally(e);
         }
     }
 
     /**
-     * Exports an animal's complete medical record to PDF format.
+     * Writes the record to {@code filePath}.
      *
-     * @param animal The animal whose record will be exported
-     * @param place The place where the animal was rescued
-     * @param vaccines List of vaccines administered to the animal
-     * @param filePath Destination path for the PDF file
-     * @throws IOException if the file path is invalid or the standard fonts cannot be loaded
+     * @throws IOException if the file cannot be written or the document cannot be built
      */
     public void exportAnimalRecord(Animal animal, Place place, List<Vaccine> vaccines, String filePath)
             throws IOException {
-
-        ReportFonts fonts = ReportFonts.create();
-
-        // All three are closed in reverse order, so a failure while constructing the PdfDocument or
-        // the Document still releases the writer. Leaking it would leave the half-written file
-        // locked on Windows, and the user would be told the export failed for the wrong reason.
-        try (PdfWriter writer = new PdfWriter(filePath);
-             PdfDocument pdf = new PdfDocument(writer);
-             Document document = new Document(pdf)) {
-
-            addHeader(document, animal, fonts);
-            addAnimalDetails(document, animal, place, fonts);
-            addVaccineHistory(document, vaccines, fonts);
-            addFooter(document);
+        // The stream is closed on every path, so a failure while building the
+        // document never leaves a half-written file locked on Windows.
+        try (OutputStream out = new FileOutputStream(filePath)) {
+            Document document = new Document();
+            PdfWriter writer = PdfWriter.getInstance(document, out);
+            writer.setPageEvent(new Footer());
+            document.open();
+            try {
+                addHeader(document, animal);
+                addAnimalDetails(document, animal, place);
+                addVaccineHistory(document, vaccines);
+            } finally {
+                document.close();
+            }
+        } catch (DocumentException e) {
+            throw new IOException("Could not build the PDF for " + animal.getRecordNumber(), e);
         }
     }
 
-    /**
-     * Adds the document header with title and animal identification.
-     */
-    private void addHeader(Document document, Animal animal, ReportFonts fonts) {
-        // Title
-        Paragraph title = new Paragraph("EXPEDIENTE")
-                .setFontSize(20)
-                .setFont(fonts.bold())
-                .setFontColor(HEADER_COLOR)
-                .setTextAlignment(TextAlignment.CENTER)
-                .setMarginBottom(10);
+    private void addHeader(Document document, Animal animal) {
+        Paragraph title = new Paragraph("EXPEDIENTE", font(FontFactory.HELVETICA_BOLD, 20, HEADER_COLOR));
+        title.setAlignment(Element.ALIGN_CENTER);
+        title.setSpacingAfter(10);
         document.add(title);
 
-        // Animal ID
-        Paragraph animalId = new Paragraph("Registro N°: " + animal.getRecordNumber())
-                .setFontSize(14)
-                .setFont(fonts.bold())
-                .setFontColor(ACCENT_COLOR)
-                .setTextAlignment(TextAlignment.CENTER)
-                .setMarginBottom(20);
+        Paragraph animalId = new Paragraph("Registro N°: " + animal.getRecordNumber(),
+                font(FontFactory.HELVETICA_BOLD, 14, ACCENT_COLOR));
+        animalId.setAlignment(Element.ALIGN_CENTER);
+        animalId.setSpacingAfter(20);
         document.add(animalId);
 
-        // Generation date
-        Paragraph generationDate = new Paragraph("Generado el: " +
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")))
-                .setFontSize(10)
-                .setTextAlignment(TextAlignment.RIGHT)
-                .setMarginBottom(30);
-        document.add(generationDate);
+        Paragraph generated = new Paragraph("Generado el: "
+                + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")),
+                font(FontFactory.HELVETICA, 10, Color.BLACK));
+        generated.setAlignment(Element.ALIGN_RIGHT);
+        generated.setSpacingAfter(30);
+        document.add(generated);
     }
 
-    /**
-     * Adds animal basic information section.
-     */
-    private void addAnimalDetails(Document document, Animal animal, Place place, ReportFonts fonts) {
-        // Section title
-        Paragraph sectionTitle = new Paragraph("INFORMACIÓN DEL ANIMAL")
-                .setFontSize(16)
-                .setFont(fonts.bold())
-                .setFontColor(HEADER_COLOR)
-                .setMarginBottom(15);
-        document.add(sectionTitle);
+    private void addAnimalDetails(Document document, Animal animal, Place place) {
+        document.add(sectionTitle("INFORMACIÓN DEL ANIMAL"));
 
-        // Create table for animal details
-        Table table = new Table(2);
-        table.setWidth(UnitValue.createPercentValue(100));
+        PdfPTable table = new PdfPTable(2);
+        table.setWidthPercentage(100);
 
-        addDetailRow(table, "Nombre:", validateField(animal.getName()), fonts);
-        addDetailRow(table, "Especie:", validateField(animal.getSpecies()), fonts);
-        addDetailRow(table, "Sexo:", validateField(animal.getSex()), fonts);
-
-        String ageText = animal.getApproximateAge() == 1 ?
-                animal.getApproximateAge() + " año" :
-                animal.getApproximateAge() + " años";
-        addDetailRow(table, "Edad Aproximada:", ageText, fonts);
-
-        addDetailRow(table, "Fecha de Ingreso:",
-                formatDate(animal.getAdmissionDate()), fonts);
-        addDetailRow(table, "Fecha de Castración:",
-                formatDate(animal.getNeuteringDate()), fonts);
-        addDetailRow(table, "Número de Chip:", validateField(animal.getChipNumber()), fonts);
-        addDetailRow(table, "Recogido por:", validateField(animal.getCollectedBy()), fonts);
-
-        if (place != null) {
-            addDetailRow(table, "Lugar de Rescate:",
-                    place.name() + ", " + place.provinceName(), fonts);
-        } else {
-            addDetailRow(table, "Lugar de Rescate:", "Sin información", fonts);
-        }
-
+        addDetailRow(table, "Nombre:", orNoInfo(animal.getName()));
+        addDetailRow(table, "Especie:", orNoInfo(animal.getSpecies()));
+        addDetailRow(table, "Sexo:", orNoInfo(animal.getSex()));
+        int age = animal.getApproximateAge();
+        addDetailRow(table, "Edad Aproximada:", age + (age == 1 ? " año" : " años"));
+        addDetailRow(table, "Fecha de Ingreso:", formatDate(animal.getAdmissionDate()));
+        addDetailRow(table, "Fecha de Castración:", formatDate(animal.getNeuteringDate()));
+        addDetailRow(table, "Número de Chip:", orNoInfo(animal.getChipNumber()));
+        addDetailRow(table, "Recogido por:", orNoInfo(animal.getCollectedBy()));
+        addDetailRow(table, "Lugar de Rescate:",
+                place != null ? place.name() + ", " + place.provinceName() : NO_INFO);
         document.add(table);
 
-        // Add multi-line fields
         if (animal.getReasonForRescue() != null && !animal.getReasonForRescue().isEmpty()) {
-            addMultilineField(document, "Razón de Rescate:", animal.getReasonForRescue(), fonts);
+            addMultilineField(document, "Razón de Rescate:", animal.getReasonForRescue());
         }
-
         if (animal.getAilments() != null && !animal.getAilments().isEmpty()) {
-            addMultilineField(document, "Afecciones Médicas:", animal.getAilments(), fonts);
+            addMultilineField(document, "Afecciones Médicas:", animal.getAilments());
         }
 
-        document.add(new Paragraph().setMarginBottom(20));
+        Paragraph spacer = new Paragraph(" ");
+        spacer.setSpacingAfter(20);
+        document.add(spacer);
     }
 
-    /**
-     * Adds vaccination history section.
-     */
-    private void addVaccineHistory(Document document, List<Vaccine> vaccines, ReportFonts fonts) {
-        Paragraph sectionTitle = new Paragraph("HISTORIAL DE VACUNACIÓN")
-                .setFontSize(16)
-                .setFont(fonts.bold())
-                .setFontColor(HEADER_COLOR)
-                .setMarginBottom(15);
-        document.add(sectionTitle);
+    private void addVaccineHistory(Document document, List<Vaccine> vaccines) {
+        document.add(sectionTitle("HISTORIAL DE VACUNACIÓN"));
 
         if (vaccines == null || vaccines.isEmpty()) {
-            Paragraph noVaccines = new Paragraph("No hay registros de vacunación disponibles.")
-                    .setFontColor(ColorConstants.GRAY)
-                    .setFont(fonts.italic())
-                    .setMarginBottom(20);
-            document.add(noVaccines);
+            Paragraph none = new Paragraph("No hay registros de vacunación disponibles.",
+                    font(FontFactory.HELVETICA_OBLIQUE, 12, Color.GRAY));
+            none.setSpacingAfter(20);
+            document.add(none);
             return;
         }
 
-        // Two columns, matching the two cells written per vaccine below. Declaring more would
-        // make iText pack several vaccines into a single physical row.
-        Table vaccineTable = new Table(2);
-        vaccineTable.setWidth(UnitValue.createPercentValue(100));
-
-        // Headers
-        vaccineTable.addHeaderCell(createHeaderCell("Vacuna", fonts));
-        vaccineTable.addHeaderCell(createHeaderCell("Fecha", fonts));
-
-        // Data rows
+        // Two columns, matching the two cells written per vaccine below. Declaring
+        // more would pack several vaccines into a single physical row.
+        PdfPTable table = new PdfPTable(2);
+        table.setWidthPercentage(100);
+        table.setHeaderRows(1);
+        table.addCell(headerCell("Vacuna"));
+        table.addCell(headerCell("Fecha"));
         for (Vaccine vaccine : vaccines) {
-            vaccineTable.addCell(createDataCell(validateField(vaccine.getVaccineName())));
-            vaccineTable.addCell(createDataCell(formatDate(vaccine.getVaccinationDate())));
+            table.addCell(dataCell(orNoInfo(vaccine.getVaccineName())));
+            table.addCell(dataCell(formatDate(vaccine.getVaccinationDate())));
         }
-
-        document.add(vaccineTable);
+        document.add(table);
     }
 
     /**
-     * Adds document footer with generation info.
+     * Drawn in the bottom margin of every page. As a paragraph at the end of the
+     * flow it spilled onto a page of its own whenever the record nearly filled one.
      */
-    private void addFooter(Document document) {
-        document.add(new Paragraph().setMarginTop(30));
-
-        Paragraph footer = new Paragraph("Documento generado automáticamente por el Sistema de Gestión de Animales")
-                .setFontSize(8)
-                .setFontColor(ColorConstants.GRAY)
-                .setTextAlignment(TextAlignment.CENTER);
-        document.add(footer);
+    private static final class Footer extends PdfPageEventHelper {
+        @Override
+        public void onEndPage(PdfWriter writer, Document document) {
+            ColumnText.showTextAligned(writer.getDirectContent(), Element.ALIGN_CENTER,
+                    new Phrase("Documento generado automáticamente por el Sistema de Gestión de Animales",
+                            font(FontFactory.HELVETICA, 8, Color.GRAY)),
+                    (document.left() + document.right()) / 2, document.bottom() - 18, 0);
+        }
     }
 
-    // Helper methods
-    private void addDetailRow(Table table, String label, String value, ReportFonts fonts) {
-        table.addCell(createLabelCell(label, fonts));
-        table.addCell(createValueCell(value));
+    private static Paragraph sectionTitle(String text) {
+        Paragraph title = new Paragraph(text, font(FontFactory.HELVETICA_BOLD, 16, HEADER_COLOR));
+        title.setSpacingAfter(15);
+        return title;
     }
 
-    private void addMultilineField(Document document, String label, String value, ReportFonts fonts) {
-        Paragraph fieldLabel = new Paragraph(label)
-                .setFont(fonts.bold())
-                .setFontColor(HEADER_COLOR)
-                .setMarginTop(10)
-                .setMarginBottom(5);
+    private static void addDetailRow(PdfPTable table, String label, String value) {
+        PdfPCell labelCell = new PdfPCell(new Phrase(label, font(FontFactory.HELVETICA_BOLD, 12, Color.BLACK)));
+        labelCell.setBackgroundColor(LIGHT_GRAY);
+        labelCell.setPadding(8);
+        table.addCell(labelCell);
+
+        PdfPCell valueCell = new PdfPCell(new Phrase(value, font(FontFactory.HELVETICA, 12, Color.BLACK)));
+        valueCell.setPadding(8);
+        table.addCell(valueCell);
+    }
+
+    private static void addMultilineField(Document document, String label, String value) {
+        Paragraph fieldLabel = new Paragraph(label, font(FontFactory.HELVETICA_BOLD, 12, HEADER_COLOR));
+        fieldLabel.setSpacingBefore(10);
+        fieldLabel.setSpacingAfter(5);
         document.add(fieldLabel);
 
-        Paragraph fieldValue = new Paragraph(validateField(value))
-                .setBackgroundColor(LIGHT_GRAY)
-                .setPadding(8)
-                .setMarginBottom(10);
-        document.add(fieldValue);
+        // A one-cell table rather than a paragraph, because only a cell can carry
+        // the shaded background and padding the section is drawn with.
+        PdfPTable box = new PdfPTable(1);
+        box.setWidthPercentage(100);
+        PdfPCell cell = new PdfPCell(new Phrase(orNoInfo(value), font(FontFactory.HELVETICA, 12, Color.BLACK)));
+        cell.setBackgroundColor(LIGHT_GRAY);
+        cell.setPadding(8);
+        cell.setBorder(Rectangle.NO_BORDER);
+        box.addCell(cell);
+        box.setSpacingAfter(10);
+        document.add(box);
     }
 
-    private Cell createHeaderCell(String text, ReportFonts fonts) {
-        return new Cell()
-                .add(new Paragraph(text).setFont(fonts.bold()).setFontColor(ColorConstants.WHITE))
-                .setBackgroundColor(ACCENT_COLOR)
-                .setPadding(8)
-                .setTextAlignment(TextAlignment.CENTER);
+    private static PdfPCell headerCell(String text) {
+        PdfPCell cell = new PdfPCell(new Phrase(text, font(FontFactory.HELVETICA_BOLD, 12, Color.WHITE)));
+        cell.setBackgroundColor(ACCENT_COLOR);
+        cell.setPadding(8);
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        return cell;
     }
 
-    private Cell createDataCell(String text) {
-        return new Cell()
-                .add(new Paragraph(text))
-                .setPadding(6)
-                .setBorder(new SolidBorder(ColorConstants.LIGHT_GRAY, 1));
+    private static PdfPCell dataCell(String text) {
+        PdfPCell cell = new PdfPCell(new Phrase(text, font(FontFactory.HELVETICA, 12, Color.BLACK)));
+        cell.setPadding(6);
+        cell.setBorderColor(BORDER_GRAY);
+        return cell;
     }
 
-    private Cell createLabelCell(String text, ReportFonts fonts) {
-        return new Cell()
-                .add(new Paragraph(text).setFont(fonts.bold()))
-                .setBackgroundColor(LIGHT_GRAY)
-                .setPadding(8);
+    private static Font font(String name, float size, Color color) {
+        return FontFactory.getFont(name, size, Font.NORMAL, color);
     }
 
-    private Cell createValueCell(String text) {
-        return new Cell()
-                .add(new Paragraph(text))
-                .setPadding(8);
+    private static String orNoInfo(String value) {
+        return (value == null || value.isBlank()) ? NO_INFO : value;
     }
 
-    private String validateField(String value) {
-        return (value == null || value.trim().isEmpty()) ? "Sin información" : value;
-    }
-
-    private String formatDate(String dateString) {
-        if (dateString == null || dateString.isEmpty()) {
-            return "Sin información";
+    private static String formatDate(String stored) {
+        if (stored == null || stored.isEmpty()) {
+            return NO_INFO;
         }
         try {
-            return DateUtils.utcStringToLocalDate(dateString)
-                    .format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            return DateUtils.utcStringToLocalDate(stored).format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
         } catch (Exception e) {
             return "Fecha inválida";
         }

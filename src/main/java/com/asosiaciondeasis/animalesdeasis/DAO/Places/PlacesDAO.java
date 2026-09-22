@@ -3,6 +3,7 @@ package com.asosiaciondeasis.animalesdeasis.DAO.Places;
 import com.asosiaciondeasis.animalesdeasis.Abstraccions.Places.IPlaceDAO;
 import com.asosiaciondeasis.animalesdeasis.Model.Place;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,10 +12,10 @@ import java.util.List;
 
 public class PlacesDAO implements IPlaceDAO {
 
-    private final Connection conn;
+    private final DataSource dataSource;
 
-    public PlacesDAO(Connection conn) {
-        this.conn = conn;
+    public PlacesDAO(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     @Override
@@ -27,7 +28,8 @@ public class PlacesDAO implements IPlaceDAO {
                 ORDER BY p.name
                 """;
 
-        try (PreparedStatement stmt = conn.prepareStatement(sql);
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
                 places.add(new Place(rs.getInt("id"), rs.getString("name"), rs.getString("province_name")));

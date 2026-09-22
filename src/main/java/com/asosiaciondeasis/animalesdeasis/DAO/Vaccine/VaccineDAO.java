@@ -1,52 +1,256 @@
 package com.asosiaciondeasis.animalesdeasis.DAO.Vaccine;
 
 import com.asosiaciondeasis.animalesdeasis.Abstraccions.Vaccines.IVaccineDAO;
+import com.asosiaciondeasis.animalesdeasis.Abstraccions.RowVersion;
+import com.asosiaciondeasis.animalesdeasis.DAO.RowVersionGuard;
+import com.asosiaciondeasis.animalesdeasis.DAO.Transactions;
 import com.asosiaciondeasis.animalesdeasis.Model.Vaccine;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
+/** SQLite implementation of {@link IVaccineDAO}. Each call opens its own connection. */
 public class VaccineDAO implements IVaccineDAO {
 
-    private final Connection conn;
+    private static final String COLUMNS = "id, animal_record_number, vaccine_name, vaccination_date, synced, last_modified";
+    /** A missing timestamp is stamped now rather than breaking {@code NOT NULL}. */
+    private static final String VALUES = "VALUES (?, ?, ?, ?, ?, COALESCE(?, datetime('now', 'utc')))";
 
-    public VaccineDAO(Connection conn) {
-        this.conn = conn;
+    private final DataSource dataSource;
+
+    public VaccineDAO(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
-    /**
-     * Inserts a vaccine. {@code last_modified} is kept when the record comes from
-     * Firebase and stamped now otherwise.
-     */
+
     @Override
     public void insertVaccine(Vaccine vaccine) throws Exception {
-        String sql = """
-                INSERT INTO vaccines (id, animal_record_number, vaccine_name, vaccination_date, synced, last_modified)
-                VALUES (?, ?, ?, ?, ?, COALESCE(?, datetime('now', 'utc')))
-                """;
-
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, vaccine.getId());
-            pstmt.setString(2, vaccine.getAnimalRecordNumber());
-            pstmt.setString(3, vaccine.getVaccineName());
-            pstmt.setString(4, vaccine.getVaccinationDate());
-            pstmt.setInt(5, vaccine.isSynced() ? 1 : 0);
-            pstmt.setString(6, blankToNull(vaccine.getLastModified()));
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement("INSERT INTO vaccines (" + COLUMNS + ") " + VALUES)) {
+            bind(pstmt, vaccine);
             pstmt.executeUpdate();
         } catch (SQLException e) {
             throw new Exception("Error inserting vaccine", e);
         }
     }
+
     @Override
     public List<Vaccine> getVaccinesByAnimal(String animalRecordNumber) throws Exception {
-        List<Vaccine> vaccines = new ArrayList<>();
-        String sql = "SELECT * FROM vaccines WHERE animal_record_number = ? ORDER BY vaccination_date DESC";
+        return queryVaccines("SELECT * FROM vaccines WHERE animal_record_number = ? ORDER BY vaccination_date DESC",
+                animalRecordNumber);
+    }
 
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, animalRecordNumber);
+    @Override
+    public Vaccine findById(String id) throws Exception {
+        List<Vaccine> found = queryVaccines("SELECT * FROM vaccines WHERE id = ?", id);
+        return found.isEmpty() ? null : found.get(0);
+    }
+
+    @Override
+    public void updateVaccine(Vaccine vaccine) throws Exception {
+        String sql = """
+                UPDATE vaccines
+                SET vaccine_name = ?, vaccination_date = ?, synced = ?, last_modified = datetime('now', 'utc')
+                WHERE id = ?
+                """;
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, vaccine.getVaccineName());
+            pstmt.setString(2, vaccine.getVaccinationDate());
+            pstmt.setInt(3, vaccine.isSynced() ? 1 : 0);
+            pstmt.setString(4, vaccine.getId());
+            if (pstmt.executeUpdate() == 0) {
+                throw new Exception("No vaccine found with ID: " + vaccine.getId());
+            }
+        } catch (SQLException e) {
+            throw new Exception("Error updating vaccine", e);
+        }
+    }
+
+    /**
+     * Deletes a vaccine and records that it was deleted.
+     *
+     * <p>The row itself is removed - this is a hard delete, unlike animals, which
+     * carry an {@code active} flag that synchronises like any other change. The
+     * tombstone in {@code deleted_vaccines} is what makes the deletion survive
+     * long enough to reach Firebase; without it the next pull found the row still
+     * in Firebase, saw nothing locally, and put it back.</p>
+     */
+    @Override
+    public void deleteVaccine(String id) throws Exception {
+        Transactions.inTransaction(dataSource, conn -> {
+            // Read the owning animal before the row goes: the tombstone needs it to
+            // address the remote document, and afterwards there is nowhere to get it.
+            String animalRecordNumber;
+            try (PreparedStatement lookup = conn.prepareStatement(
+                    "SELECT animal_record_number FROM vaccines WHERE id = ?")) {
+                lookup.setString(1, id);
+                try (ResultSet rs = lookup.executeQuery()) {
+                    if (!rs.next()) {
+                        throw new Exception("No vaccine found with the provided ID.");
+                    }
+                    animalRecordNumber = rs.getString(1);
+                }
+            }
+            try (PreparedStatement tombstone = conn.prepareStatement(
+                    "INSERT OR REPLACE INTO deleted_vaccines (id, animal_record_number) VALUES (?, ?)")) {
+                tombstone.setString(1, id);
+                tombstone.setString(2, animalRecordNumber);
+                tombstone.executeUpdate();
+            }
+            try (PreparedStatement delete = conn.prepareStatement("DELETE FROM vaccines WHERE id = ?")) {
+                delete.setString(1, id);
+                delete.executeUpdate();
+            }
+            return null;
+        });
+    }
+
+    // -------------------------------------------------------------------------
+    //  Synchronisation
+    // -------------------------------------------------------------------------
+
+    @Override
+    public List<Vaccine> getAllUnsyncedVaccines() throws Exception {
+        return queryVaccines("SELECT * FROM vaccines WHERE synced = 0");
+    }
+
+    @Override
+    public List<Vaccine> getAllVaccines() throws Exception {
+        return queryVaccines("SELECT * FROM vaccines");
+    }
+
+    @Override
+    public void saveFromRemote(List<Vaccine> vaccines, Map<String, RowVersion> expected) throws Exception {
+        if (vaccines.isEmpty()) {
+            return;
+        }
+        String sql = "INSERT INTO vaccines (" + COLUMNS + ") " + VALUES + """
+
+                ON CONFLICT(id) DO UPDATE SET
+                    animal_record_number = excluded.animal_record_number,
+                    vaccine_name = excluded.vaccine_name,
+                    vaccination_date = excluded.vaccination_date,
+                    synced = excluded.synced,
+                    last_modified = excluded.last_modified
+                WHERE vaccines.last_modified IS ? AND vaccines.synced IS ?
+                """;
+        Transactions.inTransaction(dataSource, conn -> {
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                for (Vaccine vaccine : vaccines) {
+                    bind(pstmt, vaccine);
+                    RowVersionGuard.bind(pstmt, 7, expected.get(vaccine.getId()));
+                    pstmt.addBatch();
+                }
+                pstmt.executeBatch();
+            }
+            return null;
+        });
+    }
+
+    /** Only rows that were synced when read and have not changed since. */
+    @Override
+    public void deleteRemovedRemotely(Map<String, RowVersion> expected) throws Exception {
+        if (expected.isEmpty()) {
+            return;
+        }
+        Transactions.inTransaction(dataSource, conn -> {
+            try (PreparedStatement pstmt = conn.prepareStatement(
+                    "DELETE FROM vaccines WHERE id = ? AND synced = 1 AND last_modified IS ? AND synced IS ?")) {
+                for (Map.Entry<String, RowVersion> entry : expected.entrySet()) {
+                    pstmt.setString(1, entry.getKey());
+                    RowVersionGuard.bind(pstmt, 2, entry.getValue());
+                    pstmt.addBatch();
+                }
+                pstmt.executeBatch();
+            }
+            return null;
+        });
+    }
+
+    @Override
+    public int markSynced(List<Vaccine> pushed) throws Exception {
+        if (pushed.isEmpty()) {
+            return 0;
+        }
+        // IS rather than = so that NULL matches NULL.
+        String sql = """
+                UPDATE vaccines SET synced = 1
+                WHERE id = ? AND animal_record_number IS ? AND vaccine_name IS ?
+                  AND vaccination_date IS ? AND last_modified IS ?
+                """;
+        return Transactions.inTransaction(dataSource, conn -> {
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                for (Vaccine vaccine : pushed) {
+                    pstmt.setString(1, vaccine.getId());
+                    pstmt.setString(2, vaccine.getAnimalRecordNumber());
+                    pstmt.setString(3, vaccine.getVaccineName());
+                    pstmt.setString(4, vaccine.getVaccinationDate());
+                    pstmt.setString(5, vaccine.getLastModified());
+                    pstmt.addBatch();
+                }
+                int marked = 0;
+                for (int count : pstmt.executeBatch()) {
+                    marked += Math.max(count, 0);
+                }
+                return marked;
+            }
+        });
+    }
+
+    @Override
+    public Map<String, String> getPendingDeletions() throws Exception {
+        Map<String, String> pending = new LinkedHashMap<>();
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(
+                     "SELECT id, animal_record_number FROM deleted_vaccines ORDER BY deleted_at");
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                pending.put(rs.getString(1), rs.getString(2));
+            }
+        }
+        return pending;
+    }
+
+    /**
+     * Only once the deletion has been applied remotely. Dropping a tombstone
+     * earlier would let the record come back on the next pull.
+     */
+    @Override
+    public void clearPendingDeletions(Collection<String> vaccineIds) throws Exception {
+        executeForEach("DELETE FROM deleted_vaccines WHERE id = ?", vaccineIds);
+    }
+
+    private void executeForEach(String sql, Collection<String> ids) throws Exception {
+        if (ids.isEmpty()) {
+            return;
+        }
+        Transactions.inTransaction(dataSource, conn -> {
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                for (String id : ids) {
+                    pstmt.setString(1, id);
+                    pstmt.addBatch();
+                }
+                pstmt.executeBatch();
+            }
+            return null;
+        });
+    }
+
+    private List<Vaccine> queryVaccines(String sql, String... params) throws Exception {
+        List<Vaccine> vaccines = new ArrayList<>();
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            for (int i = 0; i < params.length; i++) {
+                pstmt.setString(i + 1, params[i]);
+            }
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     vaccines.add(mapResultSetToVaccine(rs));
@@ -57,155 +261,18 @@ public class VaccineDAO implements IVaccineDAO {
         }
         return vaccines;
     }
-    /**
-     * @param timestamp {@code true} stamps {@code last_modified} now (a local
-     *                  edit); {@code false} keeps the vaccine's own value (a record
-     *                  applied from Firebase)
-     */
-    @Override
-    public void updateVaccine(Vaccine vaccine, boolean timestamp) throws Exception {
-        String sql = """
-                UPDATE vaccines
-                SET vaccine_name = ?, vaccination_date = ?, synced = ?,
-                    last_modified = COALESCE(?, datetime('now', 'utc'))
-                WHERE id = ?
-                """;
 
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, vaccine.getVaccineName());
-            pstmt.setString(2, vaccine.getVaccinationDate());
-            pstmt.setInt(3, vaccine.isSynced() ? 1 : 0);
-            pstmt.setString(4, timestamp ? null : blankToNull(vaccine.getLastModified()));
-            pstmt.setString(5, vaccine.getId());
+    /** Fills parameters 1-6 in {@link #COLUMNS} order. */
+    private static void bind(PreparedStatement pstmt, Vaccine vaccine) throws SQLException {
+        pstmt.setString(1, vaccine.getId());
+        pstmt.setString(2, vaccine.getAnimalRecordNumber());
+        pstmt.setString(3, vaccine.getVaccineName());
+        pstmt.setString(4, vaccine.getVaccinationDate());
+        pstmt.setInt(5, vaccine.isSynced() ? 1 : 0);
+        String lastModified = vaccine.getLastModified();
+        pstmt.setString(6, (lastModified == null || lastModified.isBlank()) ? null : lastModified);
+    }
 
-            if (pstmt.executeUpdate() == 0) {
-                throw new Exception("No vaccine found with ID: " + vaccine.getId());
-            }
-        } catch (SQLException e) {
-            throw new Exception("Error updating vaccine", e);
-        }
-    }
-    /**
-     * Deletes a vaccine and records that it was deleted.
-     *
-     * <p>The row itself is removed - this is a hard delete, unlike animals, which
-     * carry an {@code active} flag that synchronises like any other change. The
-     * tombstone in {@code deleted_vaccines} is what makes the deletion survive
-     * long enough to reach Firebase.</p>
-     *
-     * <p>Without it, deleting a vaccine offline left nothing behind, so the next
-     * pull found the row still in Firebase, saw nothing locally, and treated it
-     * as new. The record came back days later with no explanation.</p>
-     *
-     * <p>Both statements run in one transaction. A row removed without its
-     * tombstone written is exactly the bug this is here to fix, so they cannot be
-     * allowed to come apart.</p>
-     */
-    @Override
-    public void deleteVaccine(String id) throws Exception {
-        // Read the owning animal before the row goes: the tombstone needs it to
-        // address the remote document, and afterwards there is nowhere to get it.
-        String animalRecordNumber = null;
-        try (PreparedStatement lookup = conn.prepareStatement(
-                "SELECT animal_record_number FROM vaccines WHERE id = ?")) {
-            lookup.setString(1, id);
-            try (ResultSet rs = lookup.executeQuery()) {
-                if (rs.next()) {
-                    animalRecordNumber = rs.getString("animal_record_number");
-                }
-            }
-        }
-        if (animalRecordNumber == null) {
-            throw new Exception("No vaccine found with the provided ID.");
-        }
-        boolean previousAutoCommit = conn.getAutoCommit();
-        conn.setAutoCommit(false);
-        try {
-            try (PreparedStatement tombstone = conn.prepareStatement(
-                    "INSERT OR REPLACE INTO deleted_vaccines (id, animal_record_number) VALUES (?, ?)")) {
-                tombstone.setString(1, id);
-                tombstone.setString(2, animalRecordNumber);
-                tombstone.executeUpdate();
-            }
-            try (PreparedStatement delete = conn.prepareStatement(
-                    "DELETE FROM vaccines WHERE id = ?")) {
-                delete.setString(1, id);
-                if (delete.executeUpdate() == 0) {
-                    throw new Exception("No vaccine found with the provided ID.");
-                }
-            }
-            conn.commit();
-        } catch (Exception e) {
-            conn.rollback();
-            throw new Exception("Error deleting vaccine", e);
-        } finally {
-            conn.setAutoCommit(previousAutoCommit);
-        }
-    }
-    @Override
-    public List<String> getPendingDeletions() throws Exception {
-        List<String> ids = new ArrayList<>();
-        try (PreparedStatement pstmt = conn.prepareStatement(
-                     "SELECT id FROM deleted_vaccines ORDER BY deleted_at");
-             ResultSet rs = pstmt.executeQuery()) {
-            while (rs.next()) {
-                ids.add(rs.getString("id"));
-            }
-        }
-        return ids;
-    }
-    @Override
-    public String getPendingDeletionAnimal(String vaccineId) throws Exception {
-        try (PreparedStatement pstmt = conn.prepareStatement(
-                "SELECT animal_record_number FROM deleted_vaccines WHERE id = ?")) {
-            pstmt.setString(1, vaccineId);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                return rs.next() ? rs.getString("animal_record_number") : null;
-            }
-        }
-    }
-    /**
-     * Removes a tombstone once the deletion has been applied remotely.
-     *
-     * <p>Only then. Dropping it earlier would restore the original bug, with the
-     * deletion lost and the record free to return on the next pull.</p>
-     */
-    @Override
-    public void clearPendingDeletion(String vaccineId) throws Exception {
-        try (PreparedStatement pstmt = conn.prepareStatement(
-                "DELETE FROM deleted_vaccines WHERE id = ?")) {
-            pstmt.setString(1, vaccineId);
-            pstmt.executeUpdate();
-        }
-    }
-    @Override
-    public List<Vaccine> getAllUnsyncedVaccines() throws Exception {
-        List<Vaccine> vaccines = new ArrayList<>();
-        String sql = "SELECT * FROM vaccines WHERE synced = 0";
-
-        try (PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
-            while (rs.next()) {
-                vaccines.add(mapResultSetToVaccine(rs));
-            }
-        } catch (SQLException e) {
-            throw new Exception("Error retrieving all unsynced vaccines", e);
-        }
-        return vaccines;
-    }
-    @Override
-    public Vaccine existsVaccine(String id) throws Exception {
-        String sql = "SELECT * FROM vaccines WHERE id = ?";
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, id);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                return rs.next() ? mapResultSetToVaccine(rs) : null;
-            }
-        }
-    }
-    private static String blankToNull(String value) {
-        return (value == null || value.isBlank()) ? null : value;
-    }
     private Vaccine mapResultSetToVaccine(ResultSet rs) throws SQLException {
         Vaccine vaccine = Vaccine.fromExistingRecord(rs.getString("id"));
         vaccine.setAnimalRecordNumber(rs.getString("animal_record_number"));

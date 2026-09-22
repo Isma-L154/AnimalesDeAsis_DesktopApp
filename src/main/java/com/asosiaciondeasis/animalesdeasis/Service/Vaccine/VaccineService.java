@@ -26,6 +26,6 @@ public class VaccineService implements IVaccineService {
 
     @Override
     public void updateVaccine(Vaccine vaccine) throws Exception {
-        vaccineDAO.updateVaccine(vaccine, true);
+        vaccineDAO.updateVaccine(vaccine);
     }
 }

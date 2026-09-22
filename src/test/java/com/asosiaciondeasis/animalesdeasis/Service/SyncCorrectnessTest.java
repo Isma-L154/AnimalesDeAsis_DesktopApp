@@ -15,6 +15,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -38,6 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class SyncCorrectnessTest {
 
+    private TestSupport.TestDatabase db;
     private Connection conn;
     private AnimalDAO animalDAO;
     private VaccineDAO vaccineDAO;
@@ -45,15 +47,16 @@ class SyncCorrectnessTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        conn = TestSupport.newInMemoryDatabase();
+        db = TestSupport.newDatabase();
+        conn = db.connection();
         placeId = TestSupport.seedPlace(conn);
-        animalDAO = new AnimalDAO(conn);
-        vaccineDAO = new VaccineDAO(conn);
+        animalDAO = new AnimalDAO(db.dataSource());
+        vaccineDAO = new VaccineDAO(db.dataSource());
     }
 
     @AfterEach
     void tearDown() throws Exception {
-        conn.close();
+        db.close();
     }
 
     private Animal newStoredAnimal() throws Exception {
@@ -84,8 +87,8 @@ class SyncCorrectnessTest {
 
         vaccineDAO.deleteVaccine(vaccine.getId());
 
-        assertNull(vaccineDAO.existsVaccine(vaccine.getId()), "the row itself is gone");
-        assertEquals(List.of(vaccine.getId()), vaccineDAO.getPendingDeletions(),
+        assertNull(vaccineDAO.findById(vaccine.getId()), "the row itself is gone");
+        assertEquals(Map.of(vaccine.getId(), animal.getRecordNumber()), vaccineDAO.getPendingDeletions(),
                 "without this the deletion is invisible to the next sync");
     }
 
@@ -102,7 +105,7 @@ class SyncCorrectnessTest {
         vaccineDAO.deleteVaccine(vaccine.getId());
 
         assertEquals(animal.getRecordNumber(),
-                vaccineDAO.getPendingDeletionAnimal(vaccine.getId()));
+                vaccineDAO.getPendingDeletions().get(vaccine.getId()));
     }
 
     @Test
@@ -112,10 +115,10 @@ class SyncCorrectnessTest {
         Vaccine vaccine = newStoredVaccine(animal.getRecordNumber());
         vaccineDAO.deleteVaccine(vaccine.getId());
 
-        vaccineDAO.clearPendingDeletion(vaccine.getId());
+        vaccineDAO.clearPendingDeletions(List.of(vaccine.getId()));
 
         assertTrue(vaccineDAO.getPendingDeletions().isEmpty());
-        assertNull(vaccineDAO.getPendingDeletionAnimal(vaccine.getId()));
+        assertNull(vaccineDAO.getPendingDeletions().get(vaccine.getId()));
     }
 
     /**
@@ -145,7 +148,7 @@ class SyncCorrectnessTest {
         }
 
         assertEquals(5, vaccineDAO.getPendingDeletions().size());
-        assertTrue(vaccineDAO.getPendingDeletions().containsAll(ids));
+        assertTrue(vaccineDAO.getPendingDeletions().keySet().containsAll(ids));
     }
 
     /**

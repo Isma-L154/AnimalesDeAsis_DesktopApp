@@ -9,6 +9,7 @@ import com.asosiaciondeasis.animalesdeasis.Model.Place;
 import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
 import com.asosiaciondeasis.animalesdeasis.Util.Exporters.PDFAnimalExporter;
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
+import com.asosiaciondeasis.animalesdeasis.Util.ScreenTasks;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -47,17 +48,14 @@ public class DetailAnimalController implements IPortalAwareController {
     @FXML private Button downloadRecordBtn;
     @FXML private Button copyChipBtn;
 
+    private final ScreenTasks tasks = new ScreenTasks("animal-detail");
     private Animal currentAnimal;
     private Place currentPlace;
     private PortalController portalController;
 
-    /** Fills the view with {@code animal}, looking up the place it was rescued from. */
-    public void setAnimalDetails(Animal animal) throws Exception {
+    /** Fills the view with {@code animal}; the place it was rescued from arrives in the background. */
+    public void setAnimalDetails(Animal animal) {
         this.currentAnimal = animal;
-        this.currentPlace = ServiceFactory.getPlaceService().getAllPlaces().stream()
-                .filter(place -> place.id() == animal.getPlaceId())
-                .findFirst()
-                .orElse(null);
 
         nameLabel.setText(orNoInfo(animal.getName()));
         speciesLabel.setText(orNoInfo(animal.getSpecies()));
@@ -70,9 +68,21 @@ public class DetailAnimalController implements IPortalAwareController {
         collectedByLabel.setText(orNoInfo(animal.getCollectedBy()));
         rescueReasonLabel.setText(orNoInfo(animal.getReasonForRescue()));
         ailmentsLabel.setText(orNoInfo(animal.getAilments()));
-        placeProvinceLabel.setText(currentPlace != null
-                ? currentPlace.name() + ", " + currentPlace.provinceName()
-                : NO_INFO);
+        placeProvinceLabel.setText("Cargando…");
+        tasks.submit(() -> ServiceFactory.getPlaceService().getAllPlaces().stream()
+                        .filter(place -> place.id() == animal.getPlaceId())
+                        .findFirst()
+                        .orElse(null),
+                place -> {
+                    currentPlace = place;
+                    placeProvinceLabel.setText(place != null
+                            ? place.name() + ", " + place.provinceName()
+                            : NO_INFO);
+                },
+                e -> {
+                    log.error("Could not load places", e);
+                    placeProvinceLabel.setText(NO_INFO);
+                });
 
         boolean hasChip = animal.getChipNumber() != null && !animal.getChipNumber().isBlank();
         copyChipBtn.setVisible(hasChip);
@@ -185,6 +195,11 @@ public class DetailAnimalController implements IPortalAwareController {
     @Override
     public void setPortalController(PortalController controller) {
         this.portalController = controller;
+    }
+
+    @Override
+    public void cleanup() {
+        tasks.close();
     }
 
     @FXML

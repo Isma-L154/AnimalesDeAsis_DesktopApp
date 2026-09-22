@@ -52,9 +52,8 @@ google-services.json
 .env
 .env.local
 
-# ==== Brainstorming scratch (local only) ====
+# ==== Local tooling (never versioned) ====
+CLAUDE.md
 .superpowers/
-
-# Audit questionnaire used to drive the security review. Deliberately local:
-# it is a working tool, not part of the project.
+docs/superpowers/
 security-audit-prompt.md

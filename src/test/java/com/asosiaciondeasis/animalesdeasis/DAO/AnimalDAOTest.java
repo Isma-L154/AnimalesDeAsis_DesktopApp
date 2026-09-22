@@ -1,5 +1,6 @@
 package com.asosiaciondeasis.animalesdeasis.DAO;
 
+import com.asosiaciondeasis.animalesdeasis.Abstraccions.Animals.DuplicateChipException;
 import com.asosiaciondeasis.animalesdeasis.DAO.Animals.AnimalDAO;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.TestSupport;
@@ -34,7 +35,7 @@ class AnimalDAOTest {
     void insertAndFindByRecordNumber() throws Exception {
         Animal animal = TestSupport.newAnimal(placeId);
 
-        assertTrue(dao.insertAnimal(animal));
+        dao.insertAnimal(animal);
 
         Animal found = dao.findByRecordNumber(animal.getRecordNumber());
         assertNotNull(found);
@@ -45,8 +46,26 @@ class AnimalDAOTest {
     @Test
     void insertWithInvalidPlaceFailsBecauseForeignKeysAreEnforced() {
         Animal animal = TestSupport.newAnimal(9999); // non-existent place
-        // insertAnimal swallows SQLExceptions and returns false.
-        assertDoesNotThrow(() -> assertFalse(dao.insertAnimal(animal)));
+
+        assertThrows(Exception.class, () -> dao.insertAnimal(animal));
+        assertDoesNotThrow(() -> assertNull(dao.findByRecordNumber(animal.getRecordNumber())));
+    }
+
+    /**
+     * The regression. A failed insert used to be logged and reported as success,
+     * so a duplicate chip told the user the animal was saved while nothing was.
+     */
+    @Test
+    void insertWithDuplicateChipIsRejected() throws Exception {
+        Animal first = TestSupport.newAnimal(placeId);
+        first.setChipNumber("CHIP-1");
+        dao.insertAnimal(first);
+
+        Animal second = TestSupport.newAnimal(placeId);
+        second.setChipNumber("CHIP-1");
+
+        assertThrows(DuplicateChipException.class, () -> dao.insertAnimal(second));
+        assertNull(dao.findByRecordNumber(second.getRecordNumber()));
     }
 
     @Test
@@ -119,6 +138,29 @@ class AnimalDAOTest {
     }
 
     @Test
+    void remoteUpdateKeepsTheRemoteTimestamp() throws Exception {
+        Animal animal = TestSupport.newAnimal(placeId);
+        dao.insertAnimal(animal);
+
+        animal.setLastModified("2020-01-01 00:00:00");
+        dao.updateAnimal(animal, false);
+
+        assertEquals("2020-01-01 00:00:00", dao.findByRecordNumber(animal.getRecordNumber()).getLastModified());
+    }
+
+    /** A document pulled from Firebase with no timestamp used to break last_modified's NOT NULL. */
+    @Test
+    void remoteUpdateWithoutTimestampIsStampedInsteadOfFailing() throws Exception {
+        Animal animal = TestSupport.newAnimal(placeId);
+        dao.insertAnimal(animal);
+
+        animal.setLastModified(null);
+        dao.updateAnimal(animal, false);
+
+        assertNotNull(dao.findByRecordNumber(animal.getRecordNumber()).getLastModified());
+    }
+
+    @Test
     void chipNumberUniquenessIsEnforcedOnUpdate() throws Exception {
         Animal a = TestSupport.newAnimal(placeId);
         a.setChipNumber("CHIP-1");
@@ -128,7 +170,6 @@ class AnimalDAOTest {
         dao.insertAnimal(b);
 
         b.setChipNumber("CHIP-1"); // collide with a
-        Exception ex = assertThrows(Exception.class, () -> dao.updateAnimal(b, true));
-        assertTrue(ex.getMessage().toLowerCase().contains("unique"));
+        assertThrows(DuplicateChipException.class, () -> dao.updateAnimal(b, true));
     }
 }

@@ -4,24 +4,33 @@ import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 
 import java.util.List;
 
+/** Persistence of animals. Every failure is thrown; nothing reports success it did not have. */
 public interface IAnimalDAO {
 
-    boolean insertAnimal(Animal animal) throws Exception;
+    /** @throws DuplicateChipException when the chip number or barcode is already taken */
+    void insertAnimal(Animal animal) throws Exception;
 
+    /** Active animals, newest admission first. */
     List<Animal> getAllAnimals() throws Exception;
 
+    /** @return the animal, or {@code null} when no record has that number */
     Animal findByRecordNumber(String recordNumber) throws Exception;
 
     /**
-     * Finds an animal by its unique ID or Filters.
-     *
-     * @return The Animal object if found, otherwise null.
+     * Animals matching every filter that is given; {@code null} or blank filters
+     * are ignored. Dates are {@code yyyy-MM-dd}.
      */
+    List<Animal> findByFilters(String species, String startDate, String endDate, String chipNumber, Boolean showInactive) throws Exception;
 
-    List<Animal> findByFilters(String species, String startDate, String endDate, String chipNumber ,Boolean showInactive) throws Exception;
+    /**
+     * @param timestamp {@code true} stamps {@code last_modified} now (a local
+     *                  edit); {@code false} keeps the animal's own value (a record
+     *                  applied from Firebase)
+     * @throws DuplicateChipException when the chip number or barcode is already taken
+     */
+    void updateAnimal(Animal animal, boolean timestamp) throws Exception;
 
-    boolean updateAnimal(Animal animal, boolean timestamp) throws Exception;
-
+    /** Logical delete: the record is flagged inactive and queued for sync. */
     void deleteAnimal(String recordNumber) throws Exception;
 
     void reactivateAnimal(String recordNumber) throws Exception;

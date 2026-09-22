@@ -63,6 +63,29 @@ class VaccineDAOTest {
     }
 
     @Test
+    void remoteUpdateKeepsTheRemoteTimestamp() throws Exception {
+        Vaccine vaccine = TestSupport.newVaccine(animal.getRecordNumber());
+        vaccineDAO.insertVaccine(vaccine);
+
+        vaccine.setLastModified("2020-01-01 00:00:00");
+        vaccineDAO.updateVaccine(vaccine, false);
+
+        assertEquals("2020-01-01 00:00:00", vaccineDAO.existsVaccine(vaccine.getId()).getLastModified());
+    }
+
+    /** A document pulled from Firebase with no timestamp used to break last_modified's NOT NULL. */
+    @Test
+    void remoteUpdateWithoutTimestampIsStampedInsteadOfFailing() throws Exception {
+        Vaccine vaccine = TestSupport.newVaccine(animal.getRecordNumber());
+        vaccineDAO.insertVaccine(vaccine);
+
+        vaccine.setLastModified(null);
+        vaccineDAO.updateVaccine(vaccine, false);
+
+        assertNotNull(vaccineDAO.existsVaccine(vaccine.getId()).getLastModified());
+    }
+
+    @Test
     void deleteVaccineRemovesRow() throws Exception {
         Vaccine vaccine = TestSupport.newVaccine(animal.getRecordNumber());
         vaccineDAO.insertVaccine(vaccine);

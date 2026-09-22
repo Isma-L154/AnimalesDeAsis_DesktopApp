@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.sql.SQLException;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -24,8 +25,17 @@ class AnimalServiceTest {
         AnimalService service = new AnimalService(animalDAO);
         Animal animal = Animal.createNew();
 
-        assertTrue(service.registerAnimal(animal));
+        service.registerAnimal(animal);
         verify(animalDAO).insertAnimal(animal);
+    }
+
+    @Test
+    void registerAnimalPropagatesDaoFailure() throws Exception {
+        AnimalService service = new AnimalService(animalDAO);
+        Animal animal = Animal.createNew();
+        doThrow(new SQLException("disk I/O error")).when(animalDAO).insertAnimal(animal);
+
+        assertThrows(SQLException.class, () -> service.registerAnimal(animal));
     }
 
     @Test
@@ -43,9 +53,9 @@ class AnimalServiceTest {
         AnimalService service = new AnimalService(animalDAO);
         Animal animal = Animal.createNew();
 
-        // Even when the caller passes false, UI-driven updates must refresh the
-        // last_modified timestamp so the change is picked up by the next sync.
-        service.updateAnimal(animal, false);
+        // UI-driven updates must refresh last_modified so the change is picked
+        // up by the next sync. Only the sync itself writes a remote timestamp.
+        service.updateAnimal(animal);
 
         verify(animalDAO).updateAnimal(animal, true);
     }

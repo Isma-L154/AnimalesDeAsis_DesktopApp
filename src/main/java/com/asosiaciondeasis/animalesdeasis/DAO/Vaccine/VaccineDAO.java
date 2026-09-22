@@ -9,34 +9,24 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class VaccineDAO implements IVaccineDAO {
-    private static final Logger log = LoggerFactory.getLogger(VaccineDAO.class);
-
 
     private final Connection conn;
 
     public VaccineDAO(Connection conn) {
         this.conn = conn;
     }
-
+    /**
+     * Inserts a vaccine. {@code last_modified} is kept when the record comes from
+     * Firebase and stamped now otherwise.
+     */
     @Override
     public void insertVaccine(Vaccine vaccine) throws Exception {
-        String sql;
-        //We have to separate the SQL query into two different queries, one with the last_modified field and another without it.
-        if (vaccine.getLastModified() != null && !vaccine.getLastModified().trim().isEmpty()) {
-            sql = """
-            INSERT INTO vaccines (id, animal_record_number, vaccine_name, vaccination_date, synced, last_modified)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """;
-        } else {
-            sql = """
-            INSERT INTO vaccines (id, animal_record_number, vaccine_name, vaccination_date, synced)
-            VALUES (?, ?, ?, ?, ?)
-        """;
-        }
+        String sql = """
+                INSERT INTO vaccines (id, animal_record_number, vaccine_name, vaccination_date, synced, last_modified)
+                VALUES (?, ?, ?, ?, ?, COALESCE(?, datetime('now', 'utc')))
+                """;
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, vaccine.getId());
@@ -44,90 +34,57 @@ public class VaccineDAO implements IVaccineDAO {
             pstmt.setString(3, vaccine.getVaccineName());
             pstmt.setString(4, vaccine.getVaccinationDate());
             pstmt.setInt(5, vaccine.isSynced() ? 1 : 0);
-
-            if (vaccine.getLastModified() != null && !vaccine.getLastModified().trim().isEmpty()) {
-                pstmt.setString(6, vaccine.getLastModified());
-            }
-
+            pstmt.setString(6, blankToNull(vaccine.getLastModified()));
             pstmt.executeUpdate();
-            log.info("Vaccine inserted successfully.");
-
         } catch (SQLException e) {
             throw new Exception("Error inserting vaccine", e);
         }
     }
-
     @Override
     public List<Vaccine> getVaccinesByAnimal(String animalRecordNumber) throws Exception {
         List<Vaccine> vaccines = new ArrayList<>();
         String sql = "SELECT * FROM vaccines WHERE animal_record_number = ? ORDER BY vaccination_date DESC";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            /**
-             * Set the parameter for the prepared statement with the animal's record number
-             * And execute the query and get the result set
-             * */
             pstmt.setString(1, animalRecordNumber);
-            ResultSet rs = pstmt.executeQuery();
-
-            while (rs.next()) {
-                vaccines.add(mapResultSetToVaccine(rs));
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    vaccines.add(mapResultSetToVaccine(rs));
+                }
             }
-
         } catch (SQLException e) {
             throw new Exception("Error retrieving vaccines", e);
         }
-
         return vaccines;
     }
-
     /**
-     * The reason we have this method with a timestamp, It's because we want to update the last_modified field
-     * every time we update an animal, so we can keep track of when the last modification.
-     * But at the same time, when we pull the data from the database, we don't want to update the last_modified field
-     * because we are just reading the data, not modifying it. So we have this boolean parameter to do that
-     * */
+     * @param timestamp {@code true} stamps {@code last_modified} now (a local
+     *                  edit); {@code false} keeps the vaccine's own value (a record
+     *                  applied from Firebase)
+     */
     @Override
     public void updateVaccine(Vaccine vaccine, boolean timestamp) throws Exception {
-        String sql;
-        if (timestamp) {
-            sql = """
-            UPDATE vaccines
-            SET vaccine_name = ?, vaccination_date = ?, synced = ?, last_modified = datetime('now', 'utc')
-            WHERE id = ?
-        """;
-        } else {
-            sql = """
-            UPDATE vaccines
-            SET vaccine_name = ?, vaccination_date = ?, synced = ?, last_modified = ?
-            WHERE id = ?
-        """;
-        }
+        String sql = """
+                UPDATE vaccines
+                SET vaccine_name = ?, vaccination_date = ?, synced = ?,
+                    last_modified = COALESCE(?, datetime('now', 'utc'))
+                WHERE id = ?
+                """;
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, vaccine.getVaccineName());
             pstmt.setString(2, vaccine.getVaccinationDate());
             pstmt.setInt(3, vaccine.isSynced() ? 1 : 0);
+            pstmt.setString(4, timestamp ? null : blankToNull(vaccine.getLastModified()));
+            pstmt.setString(5, vaccine.getId());
 
-            if (timestamp) {
-                pstmt.setString(4, vaccine.getId());
-            } else {
-                pstmt.setString(4, vaccine.getLastModified());
-                pstmt.setString(5, vaccine.getId());
-            }
-
-            int rowsAffected = pstmt.executeUpdate();
-            if (rowsAffected == 0) {
+            if (pstmt.executeUpdate() == 0) {
                 throw new Exception("No vaccine found with ID: " + vaccine.getId());
             }
-
-            log.info("Vaccine updated successfully.");
         } catch (SQLException e) {
             throw new Exception("Error updating vaccine", e);
         }
     }
-
     /**
      * Deletes a vaccine and records that it was deleted.
      *
@@ -161,7 +118,6 @@ public class VaccineDAO implements IVaccineDAO {
         if (animalRecordNumber == null) {
             throw new Exception("No vaccine found with the provided ID.");
         }
-
         boolean previousAutoCommit = conn.getAutoCommit();
         conn.setAutoCommit(false);
         try {
@@ -186,7 +142,6 @@ public class VaccineDAO implements IVaccineDAO {
             conn.setAutoCommit(previousAutoCommit);
         }
     }
-
     @Override
     public List<String> getPendingDeletions() throws Exception {
         List<String> ids = new ArrayList<>();
@@ -199,7 +154,6 @@ public class VaccineDAO implements IVaccineDAO {
         }
         return ids;
     }
-
     @Override
     public String getPendingDeletionAnimal(String vaccineId) throws Exception {
         try (PreparedStatement pstmt = conn.prepareStatement(
@@ -210,7 +164,6 @@ public class VaccineDAO implements IVaccineDAO {
             }
         }
     }
-
     /**
      * Removes a tombstone once the deletion has been applied remotely.
      *
@@ -225,38 +178,34 @@ public class VaccineDAO implements IVaccineDAO {
             pstmt.executeUpdate();
         }
     }
-
     @Override
     public List<Vaccine> getAllUnsyncedVaccines() throws Exception {
         List<Vaccine> vaccines = new ArrayList<>();
         String sql = "SELECT * FROM vaccines WHERE synced = 0";
 
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            ResultSet rs = pstmt.executeQuery();
-
+        try (PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
             while (rs.next()) {
                 vaccines.add(mapResultSetToVaccine(rs));
             }
         } catch (SQLException e) {
             throw new Exception("Error retrieving all unsynced vaccines", e);
         }
-
         return vaccines;
     }
-
     @Override
     public Vaccine existsVaccine(String id) throws Exception {
         String sql = "SELECT * FROM vaccines WHERE id = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, id);
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-                return mapResultSetToVaccine(rs);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next() ? mapResultSetToVaccine(rs) : null;
             }
         }
-        return null;
     }
-
+    private static String blankToNull(String value) {
+        return (value == null || value.isBlank()) ? null : value;
+    }
     private Vaccine mapResultSetToVaccine(ResultSet rs) throws SQLException {
         Vaccine vaccine = Vaccine.fromExistingRecord(rs.getString("id"));
         vaccine.setAnimalRecordNumber(rs.getString("animal_record_number"));
@@ -267,4 +216,3 @@ public class VaccineDAO implements IVaccineDAO {
         return vaccine;
     }
 }
-

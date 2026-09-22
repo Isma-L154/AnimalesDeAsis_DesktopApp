@@ -5,5 +5,5 @@ import com.asosiaciondeasis.animalesdeasis.Model.Place;
 import java.util.List;
 
 public interface IPlaceDAO {
-    List<Place> getAllPlaces();
+    List<Place> getAllPlaces() throws Exception;
 }

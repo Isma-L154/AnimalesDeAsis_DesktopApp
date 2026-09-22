@@ -8,12 +8,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class PlacesDAO implements IPlaceDAO {
-    private static final Logger log = LoggerFactory.getLogger(PlacesDAO.class);
-
 
     private final Connection conn;
 
@@ -22,10 +18,10 @@ public class PlacesDAO implements IPlaceDAO {
     }
 
     @Override
-    public List<Place> getAllPlaces() {
+    public List<Place> getAllPlaces() throws Exception {
         List<Place> places = new ArrayList<>();
         String sql = """
-                SELECT p.id, p.name, p.province_id, pr.name AS province_name
+                SELECT p.id, p.name, pr.name AS province_name
                 FROM places p
                 JOIN provinces pr ON p.province_id = pr.id
                 ORDER BY p.name
@@ -33,20 +29,10 @@ public class PlacesDAO implements IPlaceDAO {
 
         try (PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
-
             while (rs.next()) {
-                Place place = new Place(
-                        rs.getInt("id"),
-                        rs.getString("name"),
-                        rs.getString("province_id"),
-                        rs.getString("province_name")  // Nuevo campo
-                );
-                places.add(place);
+                places.add(new Place(rs.getInt("id"), rs.getString("name"), rs.getString("province_name")));
             }
-        } catch (Exception e) {
-            log.error("Unexpected error", e);
         }
-
         return places;
     }
 }

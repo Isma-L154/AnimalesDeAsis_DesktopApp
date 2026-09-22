@@ -6,33 +6,39 @@ import com.asosiaciondeasis.animalesdeasis.Controller.Animal.DetailAnimalControl
 import com.asosiaciondeasis.animalesdeasis.Controller.PortalController;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Model.Vaccine;
-import com.asosiaciondeasis.animalesdeasis.Service.SyncService;
 import com.asosiaciondeasis.animalesdeasis.Util.DateUtils;
-
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
-import javafx.geometry.Pos;
-import javafx.scene.control.*;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Pos;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.scene.Parent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Objects;
+import java.util.function.Consumer;
 
 public class VaccineManagementController implements IPortalAwareController {
     private static final Logger log = LoggerFactory.getLogger(VaccineManagementController.class);
 
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
     @FXML private Label animalInfoLabel;
     @FXML private TableView<Vaccine> vaccineTable;
@@ -45,104 +51,45 @@ public class VaccineManagementController implements IPortalAwareController {
     private PortalController portalController;
     private Animal currentAnimal;
 
-    /**
-     * Initializes the controller and sets up the vaccine table columns.
-     * Called automatically after the FXML fields are injected.
-     *
-     * @throws Exception if there is an error during initialization.
-     */
     @FXML
-    public void initialize() throws Exception {
-        // Initialize the vaccine table columns
-        setupTableColumns();
-
-    }
-
-    /**
-     * Sets the current animal for which vaccines are managed.
-     * Updates the animal info label, loads vaccines, and sets up action buttons.
-     *
-     * @param animal The Animal object to manage vaccines for.
-     * @throws Exception if there is an error loading vaccines.
-     */
-    public void setCurrentAnimal(Animal animal) throws Exception {
-        this.currentAnimal = animal;
-        updateAnimalInfoLabel();
-        addActionsButtons();
-        loadVaccinesForAnimal();
-    }
-
-    /**
-     * Configures the columns of the vaccine table, including formatting the date column.
-     */
-    private void setupTableColumns() {
+    public void initialize() {
         vaccineNameColumn.setCellValueFactory(new PropertyValueFactory<>("vaccineName"));
-
-        vaccinationDateColumn.setCellValueFactory(cellData -> {
-            LocalDate date = DateUtils.utcStringToLocalDate(cellData.getValue().getVaccinationDate());
-            String formattedDate = (date != null) ? date.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) : "N/A";
-            return new SimpleStringProperty(formattedDate);
-        });
+        vaccinationDateColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(formatDate(cellData.getValue().getVaccinationDate())));
 
         vaccineNameColumn.setResizable(false);
         vaccinationDateColumn.setResizable(false);
         actionsColumn.setResizable(false);
+        addActionsButtons();
     }
 
-    /**
-     * Updates the label displaying the current animal's name.
-     */
-    private void updateAnimalInfoLabel() {
-        if (animalInfoLabel != null && currentAnimal != null) {
-            animalInfoLabel.setText("Animal: " + currentAnimal.getName());
-        }
+    public void setCurrentAnimal(Animal animal) throws Exception {
+        this.currentAnimal = animal;
+        animalInfoLabel.setText("Animal: " + animal.getName());
+        loadVaccinesForAnimal();
     }
-    /**
-     * Loads the list of vaccines for the current animal and updates the table and summary labels.
-     *
-     * @throws Exception if there is an error retrieving vaccines.
-     */
+
     private void loadVaccinesForAnimal() throws Exception {
-        if (currentAnimal == null) return;
-
         List<Vaccine> vaccines = ServiceFactory.getVaccineService()
                 .getVaccinesByAnimal(currentAnimal.getRecordNumber());
 
         vaccineTable.setItems(FXCollections.observableArrayList(vaccines));
-        updateSummary(vaccines);
-    }
-
-    /**
-     * Updates the summary labels for total vaccines and the date of the last vaccine.
-     *
-     * @param vaccines The list of vaccines to summarize.
-     */
-    private void updateSummary(List<Vaccine> vaccines) {
         totalVaccinesLabel.setText(String.valueOf(vaccines.size()));
-
-        if (!vaccines.isEmpty()) {
-            LocalDate lastDate = vaccines.stream()
-                    .map(vaccine -> DateUtils.utcStringToLocalDate(vaccine.getVaccinationDate()))
-                    .filter(date -> date != null)
-                    .max(LocalDate::compareTo)
-                    .orElse(null);
-
-            String formattedLastDate = (lastDate != null)
-                    ? lastDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))
-                    : "N/A";
-
-            lastVaccineLabel.setText(formattedLastDate);
-        } else {
-            lastVaccineLabel.setText("N/A");
-        }
+        lastVaccineLabel.setText(vaccines.stream()
+                .map(vaccine -> DateUtils.utcStringToLocalDate(vaccine.getVaccinationDate()))
+                .filter(Objects::nonNull)
+                .max(LocalDate::compareTo)
+                .map(date -> date.format(DATE_FORMAT))
+                .orElse("N/A"));
     }
 
-    /**
-     * Adds edit and delete action buttons to each row in the vaccine table.
-     * Configures the button actions for editing and deleting vaccines.
-     */
+    private static String formatDate(String stored) {
+        LocalDate date = DateUtils.utcStringToLocalDate(stored);
+        return date != null ? date.format(DATE_FORMAT) : "N/A";
+    }
+
     private void addActionsButtons() {
-        actionsColumn.setCellFactory(column -> new TableCell<Vaccine, Void>() {
+        actionsColumn.setCellFactory(column -> new TableCell<>() {
             private final HBox buttonsContainer = new HBox(10);
             private final Button editButton = new Button("Editar");
             private final Button deleteButton = new Button("Eliminar");
@@ -155,20 +102,13 @@ public class VaccineManagementController implements IPortalAwareController {
                 editButton.setMinSize(65, 28);
                 editButton.setMaxSize(65, 28);
 
-                editButton.setOnAction(event -> {
-                    Vaccine vaccine = getTableView().getItems().get(getIndex());
-                    onEditVaccine(vaccine);
-                });
-
+                editButton.setOnAction(event -> onEditVaccine(getTableView().getItems().get(getIndex())));
                 deleteButton.setOnAction(event -> {
                     Vaccine vaccine = getTableView().getItems().get(getIndex());
-
-
                     boolean confirmed = NavigationHelper.showConfirmationAlert("Confirmar eliminación",
                             "¿Estás seguro de que deseas eliminar esta vacuna?",
-                            "Vacuna: " + vaccine.getVaccineName() + " - " + vaccine.getVaccinationDate());
-
-                    if(confirmed) {
+                            "Vacuna: " + vaccine.getVaccineName() + " - " + formatDate(vaccine.getVaccinationDate()));
+                    if (confirmed) {
                         onDeleteVaccine(vaccine);
                     }
                 });
@@ -180,164 +120,111 @@ public class VaccineManagementController implements IPortalAwareController {
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty) {
-                    setGraphic(null);
-                } else {
-                    setGraphic(buttonsContainer);
-                }
+                setGraphic(empty ? null : buttonsContainer);
             }
         });
     }
 
-    /**
-     * Opens the window to create a new vaccine for the current animal.
-     * Handles the creation callback and updates the vaccine list upon success.
-     */
     @FXML
     public void onCreateNewVaccine() {
-        try{
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Vaccine/CreateVaccine.fxml"));
-            Parent root = loader.load();
-            CreateVaccineController controller = loader.getController();
+        openModal("/fxml/Vaccine/CreateVaccine.fxml", "Nueva Vacuna", (CreateVaccineController controller) -> {
             controller.setAnimalInfo(currentAnimal.getName(), currentAnimal.getRecordNumber());
-
-            controller.setOnVaccineCreated(vaccine -> {
-                try {
-                    ServiceFactory.getVaccineService().registerVaccine(vaccine);
-                    loadVaccinesForAnimal();
-
-                    NavigationHelper.showSuccessAlert("Éxito", "Vacuna registrada correctamente");
-                } catch (Exception e) {
-                    NavigationHelper.showErrorAlert("Error", "No se pudo registrar la vacuna: ", e.getMessage());
-                }
-            });
-
-            /**
-             * Create a new modal stage for the vaccine creation, because we want to make something smaller and focused
-             * than the main window, so the user can focus on the task of creating a new vaccine
-             * */
-
-            Stage stage = new Stage();
-            stage.setTitle("Nueva Vacuna");
-            stage.initModality(Modality.APPLICATION_MODAL);
-            stage.initOwner(vaccineTable.getScene().getWindow());
-            stage.setResizable(false);
-            stage.setScene(new Scene(root));
-
-            try {
-                Image icon = new Image(getClass().getResourceAsStream("/images/AdeAsisLogo.png"));
-                stage.getIcons().add(icon);
-            } catch (Exception e) {
-                log.info("No se pudo cargar el icono del modal: "+ e.getMessage());
-            }
-
-            stage.showAndWait();
-        } catch (Exception e) {
-            NavigationHelper.showErrorAlert("Error", "No se pudo abrir la ventana de creación de vacuna: ", e.getMessage());
-        }
+            controller.setOnVaccineCreated(vaccine -> saveAndReload(
+                    () -> ServiceFactory.getVaccineService().registerVaccine(vaccine),
+                    "Vacuna registrada correctamente", "No se pudo registrar la vacuna"));
+        });
     }
 
-    /**
-     * Opens the window to edit the selected vaccine.
-     * Handles the update callback and refreshes the vaccine list upon success.
-     *
-     * @param vaccine The Vaccine object to edit.
-     */
     private void onEditVaccine(Vaccine vaccine) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Vaccine/EditVaccine.fxml"));
-            Parent root = loader.load();
-            EditVaccineController controller = loader.getController();
+        openModal("/fxml/Vaccine/EditVaccine.fxml", "Editar Vacuna", (EditVaccineController controller) -> {
             controller.setAnimalInfo(currentAnimal.getName());
             controller.setVaccineData(vaccine);
+            controller.setOnVaccineUpdated(updated -> saveAndReload(
+                    () -> ServiceFactory.getVaccineService().updateVaccine(updated),
+                    "Vacuna actualizada correctamente", "No se pudo actualizar la vacuna"));
+        });
+    }
 
-            controller.setOnVaccineUpdated(updatedVaccine -> {
-                try {
-                    ServiceFactory.getVaccineService().updateVaccine(updatedVaccine, true);
-                    loadVaccinesForAnimal();
-                    NavigationHelper.showSuccessAlert("Éxito", "Vacuna actualizada correctamente");
-                } catch (Exception e) {
-                    NavigationHelper.showErrorAlert("Error", "No se pudo actualizar la vacuna: ", e.getMessage());
-                }
-            });
-
-            /**
-             * Create a new modal stage for the vaccine edition, because we want to make something smaller and focused
-             * than the main window, so the user can focus on the task of editing a vaccine
-             * */
+    /**
+     * Opens a small modal form over the main window, which keeps the task
+     * focused and blocks the table until it is done.
+     */
+    private <C> void openModal(String fxmlPath, String title, Consumer<C> setup) {
+        try {
+            FXMLLoader loader = new FXMLLoader(VaccineManagementController.class.getResource(fxmlPath));
+            Parent root = loader.load();
+            setup.accept(loader.getController());
 
             Stage stage = new Stage();
-            stage.setTitle("Editar Vacuna");
+            stage.setTitle(title);
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.initOwner(vaccineTable.getScene().getWindow());
             stage.setResizable(false);
             stage.setScene(new Scene(root));
-
-            try {
-                Image icon = new Image(getClass().getResourceAsStream("/images/AdeAsisLogo.png"));
-                stage.getIcons().add(icon);
-            } catch (Exception e) {
-                log.info("No se pudo cargar el icono del modal: "+ e.getMessage());
-            }
-
+            stage.getIcons().add(new Image(Objects.requireNonNull(
+                    VaccineManagementController.class.getResourceAsStream("/images/AdeAsisLogo.png"))));
             stage.showAndWait();
         } catch (Exception e) {
-            NavigationHelper.showErrorAlert("Error", "No se pudo abrir la ventana de edición de vacuna: ", e.getMessage());
+            log.error("Could not open {}", fxmlPath, e);
+            NavigationHelper.showErrorAlert("Error", "No se pudo abrir el formulario de vacuna", e.getMessage());
+        }
+    }
+
+    @FunctionalInterface
+    private interface Save {
+        void run() throws Exception;
+    }
+
+    private void saveAndReload(Save save, String successMessage, String failureHeader) {
+        try {
+            save.run();
+            loadVaccinesForAnimal();
+            NavigationHelper.showSuccessAlert("Éxito", successMessage);
+        } catch (Exception e) {
+            log.error(failureHeader, e);
+            NavigationHelper.showErrorAlert("Error", failureHeader, e.getMessage());
         }
     }
 
     /**
-     * Deletes the selected vaccine from both local storage and Firebase, then refreshes the vaccine list.
-     *
-     * @param vaccine The Vaccine object to delete.
+     * Deletes off the interface thread: the remote half waits on Firestore, and
+     * awaiting it here froze the window for as long as the network took.
      */
     private void onDeleteVaccine(Vaccine vaccine) {
-        try {
-            // Delete it in Firebase and Local
-            ServiceFactory.getSyncService().deleteVaccineAndSync(vaccine);
-            loadVaccinesForAnimal();
-            NavigationHelper.showSuccessAlert(
-                    "Éxito",
-                    "Vacuna eliminada correctamente."
-            );
-        } catch (Exception e) {
-            NavigationHelper.showErrorAlert(
-                    "Error",
-                    "No se pudo eliminar la vacuna",
-                    e.getMessage()
-            );
-        }
+        vaccineTable.setDisable(true);
+        Task<Void> delete = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                ServiceFactory.getSyncService().deleteVaccineAndSync(vaccine);
+                return null;
+            }
+        };
+        delete.setOnSucceeded(e -> {
+            vaccineTable.setDisable(false);
+            saveAndReload(() -> { }, "Vacuna eliminada correctamente.", "No se pudo recargar las vacunas");
+        });
+        delete.setOnFailed(e -> {
+            vaccineTable.setDisable(false);
+            log.error("Could not delete vaccine {}", vaccine.getId(), delete.getException());
+            NavigationHelper.showErrorAlert("Error", "No se pudo eliminar la vacuna",
+                    delete.getException().getMessage());
+        });
+
+        Thread worker = new Thread(delete, "vaccine-delete");
+        worker.setDaemon(true);
+        worker.start();
     }
 
-    /**
-     * Navigates back to the animal detail view for the current animal.
-     * Loads the detail view and sets the animal details.
-     */
     @FXML
     private void goBackDetail() {
         if (currentAnimal != null && portalController != null) {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Animal/DetailAnimal.fxml"));
-                Parent root = loader.load();
-                DetailAnimalController detailController = loader.getController();
-                detailController.setPortalController(portalController);
-                detailController.setAnimalDetails(currentAnimal, ServiceFactory.getPlaceService().getAllPlaces());
-                portalController.setContent(root);
-
-            } catch (Exception e) {
-                NavigationHelper.showErrorAlert("Error", "No se pudo cargar los detalles del animal", e.getMessage());
-            }
-        } else {
-            NavigationHelper.showErrorAlert("Error", "No se puede regresar", "Datos del animal no disponibles.");
+            portalController.<DetailAnimalController>openScreen("/fxml/Animal/DetailAnimal.fxml",
+                    detail -> detail.setAnimalDetails(currentAnimal));
         }
     }
 
-    /**
-     * Sets the portal controller reference for navigation purposes.
-     *
-     * @param controller The PortalController instance.
-     */
     @Override
-    public void setPortalController(PortalController controller) {this.portalController = controller;}
-
+    public void setPortalController(PortalController controller) {
+        this.portalController = controller;
+    }
 }

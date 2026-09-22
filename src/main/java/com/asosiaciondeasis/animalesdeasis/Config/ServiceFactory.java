@@ -1,5 +1,9 @@
 package com.asosiaciondeasis.animalesdeasis.Config;
 
+import com.asosiaciondeasis.animalesdeasis.Abstraccions.Animals.IAnimalService;
+import com.asosiaciondeasis.animalesdeasis.Abstraccions.Places.IPlacesService;
+import com.asosiaciondeasis.animalesdeasis.Abstraccions.Statistics.IStatisticsService;
+import com.asosiaciondeasis.animalesdeasis.Abstraccions.Vaccines.IVaccineService;
 import com.asosiaciondeasis.animalesdeasis.DAO.Animals.AnimalDAO;
 import com.asosiaciondeasis.animalesdeasis.DAO.Places.PlacesDAO;
 import com.asosiaciondeasis.animalesdeasis.DAO.Statistics.StatisticsDAO;
@@ -16,11 +20,11 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 /**
- * Utility class designed to provide singleton-like access to various services and DAO (Data Access Object) instances throughout the application.
- * It centralizes the creation of these objects, ensuring they all share the same database connection
+ * Composition root: wires services to their DAOs over the shared database
+ * connection. Controllers ask for abstractions here instead of building
+ * implementations themselves.
  */
-
-public class ServiceFactory {
+public final class ServiceFactory {
 
     private static final Connection conn;
 
@@ -28,31 +32,38 @@ public class ServiceFactory {
         try {
             conn = DatabaseConnection.getConnection();
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to establish database connection", e);
+            throw new ExceptionInInitializerError(e);
         }
     }
 
-    public static AnimalService getAnimalService() {
+    private ServiceFactory() {
+    }
+
+    public static IAnimalService getAnimalService() {
         return new AnimalService(new AnimalDAO(conn));
     }
 
-    public static VaccineService getVaccineService() {
+    public static IVaccineService getVaccineService() {
         return new VaccineService(new VaccineDAO(conn));
     }
 
-    public static StatisticsService getStatisticsService() {
+    public static IStatisticsService getStatisticsService() {
         return new StatisticsService(new StatisticsDAO(conn));
     }
 
-    public static PlaceService getPlaceService() {return new PlaceService(new PlacesDAO(conn));}
+    public static IPlacesService getPlaceService() {
+        return new PlaceService(new PlacesDAO(conn));
+    }
 
     public static ShelterSummaryService getShelterSummaryService() {
         return new ShelterSummaryService(new AnimalDAO(conn));
     }
 
-    public static SyncService getSyncService() {return new SyncService(conn);}
+    public static SyncService getSyncService() {
+        return new SyncService(conn);
+    }
 
-    public static StatisticsDAO getStatisticsDAO() {return new StatisticsDAO(conn);}
-
-    public static CsvStatisticsExporter getCsvStatisticsExporter() {return new CsvStatisticsExporter(getStatisticsDAO());}
+    public static CsvStatisticsExporter getCsvStatisticsExporter() {
+        return new CsvStatisticsExporter(new StatisticsDAO(conn));
+    }
 }

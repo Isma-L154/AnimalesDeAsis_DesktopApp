@@ -67,7 +67,7 @@ class PDFAnimalExporterTest {
 
         String text = exportAndExtractText(
                 sampleAnimal(),
-                new Place(1, "Escazú", "SJ", "San José"),
+                new Place(1, "Escazú", "San José"),
                 List.of(vaccine));
 
         assertTrue(text.contains("EXPEDIENTE"), text);

@@ -1,5 +1,6 @@
 package com.asosiaciondeasis.animalesdeasis.Abstraccions.Animals;
 
+import com.asosiaciondeasis.animalesdeasis.Abstraccions.RowVersion;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 
 import java.util.List;
@@ -40,18 +41,18 @@ public interface IAnimalDAO {
 
     List<Animal> getUnsyncedAnimals() throws Exception;
 
-    /** {@code last_modified} of every animal, active or not, keyed by record number. */
-    Map<String, String> getLastModifiedByRecordNumber() throws Exception;
+    /** The current version of every animal, active or not, keyed by record number. */
+    Map<String, RowVersion> getRowVersions() throws Exception;
 
     /**
      * Inserts or replaces records pulled from Firebase, in one transaction.
      *
-     * <p>An existing row is replaced only while its {@code last_modified} still
-     * equals {@code expectedLastModified.get(recordNumber)} - the value the caller
-     * compared against. An edit saved locally in the meantime is kept, and the
-     * next sync resolves it.</p>
+     * <p>An existing row is replaced only while it still matches
+     * {@code expected.get(recordNumber)} - the version the caller compared
+     * against. An edit saved locally in the meantime is kept, and the next sync
+     * resolves it.</p>
      */
-    void saveFromRemote(List<Animal> animals, Map<String, String> expectedLastModified) throws Exception;
+    void saveFromRemote(List<Animal> animals, Map<String, RowVersion> expected) throws Exception;
 
     /**
      * Marks pushed records as synced, in one transaction, but only rows that still

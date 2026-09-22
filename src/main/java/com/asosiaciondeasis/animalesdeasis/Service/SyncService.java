@@ -1,5 +1,6 @@
 package com.asosiaciondeasis.animalesdeasis.Service;
 
+import com.asosiaciondeasis.animalesdeasis.Abstraccions.RowVersion;
 import com.asosiaciondeasis.animalesdeasis.Config.FirebaseConfig;
 import com.asosiaciondeasis.animalesdeasis.DAO.Animals.AnimalDAO;
 import com.asosiaciondeasis.animalesdeasis.DAO.Vaccine.VaccineDAO;
@@ -138,7 +139,7 @@ public class SyncService {
             vaccineFutures.add(doc.getReference().collection("vaccines").get());
         }
 
-        Map<String, String> localAnimals = animalDAO.getLastModifiedByRecordNumber();
+        Map<String, RowVersion> localAnimals = animalDAO.getRowVersions();
         List<Animal> animalChanges = newerThanLocal(remoteAnimals, Animal::getRecordNumber,
                 Animal::getLastModified, localAnimals);
         // Animals first: the vaccines below reference them.
@@ -160,15 +161,15 @@ public class SyncService {
         // helpfully puts it back - undoing the deletion the user made offline.
         Set<String> deletedHere = vaccineDAO.getPendingDeletions().keySet();
 
-        Map<String, String> localLastModified = new HashMap<>();
+        Map<String, RowVersion> localVersions = new HashMap<>();
         Map<String, List<Vaccine>> localByAnimal = new HashMap<>();
         for (Vaccine vaccine : vaccineDAO.getAllVaccines()) {
-            localLastModified.put(vaccine.getId(), vaccine.getLastModified());
+            localVersions.put(vaccine.getId(), new RowVersion(vaccine.getLastModified(), vaccine.isSynced()));
             localByAnimal.computeIfAbsent(vaccine.getAnimalRecordNumber(), k -> new ArrayList<>()).add(vaccine);
         }
 
         List<Vaccine> remoteVaccines = new ArrayList<>();
-        List<String> removedRemotely = new ArrayList<>();
+        Map<String, RowVersion> removedRemotely = new HashMap<>();
         for (int i = 0; i < remoteAnimals.size(); i++) {
             String recordNumber = remoteAnimals.get(i).getRecordNumber();
             Set<String> remoteIds = new HashSet<>();
@@ -185,14 +186,14 @@ public class SyncService {
                 // Only previously synced vaccines: an unsynced one is new here and
                 // simply has not been pushed yet.
                 if (local.isSynced() && !remoteIds.contains(local.getId())) {
-                    removedRemotely.add(local.getId());
+                    removedRemotely.put(local.getId(), localVersions.get(local.getId()));
                 }
             }
         }
 
         List<Vaccine> vaccineChanges = newerThanLocal(remoteVaccines, Vaccine::getId,
-                Vaccine::getLastModified, localLastModified);
-        vaccineDAO.saveFromRemote(vaccineChanges, localLastModified);
+                Vaccine::getLastModified, localVersions);
+        vaccineDAO.saveFromRemote(vaccineChanges, localVersions);
         vaccineDAO.deleteRemovedRemotely(removedRemotely);
 
         log.info("Applied {} vaccines from Firebase, removed {} deleted there",
@@ -204,12 +205,12 @@ public class SyncService {
      * timestamp is newer than the local one.
      */
     static <T> List<T> newerThanLocal(List<T> remote, Function<T, String> id,
-                                      Function<T, String> lastModified, Map<String, String> localLastModified) {
+                                      Function<T, String> lastModified, Map<String, RowVersion> local) {
         List<T> changes = new ArrayList<>();
         for (T record : remote) {
             String key = id.apply(record);
-            if (!localLastModified.containsKey(key)
-                    || isNewer(lastModified.apply(record), localLastModified.get(key))) {
+            if (!local.containsKey(key)
+                    || isNewer(lastModified.apply(record), local.get(key).lastModified())) {
                 changes.add(record);
             }
         }

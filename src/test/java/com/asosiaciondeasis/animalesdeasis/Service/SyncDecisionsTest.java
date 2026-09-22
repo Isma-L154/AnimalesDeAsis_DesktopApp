@@ -1,5 +1,6 @@
 package com.asosiaciondeasis.animalesdeasis.Service;
 
+import com.asosiaciondeasis.animalesdeasis.Abstraccions.RowVersion;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import org.junit.jupiter.api.Test;
 
@@ -29,10 +30,10 @@ class SyncDecisionsTest {
                 remote("newer", "2024-06-01 00:00:00"),
                 remote("older", "2024-01-01 00:00:00"),
                 remote("same", "2024-03-01 10:00:00"));
-        Map<String, String> local = Map.of(
-                "newer", "2024-05-01 00:00:00",
-                "older", "2024-02-01 00:00:00",
-                "same", "2024-03-01 10:00:00");
+        Map<String, RowVersion> local = Map.of(
+                "newer", new RowVersion("2024-05-01 00:00:00", true),
+                "older", new RowVersion("2024-02-01 00:00:00", true),
+                "same", new RowVersion("2024-03-01 10:00:00", true));
 
         List<Animal> changes = SyncService.newerThanLocal(remote, Animal::getRecordNumber,
                 Animal::getLastModified, local);

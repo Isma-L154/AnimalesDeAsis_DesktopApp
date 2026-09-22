@@ -1,6 +1,8 @@
 package com.asosiaciondeasis.animalesdeasis.DAO.Vaccine;
 
 import com.asosiaciondeasis.animalesdeasis.Abstraccions.Vaccines.IVaccineDAO;
+import com.asosiaciondeasis.animalesdeasis.Abstraccions.RowVersion;
+import com.asosiaciondeasis.animalesdeasis.DAO.RowVersionGuard;
 import com.asosiaciondeasis.animalesdeasis.DAO.Transactions;
 import com.asosiaciondeasis.animalesdeasis.Model.Vaccine;
 
@@ -126,7 +128,7 @@ public class VaccineDAO implements IVaccineDAO {
     }
 
     @Override
-    public void saveFromRemote(List<Vaccine> vaccines, Map<String, String> expectedLastModified) throws Exception {
+    public void saveFromRemote(List<Vaccine> vaccines, Map<String, RowVersion> expected) throws Exception {
         if (vaccines.isEmpty()) {
             return;
         }
@@ -138,13 +140,13 @@ public class VaccineDAO implements IVaccineDAO {
                     vaccination_date = excluded.vaccination_date,
                     synced = excluded.synced,
                     last_modified = excluded.last_modified
-                WHERE vaccines.last_modified IS ?
+                WHERE vaccines.last_modified IS ? AND vaccines.synced IS ?
                 """;
         Transactions.inTransaction(dataSource, conn -> {
             try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
                 for (Vaccine vaccine : vaccines) {
                     bind(pstmt, vaccine);
-                    pstmt.setString(7, expectedLastModified.get(vaccine.getId()));
+                    RowVersionGuard.bind(pstmt, 7, expected.get(vaccine.getId()));
                     pstmt.addBatch();
                 }
                 pstmt.executeBatch();
@@ -153,9 +155,24 @@ public class VaccineDAO implements IVaccineDAO {
         });
     }
 
+    /** Only rows that were synced when read and have not changed since. */
     @Override
-    public void deleteRemovedRemotely(Collection<String> ids) throws Exception {
-        executeForEach("DELETE FROM vaccines WHERE id = ? AND synced = 1", ids);
+    public void deleteRemovedRemotely(Map<String, RowVersion> expected) throws Exception {
+        if (expected.isEmpty()) {
+            return;
+        }
+        Transactions.inTransaction(dataSource, conn -> {
+            try (PreparedStatement pstmt = conn.prepareStatement(
+                    "DELETE FROM vaccines WHERE id = ? AND synced = 1 AND last_modified IS ? AND synced IS ?")) {
+                for (Map.Entry<String, RowVersion> entry : expected.entrySet()) {
+                    pstmt.setString(1, entry.getKey());
+                    RowVersionGuard.bind(pstmt, 2, entry.getValue());
+                    pstmt.addBatch();
+                }
+                pstmt.executeBatch();
+            }
+            return null;
+        });
     }
 
     @Override

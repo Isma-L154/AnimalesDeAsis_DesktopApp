@@ -1,5 +1,6 @@
 package com.asosiaciondeasis.animalesdeasis.Abstraccions.Vaccines;
 
+import com.asosiaciondeasis.animalesdeasis.Abstraccions.RowVersion;
 import com.asosiaciondeasis.animalesdeasis.Model.Vaccine;
 
 import java.util.Collection;
@@ -34,18 +35,18 @@ public interface IVaccineDAO {
 
     /**
      * Inserts or replaces vaccines pulled from Firebase, in one transaction. An
-     * existing row is replaced only while its {@code last_modified} still equals
-     * {@code expectedLastModified.get(id)}, so a local edit made in the meantime
-     * is kept.
+     * existing row is replaced only while it still matches {@code expected.get(id)},
+     * so a local edit made in the meantime is kept.
      */
-    void saveFromRemote(List<Vaccine> vaccines, Map<String, String> expectedLastModified) throws Exception;
+    void saveFromRemote(List<Vaccine> vaccines, Map<String, RowVersion> expected) throws Exception;
 
     /**
-     * Removes vaccines that were deleted in Firebase, in one transaction. No
-     * tombstone is written - the deletion already happened remotely - and a row
-     * edited locally since its last sync is kept.
+     * Removes vaccines that were deleted in Firebase, in one transaction, each only
+     * while it still matches the version given for it. No tombstone is written -
+     * the deletion already happened remotely - and a row edited locally since it
+     * was read is kept.
      */
-    void deleteRemovedRemotely(Collection<String> ids) throws Exception;
+    void deleteRemovedRemotely(Map<String, RowVersion> expected) throws Exception;
 
     /**
      * Marks pushed vaccines as synced, but only rows that still hold exactly what

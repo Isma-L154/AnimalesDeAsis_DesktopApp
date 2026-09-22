@@ -169,7 +169,7 @@ class AnimalDAOTest {
         Animal brandNew = TestSupport.newAnimal(placeId);
         brandNew.setLastModified("2021-01-01 00:00:00");
 
-        dao.saveFromRemote(List.of(newer, brandNew), dao.getLastModifiedByRecordNumber());
+        dao.saveFromRemote(List.of(newer, brandNew), dao.getRowVersions());
 
         Animal replaced = dao.findByRecordNumber(existing.getRecordNumber());
         assertEquals("Actualizado", replaced.getName());
@@ -198,7 +198,7 @@ class AnimalDAOTest {
         Animal animal = TestSupport.newAnimal(placeId);
         animal.setLastModified("2020-01-01 00:00:00");
         dao.insertAnimal(animal);
-        Map<String, String> readBeforeTheEdit = dao.getLastModifiedByRecordNumber();
+        var readBeforeTheEdit = dao.getRowVersions();
 
         animal.setName("Editado aquí");
         dao.updateAnimal(animal);
@@ -213,6 +213,33 @@ class AnimalDAOTest {
         dao.saveFromRemote(List.of(remoteCopy), readBeforeTheEdit);
 
         assertEquals("Editado aquí", dao.findByRecordNumber(animal.getRecordNumber()).getName());
+    }
+
+    /**
+     * last_modified has one-second precision, so an edit saved in the same second
+     * as the pull's snapshot leaves it unchanged. The edit still flips synced to
+     * 0, which is what the guard has to notice.
+     */
+    @Test
+    void remoteRecordDoesNotOverwriteAnEditMadeInTheSameSecondAsTheSnapshot() throws Exception {
+        Animal animal = TestSupport.newAnimal(placeId);
+        animal.setSynced(true);
+        animal.setLastModified("2020-01-01 00:00:00");
+        dao.insertAnimal(animal);
+        var readBeforeTheEdit = dao.getRowVersions();
+
+        try (var stmt = conn.createStatement()) {
+            stmt.executeUpdate("UPDATE animals SET name = 'Editado en el mismo segundo', synced = 0 "
+                    + "WHERE record_number = '" + animal.getRecordNumber() + "'");
+        }
+
+        Animal remoteCopy = dao.findByRecordNumber(animal.getRecordNumber());
+        remoteCopy.setName("Versión remota");
+        remoteCopy.setLastModified("2021-01-01 00:00:00");
+        remoteCopy.setSynced(true);
+        dao.saveFromRemote(List.of(remoteCopy), readBeforeTheEdit);
+
+        assertEquals("Editado en el mismo segundo", dao.findByRecordNumber(animal.getRecordNumber()).getName());
     }
 
     // --- Marking pushed records -------------------------------------------------

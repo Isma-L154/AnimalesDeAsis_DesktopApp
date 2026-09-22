@@ -2,6 +2,8 @@ package com.asosiaciondeasis.animalesdeasis.DAO.Animals;
 
 import com.asosiaciondeasis.animalesdeasis.Abstraccions.Animals.DuplicateChipException;
 import com.asosiaciondeasis.animalesdeasis.Abstraccions.Animals.IAnimalDAO;
+import com.asosiaciondeasis.animalesdeasis.Abstraccions.RowVersion;
+import com.asosiaciondeasis.animalesdeasis.DAO.RowVersionGuard;
 import com.asosiaciondeasis.animalesdeasis.DAO.Transactions;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 
@@ -164,20 +166,21 @@ public class AnimalDAO implements IAnimalDAO {
     }
 
     @Override
-    public Map<String, String> getLastModifiedByRecordNumber() throws Exception {
-        Map<String, String> result = new HashMap<>();
+    public Map<String, RowVersion> getRowVersions() throws Exception {
+        Map<String, RowVersion> result = new HashMap<>();
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement("SELECT record_number, last_modified FROM animals");
+             PreparedStatement pstmt = conn.prepareStatement(
+                     "SELECT record_number, last_modified, synced FROM animals");
              ResultSet rs = pstmt.executeQuery()) {
             while (rs.next()) {
-                result.put(rs.getString(1), rs.getString(2));
+                result.put(rs.getString(1), new RowVersion(rs.getString(2), rs.getInt(3) == 1));
             }
         }
         return result;
     }
 
     @Override
-    public void saveFromRemote(List<Animal> animals, Map<String, String> expectedLastModified) throws Exception {
+    public void saveFromRemote(List<Animal> animals, Map<String, RowVersion> expected) throws Exception {
         if (animals.isEmpty()) {
             return;
         }
@@ -192,13 +195,13 @@ public class AnimalDAO implements IAnimalDAO {
                     neutering_date = excluded.neutering_date, adopted = excluded.adopted,
                     synced = excluded.synced, active = excluded.active,
                     last_modified = excluded.last_modified
-                WHERE animals.last_modified IS ?
+                WHERE animals.last_modified IS ? AND animals.synced IS ?
                 """;
         Transactions.inTransaction(dataSource, conn -> {
             try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
                 for (Animal animal : animals) {
                     bind(pstmt, animal);
-                    pstmt.setString(18, expectedLastModified.get(animal.getRecordNumber()));
+                    RowVersionGuard.bind(pstmt, 18, expected.get(animal.getRecordNumber()));
                     pstmt.addBatch();
                 }
                 pstmt.executeBatch();

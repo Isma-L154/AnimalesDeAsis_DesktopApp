@@ -1,5 +1,6 @@
 package com.asosiaciondeasis.animalesdeasis.DAO;
 
+import com.asosiaciondeasis.animalesdeasis.Abstraccions.RowVersion;
 import com.asosiaciondeasis.animalesdeasis.DAO.Animals.AnimalDAO;
 import com.asosiaciondeasis.animalesdeasis.DAO.Vaccine.VaccineDAO;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
@@ -77,7 +78,8 @@ class VaccineDAOTest {
         Vaccine brandNew = TestSupport.newVaccine(animal.getRecordNumber());
         brandNew.setLastModified(null);
 
-        vaccineDAO.saveFromRemote(List.of(newer, brandNew), Map.of(existing.getId(), "2020-01-01 00:00:00"));
+        vaccineDAO.saveFromRemote(List.of(newer, brandNew),
+                Map.of(existing.getId(), new RowVersion("2020-01-01 00:00:00", false)));
 
         assertEquals("Moquillo", vaccineDAO.findById(existing.getId()).getVaccineName());
         assertEquals("2021-01-01 00:00:00", vaccineDAO.findById(existing.getId()).getLastModified());
@@ -97,7 +99,7 @@ class VaccineDAOTest {
         Vaccine remote = vaccineDAO.findById(vaccine.getId());
         remote.setVaccineName("Versión remota");
         remote.setLastModified("2021-01-01 00:00:00");
-        vaccineDAO.saveFromRemote(List.of(remote), Map.of(vaccine.getId(), "2020-01-01 00:00:00"));
+        vaccineDAO.saveFromRemote(List.of(remote), Map.of(vaccine.getId(), new RowVersion("2020-01-01 00:00:00", false)));
 
         assertEquals("Editada aquí", vaccineDAO.findById(vaccine.getId()).getVaccineName());
     }
@@ -116,6 +118,59 @@ class VaccineDAOTest {
         assertFalse(vaccineDAO.findById(vaccine.getId()).isSynced());
     }
 
+    /** Same-second edit: last_modified unchanged, synced flipped to 0. */
+    @Test
+    void remoteVaccineDoesNotOverwriteAnEditMadeInTheSameSecondAsTheSnapshot() throws Exception {
+        Vaccine vaccine = TestSupport.newVaccine(animal.getRecordNumber());
+        vaccine.setSynced(true);
+        vaccine.setLastModified("2020-01-01 00:00:00");
+        vaccineDAO.insertVaccine(vaccine);
+        Map<String, RowVersion> readBeforeTheEdit = versionsOf(vaccine.getId());
+
+        editInTheSameSecond(vaccine.getId(), "Editada en el mismo segundo");
+
+        Vaccine remote = vaccineDAO.findById(vaccine.getId());
+        remote.setVaccineName("Versión remota");
+        remote.setLastModified("2021-01-01 00:00:00");
+        remote.setSynced(true);
+        vaccineDAO.saveFromRemote(List.of(remote), readBeforeTheEdit);
+
+        assertEquals("Editada en el mismo segundo", vaccineDAO.findById(vaccine.getId()).getVaccineName());
+    }
+
+    @Test
+    void remoteDeletionKeepsAVaccineEditedInTheSameSecondAsTheSnapshot() throws Exception {
+        Vaccine vaccine = TestSupport.newVaccine(animal.getRecordNumber());
+        vaccine.setSynced(true);
+        vaccine.setLastModified("2020-01-01 00:00:00");
+        vaccineDAO.insertVaccine(vaccine);
+        Map<String, RowVersion> readBeforeTheEdit = versionsOf(vaccine.getId());
+
+        editInTheSameSecond(vaccine.getId(), "Editada en el mismo segundo");
+        vaccineDAO.deleteRemovedRemotely(readBeforeTheEdit);
+
+        assertNotNull(vaccineDAO.findById(vaccine.getId()));
+    }
+
+    private Map<String, RowVersion> versionsOf(String... ids) throws Exception {
+        Map<String, RowVersion> versions = new java.util.HashMap<>();
+        for (String id : ids) {
+            Vaccine stored = vaccineDAO.findById(id);
+            versions.put(id, new RowVersion(stored.getLastModified(), stored.isSynced()));
+        }
+        return versions;
+    }
+
+    /** What an edit saved within the snapshot's second looks like: new content, same timestamp. */
+    private void editInTheSameSecond(String id, String name) throws Exception {
+        try (PreparedStatement pstmt = conn.prepareStatement(
+                "UPDATE vaccines SET vaccine_name = ?, synced = 0 WHERE id = ?")) {
+            pstmt.setString(1, name);
+            pstmt.setString(2, id);
+            pstmt.executeUpdate();
+        }
+    }
+
     @Test
     void remoteDeletionRemovesOnlyVaccinesNotEditedHere() throws Exception {
         Vaccine synced = TestSupport.newVaccine(animal.getRecordNumber());
@@ -124,7 +179,7 @@ class VaccineDAOTest {
         Vaccine editedHere = TestSupport.newVaccine(animal.getRecordNumber());
         vaccineDAO.insertVaccine(editedHere);
 
-        vaccineDAO.deleteRemovedRemotely(List.of(synced.getId(), editedHere.getId()));
+        vaccineDAO.deleteRemovedRemotely(versionsOf(synced.getId(), editedHere.getId()));
 
         assertNull(vaccineDAO.findById(synced.getId()));
         assertNotNull(vaccineDAO.findById(editedHere.getId()), "an unsynced local edit is kept");

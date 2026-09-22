@@ -238,7 +238,7 @@
                     <plugin>
                         <groupId>org.panteleyev</groupId>
                         <artifactId>jpackage-maven-plugin</artifactId>
-                        <version>1.6.5</version>
+                        <version>1.8.0</version>
                         <configuration>
                             <name>AnimalesDeAsis</name>
                             <appVersion>${app.version}</appVersion>
@@ -274,7 +274,7 @@
                     <plugin>
                         <groupId>org.panteleyev</groupId>
                         <artifactId>jpackage-maven-plugin</artifactId>
-                        <version>1.6.5</version>
+                        <version>1.8.0</version>
                         <configuration>
                             <name>AnimalesDeAsis</name>
                             <appVersion>${app.version}</appVersion>
@@ -305,7 +305,7 @@
                     <plugin>
                         <groupId>org.panteleyev</groupId>
                         <artifactId>jpackage-maven-plugin</artifactId>
-                        <version>1.6.5</version>
+                        <version>1.8.0</version>
                         <configuration>
                             <name>AnimalesDeAsis</name>
                             <appVersion>${app.version}</appVersion>

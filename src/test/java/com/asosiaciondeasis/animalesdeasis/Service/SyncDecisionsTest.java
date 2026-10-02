@@ -1,9 +1,12 @@
 package com.asosiaciondeasis.animalesdeasis.Service;
 
 import com.asosiaciondeasis.animalesdeasis.Abstraccions.RowVersion;
+import com.asosiaciondeasis.animalesdeasis.Abstraccions.Sync.SyncState;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -47,6 +50,27 @@ class SyncDecisionsTest {
         assertTrue(SyncService.isNewer("2024-01-01 00:00:00", null));
         assertTrue(SyncService.isNewer("not a date", "2024-01-01 00:00:00"));
         assertFalse(SyncService.isNewer("2024-01-01 00:00:00", "2024-01-01 00:00:01"));
+    }
+
+    @Test
+    void theFirstPullReadsEverythingBecauseThereIsNowhereToResumeFrom() {
+        Instant now = Instant.parse("2026-06-01T12:00:00Z");
+
+        assertTrue(SyncService.needsFullPull(SyncState.none(), now));
+        assertTrue(SyncService.needsFullPull(new SyncState(null, now), now));
+        assertTrue(SyncService.needsFullPull(new SyncState(now, null), now));
+    }
+
+    @Test
+    void everythingIsReadAgainOnceTheLastFullPullIsOldEnough() {
+        Instant lastFullPull = Instant.parse("2026-06-01T12:00:00Z");
+        SyncState state = new SyncState(lastFullPull, lastFullPull);
+        Instant due = lastFullPull.plus(SyncService.FULL_PULL_INTERVAL);
+
+        assertFalse(SyncService.needsFullPull(state, lastFullPull.plus(Duration.ofDays(1))));
+        assertFalse(SyncService.needsFullPull(state, due.minusSeconds(1)));
+        assertTrue(SyncService.needsFullPull(state, due));
+        assertTrue(SyncService.needsFullPull(state, due.plus(Duration.ofDays(90))));
     }
 
     @Test

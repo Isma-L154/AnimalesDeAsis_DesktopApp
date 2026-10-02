@@ -50,10 +50,16 @@ The goal of this project is to provide a **comprehensive offline-first solution*
   - Application startup (if internet is available).
   - Every 24 hours (automated scheduler).
 - Sync process:
-  - **Push**: Uploads unsynced local data to Firebase.
-  - **Pull**: Downloads Firebase records that are missing locally or newer than the local copy.
+  - **Pull**: Downloads only the animals changed since the previous sync, with their
+    vaccines, so the cost follows what changed and not how many records exist. The
+    first sync on a machine, and one every 30 days, reads everything.
+  - **Push**: Uploads unsynced local data and stamps each animal it touches with the
+    server's time. That stamp is what the next pull on the other machines looks for.
 - The most recent `last_modified` wins, so offline edits are not overwritten by older remote data.
 - Deletions made offline are kept as tombstones until they reach Firebase.
+- Only this application writes the stamp. A record edited in the Firebase console, or
+  by an installation older than this behaviour, reaches the other machines at their
+  next full read rather than at the next sync — so update every installation together.
 
 ### 📊 Statistics & Reporting
 - Monthly admissions by year.

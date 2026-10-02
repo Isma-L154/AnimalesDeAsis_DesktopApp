@@ -1,10 +1,17 @@
 package com.asosiaciondeasis.animalesdeasis.Model;
 
+import com.google.cloud.firestore.annotation.IgnoreExtraProperties;
+
 import java.util.UUID;
 
 /**
  * Represents an animal that has been rescued and registered in the system.
+ *
+ * <p>Its Firestore document also carries the stamp synchronisation writes,
+ * which is not part of the record. Without the annotation the SDK logs a
+ * warning for that field on every document it reads.</p>
  */
+@IgnoreExtraProperties
 public class Animal {
 
     private String recordNumber; // UUID

@@ -16,7 +16,6 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -26,16 +25,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The two ways synchronisation lost data.
+ * A vaccine deleted offline must stay deleted.
  *
- * <p>Neither of these announced itself. One made a deleted record reappear days
- * later; the other made a large backlog fail to upload entirely, while the
- * exception was logged and swallowed. Both look, to the person using the
- * application, like they imagined it.</p>
+ * <p>Deleting one used to leave nothing behind, so the next pull found it still
+ * in Firebase, saw nothing locally, and put it back days later. To the person
+ * using the application it looked like they had imagined deleting it.</p>
  *
- * <p>These tests do not talk to Firestore. What they cover is the local half —
- * the tombstones that make a deletion survive, and the chunk boundaries that
- * decide whether a commit is even legal — which is where both faults lived.</p>
+ * <p>These tests cover the local half: the tombstones that make a deletion
+ * survive until it has been applied remotely.</p>
  */
 class SyncCorrectnessTest {
 
@@ -187,74 +184,6 @@ class SyncCorrectnessTest {
              ResultSet rs = pstmt.executeQuery()) {
             assertTrue(rs.next(), "deleted_vaccines is missing from the schema");
         }
-    }
-
-    // -------------------------------------------------------------------------
-    //  Batch limits
-    // -------------------------------------------------------------------------
-
-    /**
-     * Firestore commits at most 500 operations per batch and fails the whole
-     * commit past that, so the more work had piled up offline, the more certain
-     * it was that none of it would upload. Off-by-one here is the entire bug.
-     */
-    @Test
-    @DisplayName("writes are split into groups Firestore will accept")
-    void partitionRespectsTheLimit() {
-        List<Integer> items = IntStream.range(0, 1201).boxed().toList();
-
-        List<List<Integer>> chunks = SyncService.partition(items, 500);
-
-        assertEquals(3, chunks.size());
-        assertEquals(500, chunks.get(0).size());
-        assertEquals(500, chunks.get(1).size());
-        assertEquals(201, chunks.get(2).size());
-        assertTrue(chunks.stream().allMatch(c -> c.size() <= 500));
-    }
-
-    @Test
-    @DisplayName("exactly at the limit stays one group")
-    void exactlyAtTheLimitIsNotSplit() {
-        List<Integer> items = IntStream.range(0, 500).boxed().toList();
-
-        assertEquals(1, SyncService.partition(items, 500).size());
-    }
-
-    @Test
-    @DisplayName("one over the limit becomes two groups")
-    void oneOverTheLimitSplits() {
-        List<Integer> items = IntStream.range(0, 501).boxed().toList();
-
-        List<List<Integer>> chunks = SyncService.partition(items, 500);
-
-        assertEquals(2, chunks.size());
-        assertEquals(500, chunks.get(0).size());
-        assertEquals(1, chunks.get(1).size());
-    }
-
-    @Test
-    @DisplayName("nothing to send produces no batches at all")
-    void emptyInputProducesNoChunks() {
-        assertTrue(SyncService.partition(List.of(), 500).isEmpty(),
-                "an empty commit would be a wasted round trip");
-    }
-
-    @Test
-    @DisplayName("every item survives the split, in order")
-    void partitionLosesNothing() {
-        List<Integer> items = IntStream.range(0, 1050).boxed().toList();
-
-        List<Integer> flattened = SyncService.partition(items, 500).stream()
-                .flatMap(List::stream).toList();
-
-        assertEquals(items, flattened);
-    }
-
-    @Test
-    @DisplayName("a nonsensical chunk size is rejected rather than looping forever")
-    void invalidChunkSizeThrows() {
-        assertThrows(IllegalArgumentException.class,
-                () -> SyncService.partition(List.of(1, 2, 3), 0));
     }
 
     // -------------------------------------------------------------------------

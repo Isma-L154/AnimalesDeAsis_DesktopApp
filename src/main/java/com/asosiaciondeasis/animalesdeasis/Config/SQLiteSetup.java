@@ -126,12 +126,22 @@ public final class SQLiteSetup {
                 );
                 """;
 
+        // How far this installation has read the shared copy. Local to the
+        // machine and never synchronised: each one reads at its own pace.
+        String createSyncState = """
+                CREATE TABLE IF NOT EXISTS sync_state (
+                    key TEXT PRIMARY KEY,
+                    value TEXT NOT NULL
+                );
+                """;
+
         try (Statement stmt = conn.createStatement()) {
             stmt.execute(createProvinces);
             stmt.execute(createPlaces);
             stmt.execute(createAnimals);
             stmt.execute(createVaccines);
             stmt.execute(createDeletedVaccines);
+            stmt.execute(createSyncState);
 
             // --- Indexes for the hot query paths (sync filters, listings, joins) ---
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_animals_synced ON animals(synced)");

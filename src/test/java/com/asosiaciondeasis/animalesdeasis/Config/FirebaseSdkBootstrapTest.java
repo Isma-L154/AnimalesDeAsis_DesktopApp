@@ -64,7 +64,7 @@ class FirebaseSdkBootstrapTest {
         Firestore db = FirestoreClient.getFirestore(app);
         assertNotNull(db);
 
-        // Mirrors how SyncService pushes: a collection reference, a batch, a set and a delete.
+        // Mirrors how FirestoreRecords pushes: a collection reference, a batch, a set and a delete.
         // The set is what forces the protobuf serialisation path to load.
         CollectionReference animals = db.collection("animals");
         DocumentReference doc = animals.document("A-2026-0042");

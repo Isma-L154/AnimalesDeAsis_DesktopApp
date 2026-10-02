@@ -92,7 +92,7 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.6.3</version>
+            <version>1.6.4</version>
         </dependency>
 
         <!-- PDF Generation. OpenPDF is LGPL 2.1 / MPL 2.0; iText, used before, is

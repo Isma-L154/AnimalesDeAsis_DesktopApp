@@ -51,7 +51,7 @@ public final class ServiceFactory {
     }
 
     public static SyncService getSyncService() {
-        return new SyncService(DATA_SOURCE);
+        return new SyncService(new AnimalDAO(DATA_SOURCE), new VaccineDAO(DATA_SOURCE));
     }
 
     public static CsvStatisticsExporter getCsvStatisticsExporter() {

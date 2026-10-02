@@ -41,8 +41,16 @@ jobs:
       - name: Install a virtual display
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends xvfb
 
+      # Run inside the Firestore emulator, so the tests of the code that talks to
+      # Firestore run instead of being skipped: without it, nothing checks a
+      # firebase-admin update against a real Firestore. The emulator needs Node,
+      # which the runner image carries, and the JDK set up above. The version is
+      # pinned by hand, since nothing in the repository declares it.
       - name: Build and test
-        run: xvfb-run -a mvn -B clean test --file pom.xml
+        run: >
+          npx --yes firebase-tools@15.32.1 emulators:exec
+          --only firestore --project demo-animalesdeasis
+          "xvfb-run -a mvn -B clean test --file pom.xml"
       - name: Publish test report
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

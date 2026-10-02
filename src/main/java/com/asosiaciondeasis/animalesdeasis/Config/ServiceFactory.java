@@ -7,6 +7,8 @@ import com.asosiaciondeasis.animalesdeasis.Abstraccions.Vaccines.IVaccineService
 import com.asosiaciondeasis.animalesdeasis.DAO.Animals.AnimalDAO;
 import com.asosiaciondeasis.animalesdeasis.DAO.Places.PlacesDAO;
 import com.asosiaciondeasis.animalesdeasis.DAO.Statistics.StatisticsDAO;
+import com.asosiaciondeasis.animalesdeasis.DAO.Sync.FirestoreRecords;
+import com.asosiaciondeasis.animalesdeasis.DAO.Sync.SyncStateDAO;
 import com.asosiaciondeasis.animalesdeasis.DAO.Vaccine.VaccineDAO;
 import com.asosiaciondeasis.animalesdeasis.Service.Animal.AnimalService;
 import com.asosiaciondeasis.animalesdeasis.Service.Home.ShelterSummaryService;
@@ -15,6 +17,7 @@ import com.asosiaciondeasis.animalesdeasis.Service.Statistics.StatisticsService;
 import com.asosiaciondeasis.animalesdeasis.Service.SyncService;
 import com.asosiaciondeasis.animalesdeasis.Service.Vaccine.VaccineService;
 import com.asosiaciondeasis.animalesdeasis.Util.Exporters.CsvStatisticsExporter;
+import com.google.firebase.cloud.FirestoreClient;
 
 import javax.sql.DataSource;
 
@@ -51,7 +54,8 @@ public final class ServiceFactory {
     }
 
     public static SyncService getSyncService() {
-        return new SyncService(new AnimalDAO(DATA_SOURCE), new VaccineDAO(DATA_SOURCE));
+        return new SyncService(new AnimalDAO(DATA_SOURCE), new VaccineDAO(DATA_SOURCE),
+                new SyncStateDAO(DATA_SOURCE), new FirestoreRecords(FirestoreClient::getFirestore));
     }
 
     public static CsvStatisticsExporter getCsvStatisticsExporter() {

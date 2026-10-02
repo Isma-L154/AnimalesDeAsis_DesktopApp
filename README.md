@@ -122,6 +122,10 @@ From an IDE, run **`Main`** — pressing Run works with no launch configuration.
 # Run the tests (JUnit + Mockito)
 ./mvnw test
 
+# The same, including the tests that need a real Firestore (requires Node;
+# on Windows use ".\mvnw.cmd test")
+npx firebase-tools emulators:exec --only firestore --project demo-animalesdeasis "./mvnw test"
+
 # Run the application
 ./mvnw javafx:run
 

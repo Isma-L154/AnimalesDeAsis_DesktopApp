@@ -30,11 +30,14 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  * timestamps and the batches behave as that stand-in assumes. This is the check
  * that they do.</p>
  *
- * <p>Skipped unless {@code FIRESTORE_EMULATOR_HOST} is set. To run it:</p>
+ * <p>Skipped unless {@code FIRESTORE_EMULATOR_HOST} is set, which
+ * {@code emulators:exec} does for the command it runs. CI runs the whole suite
+ * that way; locally, with Node installed:</p>
  * <pre>
- *   npx firebase-tools emulators:exec --only firestore --project demo-animalesdeasis \
- *       "./mvnw test -Dtest=FirestoreRecordsEmulatorTest"
+ *   npx firebase-tools emulators:exec --only firestore --project demo-animalesdeasis "./mvnw test"
  * </pre>
+ * <p>On Windows the command runs under {@code cmd}, so the wrapper is
+ * {@code ".\mvnw.cmd test"}.</p>
  */
 class FirestoreRecordsEmulatorTest {
 

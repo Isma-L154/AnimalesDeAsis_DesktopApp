@@ -34,8 +34,6 @@ public class SplashController {
         statusLabel.textProperty().bind(initTask.messageProperty());
         initTask.setOnSucceeded(e -> loadWelcomeScreen());
         initTask.setOnFailed(e -> {
-            // This used to say "Reintentando..." while retrying nothing and
-            // logging nothing, so a failed start left no trace anywhere.
             log.error("Application failed to initialise", initTask.getException());
             statusLabel.textProperty().unbind();
             statusLabel.setText("No se pudo iniciar la aplicación. Revise su conexión y vuelva a abrirla.");

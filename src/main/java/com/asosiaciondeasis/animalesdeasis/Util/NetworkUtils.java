@@ -3,37 +3,35 @@ package com.asosiaciondeasis.animalesdeasis.Util;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.List;
 
 /**
- * Small helper to check for real internet connectivity.
+ * Checks for real internet connectivity.
  *
- * <p>The previous implementation only resolved a DNS name, which returns
- * {@code true} even when the resolver is cached or a captive portal is present.
- * We instead attempt a short, bounded TCP connection to well-known hosts so a
- * missing network fails fast (bounded by {@link #TIMEOUT_MS}) instead of hanging
- * the caller.</p>
+ * <p>Resolving a DNS name is not enough: it succeeds from a cached resolver or
+ * behind a captive portal. A short TCP connection to well-known hosts fails
+ * fast, bounded by {@link #TIMEOUT_MS}, instead of hanging the caller.</p>
  */
-public class NetworkUtils {
+public final class NetworkUtils {
 
     private static final int TIMEOUT_MS = 1500;
 
-    /** Hosts/ports tried in order; the first reachable one wins. */
-    private static final String[][] PROBES = {
-            {"8.8.8.8", "53"},          // Google DNS
-            {"1.1.1.1", "53"},          // Cloudflare DNS
-            {"firestore.googleapis.com", "443"}
-    };
-
-    private NetworkUtils() {
-        // Utility class.
+    private record Probe(String host, int port) {
     }
 
-    /**
-     * @return {@code true} if any probe host is reachable within the timeout.
-     */
+    /** Tried in order; the first reachable one wins. */
+    private static final List<Probe> PROBES = List.of(
+            new Probe("8.8.8.8", 53),          // Google DNS
+            new Probe("1.1.1.1", 53),          // Cloudflare DNS
+            new Probe("firestore.googleapis.com", 443));
+
+    private NetworkUtils() {
+    }
+
+    /** @return {@code true} if any probe host is reachable within the timeout */
     public static boolean isInternetAvailable() {
-        for (String[] probe : PROBES) {
-            if (canConnect(probe[0], Integer.parseInt(probe[1]))) {
+        for (Probe probe : PROBES) {
+            if (canConnect(probe.host(), probe.port())) {
                 return true;
             }
         }

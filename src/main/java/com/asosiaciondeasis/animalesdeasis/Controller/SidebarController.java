@@ -1,6 +1,7 @@
 package com.asosiaciondeasis.animalesdeasis.Controller;
 
 import com.asosiaciondeasis.animalesdeasis.Model.NavigationSection;
+import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -14,6 +15,7 @@ import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * The navigation rail.
@@ -47,7 +49,7 @@ public class SidebarController {
      *
      * @param onSelect invoked with the chosen section when an item is activated
      */
-    public VBox build(java.util.function.Consumer<NavigationSection> onSelect) {
+    public VBox build(Consumer<NavigationSection> onSelect) {
         root = new VBox();
         root.getStyleClass().add("sidebar");
         root.setFillWidth(true);
@@ -89,7 +91,7 @@ public class SidebarController {
     }
 
     private Button createItem(NavigationSection section,
-                              java.util.function.Consumer<NavigationSection> onSelect) {
+                              Consumer<NavigationSection> onSelect) {
         FontIcon icon = new FontIcon(section.iconLiteral());
         icon.getStyleClass().add("sidebar-icon");
 
@@ -141,8 +143,7 @@ public class SidebarController {
         root.setPrefWidth(width);
         root.setMinWidth(width);
         root.setMaxWidth(width);
-        root.pseudoClassStateChanged(
-                javafx.css.PseudoClass.getPseudoClass("collapsed"), value);
+        root.pseudoClassStateChanged(PseudoClass.getPseudoClass("collapsed"), value);
 
         for (Button item : items.values()) {
             // The label goes; the icon and the tooltip stay. Text is hidden with

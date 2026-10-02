@@ -4,6 +4,7 @@ import java.io.FileOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 
 /**
  * One-off tool that encrypts a Firebase service-account JSON into the bundle the
@@ -51,7 +52,7 @@ public final class FirebaseCredentialsEncryptor {
     public static void encryptCredentials(String inputPath, String outputPath) throws Exception {
         byte[] plaintext = Files.readAllBytes(Paths.get(inputPath));
         byte[] encrypted = CredentialsManager.encrypt(plaintext);
-        java.util.Arrays.fill(plaintext, (byte) 0);
+        Arrays.fill(plaintext, (byte) 0);
 
         Path output = Paths.get(outputPath);
         if (output.getParent() != null) {

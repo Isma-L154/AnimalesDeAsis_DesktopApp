@@ -50,10 +50,16 @@ The goal of this project is to provide a **comprehensive offline-first solution*
   - Application startup (if internet is available).
   - Every 24 hours (automated scheduler).
 - Sync process:
-  - **Push**: Uploads unsynced local data to Firebase.
-  - **Pull**: Downloads Firebase records that are missing locally or newer than the local copy.
+  - **Pull**: Downloads only the animals changed since the previous sync, with their
+    vaccines, so the cost follows what changed and not how many records exist. The
+    first sync on a machine, and one every 30 days, reads everything.
+  - **Push**: Uploads unsynced local data and stamps each animal it touches with the
+    server's time. That stamp is what the next pull on the other machines looks for.
 - The most recent `last_modified` wins, so offline edits are not overwritten by older remote data.
 - Deletions made offline are kept as tombstones until they reach Firebase.
+- Only this application writes the stamp. A record edited in the Firebase console, or
+  by an installation older than this behaviour, reaches the other machines at their
+  next full read rather than at the next sync — so update every installation together.
 
 ### 📊 Statistics & Reporting
 - Monthly admissions by year.
@@ -113,8 +119,12 @@ Requires **JDK 21** (a *Full* JDK that includes JavaFX, e.g. Liberica Full, is u
 From an IDE, run **`Main`** — pressing Run works with no launch configuration.
 
 ```bash
-# Run the unit tests (JUnit 5 + Mockito)
+# Run the tests (JUnit + Mockito)
 ./mvnw test
+
+# The same, including the tests that need a real Firestore (requires Node;
+# on Windows use ".\mvnw.cmd test")
+npx firebase-tools emulators:exec --only firestore --project demo-animalesdeasis "./mvnw test"
 
 # Run the application
 ./mvnw javafx:run
@@ -129,8 +139,14 @@ The application version is controlled by the `app.version` property in `pom.xml`
 ### 🚀 Continuous Integration & Releases
 GitHub Actions ([`.github/workflows/workflow-CI.yml`](.github/workflows/workflow-CI.yml)):
 - **Every push / PR to `main`** → compile and run the test suite.
-- **Pushing a `v*` tag** (e.g. `git tag v1.0.0 && git push origin v1.0.0`) → builds
-  native installers on Windows, macOS and Linux and publishes them to a GitHub Release.
+- **Every push to `main`** → also builds native installers on Windows, macOS and
+  Linux and replaces the rolling `latest` prerelease with them.
+- **Pushing a `v*` tag** (e.g. `git tag v1.0.0 && git push origin v1.0.0`) → publishes
+  the installers as a permanent, versioned GitHub Release. Tags must be strictly
+  numeric (`v1.2.3`); jpackage rejects suffixes such as `-rc1`.
+
+[`codeql.yml`](.github/workflows/codeql.yml) runs CodeQL on every push and PR to
+`main`, and weekly.
 
 To let CI produce Firebase-enabled installers, add a repository secret
 `FIREBASE_CREDENTIALS_ENC` containing the base64 of the encrypted bundle (optional;

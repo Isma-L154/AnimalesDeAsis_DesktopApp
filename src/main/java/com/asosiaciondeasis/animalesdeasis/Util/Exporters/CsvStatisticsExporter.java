@@ -28,6 +28,8 @@ import java.util.Map;
 public class CsvStatisticsExporter {
 
     private static final Locale SPANISH = Locale.of("es", "ES");
+    private static final String RULE = "=".repeat(60);
+    private static final int MAX_ORIGINS = 15;
 
     private final IStatisticsDAO statisticsDAO;
 
@@ -54,133 +56,137 @@ public class CsvStatisticsExporter {
         return new File(selectedFile.getAbsolutePath() + ".csv");
     }
 
+    /** Everything the report shows, read before a single line is written. */
+    record YearReport(int year, Map<String, Integer> monthlyAdmissions, int totalAdmissions,
+                      double adoptionRate, Map<String, Integer> origins) {
+    }
+
     /**
-     * Core method that generates and writes the CSV file content.
+     * Queries the database and writes the file: call it off the interface thread.
      *
-     * The CSV structure includes:
-     * 1. Header with compatibility information for users without Excel
-     * 2. Executive summary with key metrics (total admissions, adoption rate, monthly average)
-     * 3. Detailed monthly admissions breakdown with month names
-     * 4. Adoption analysis showing adopted vs non-adopted animals
-     * 5. Top 15 animal origins by location and province
-     * 6. Metadata section with report generation details
+     * <p>The figures are read first, so a failed query leaves no half-written
+     * report behind.</p>
      *
-     * Uses UTF-8 encoding to ensure proper character display across different systems.
-     * Handles comma escaping in location names to prevent CSV parsing issues.
-     *
-     * <p>Queries the database and writes the file: call it off the interface thread.</p>
-     *
-     * @param file The target file where CSV content will be written
-     * @param year The year for which to generate statistics
      * @throws Exception if the statistics cannot be read or the file cannot be written
      */
     public void exportToFile(File file, int year) throws Exception {
+        YearReport report = new YearReport(year,
+                statisticsDAO.getMonthlyAdmissions(year),
+                statisticsDAO.getTotalAdmissions(year),
+                statisticsDAO.getAdoptionRate(year),
+                statisticsDAO.getAnimalOrigins(year));
+
         try (PrintWriter writer = new PrintWriter(
                 new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
-
-            writer.println("# ARCHIVO CSV - Compatible con Excel, LibreOffice, Google Sheets y cualquier editor de texto");
-            writer.println("# Para abrir: Haga doble clic o abra con Excel, Notepad, Word, etc.");
-            writer.println("#");
-
-            writer.println("Asociación de Asís - Reporte de Estadísticas del Año " + year);
-            writer.println("Generado el: " + LocalDateTime.now().format(
-                    DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
-            writer.println("=".repeat(60));
-            writer.println();
-
-            Map<String, Integer> monthlyAdmissions = statisticsDAO.getMonthlyAdmissions(year);
-            int totalAdmissions = statisticsDAO.getTotalAdmissions(year);
-            double adoptionRate = statisticsDAO.getAdoptionRate(year);
-
-            writer.println("RESUMEN EJECUTIVO");
-            writer.println("Indicador,Valor");
-            writer.println("Año," + year);
-            writer.println("Total de Admisiones," + totalAdmissions);
-            writer.println("Tasa de Adopción (%)," + String.format(Locale.US, "%.2f", adoptionRate));
-
-            if (!monthlyAdmissions.isEmpty()) {
-                double monthlyAverage = monthlyAdmissions.values().stream()
-                        .mapToInt(Integer::intValue)
-                        .average()
-                        .orElse(0.0);
-                writer.println("Promedio Mensual," + String.format(Locale.US, "%.2f", monthlyAverage));
-            }
-
-            writer.println();
-            writer.println("=".repeat(60));
-            writer.println();
-
-            writer.println("ADMISIONES MENSUALES DETALLADAS");
-            writer.println("Mes,Número,Nombre del Mes");
-
-            for (Map.Entry<String, Integer> entry : monthlyAdmissions.entrySet()) {
-                String monthNumber = entry.getKey();
-                String monthName = monthNumberToName(monthNumber);
-                int count = entry.getValue();
-                writer.println(monthNumber + "," + count + "," + monthName);
-            }
-
-            writer.println();
-            writer.println("=".repeat(60));
-            writer.println();
-
-            writer.println("ANÁLISIS DE ADOPCIONES");
-            writer.println("Concepto,Cantidad,Porcentaje");
-
-            if (totalAdmissions > 0) {
-                int adoptedAnimals = (int) Math.round(totalAdmissions * adoptionRate / 100.0);
-                int notAdoptedAnimals = totalAdmissions - adoptedAnimals;
-
-                writer.println("Animales Adoptados," + adoptedAnimals + "," +
-                        String.format(Locale.US, "%.2f", adoptionRate));
-                writer.println("Animales No Adoptados," + notAdoptedAnimals + "," +
-                        String.format(Locale.US, "%.2f", 100.0 - adoptionRate));
-            } else {
-                writer.println("Sin datos disponibles,0,0.00");
-            }
-
-            writer.println();
-            writer.println("=".repeat(60));
-            writer.println();
-
-            writer.println("ORIGEN DE ANIMALES POR LUGAR");
-            writer.println("Lugar - Provincia,Cantidad");
-
-            Map<String, Integer> originsData = statisticsDAO.getAnimalOrigins(year);
-
-            if (!originsData.isEmpty()) {
-                originsData.entrySet().stream()
-                        .limit(15)
-                        .forEach(entry -> {
-                            String origin = entry.getKey().replace(",", " -");
-                            int count = entry.getValue();
-                            writer.println(origin + "," + count);
-                        });
-            } else {
-                writer.println("Sin datos disponibles,0");
-            }
-
-            writer.println();
-            writer.println("=".repeat(60));
-            writer.println();
-
-            writer.println("METADATOS DEL REPORTE");
-            writer.println("Campo,Valor");
-            writer.println("Sistema,Dashboard de Estadísticas");
-            writer.println("Versión,1.0");
-            writer.println("Fecha de Generación," + LocalDateTime.now().format(
-                    DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-            writer.println("Hora de Generación," + LocalDateTime.now().format(
-                    DateTimeFormatter.ofPattern("HH:mm:ss")));
-            writer.println("Total de Registros Procesados," + totalAdmissions);
-
+            write(writer, report, LocalDateTime.now());
         } catch (IOException e) {
             throw new IOException("Could not write CSV file " + file + ": " + e.getMessage(), e);
         }
     }
 
+    /** Package-visible so a test can hand it a writer that fails. */
+    static void write(PrintWriter writer, YearReport report, LocalDateTime generatedAt) throws IOException {
+        writeHeader(writer, report.year(), generatedAt);
+        writeSummary(writer, report);
+        writeSeparator(writer);
+        writeMonthlyAdmissions(writer, report.monthlyAdmissions());
+        writeSeparator(writer);
+        writeAdoptions(writer, report.totalAdmissions(), report.adoptionRate());
+        writeSeparator(writer);
+        writeOrigins(writer, report.origins());
+        writeSeparator(writer);
+        writeMetadata(writer, report.totalAdmissions(), generatedAt);
+
+        // PrintWriter never throws: it records the failure and carries on. Without
+        // this, a disk that fills up halfway is reported as a completed export.
+        if (writer.checkError()) {
+            throw new IOException("the report could not be written completely");
+        }
+    }
+
+    private static void writeHeader(PrintWriter writer, int year, LocalDateTime generatedAt) {
+        writer.println("# ARCHIVO CSV - Compatible con Excel, LibreOffice, Google Sheets y cualquier editor de texto");
+        writer.println("# Para abrir: Haga doble clic o abra con Excel, Notepad, Word, etc.");
+        writer.println("#");
+        writer.println("Asociación de Asís - Reporte de Estadísticas del Año " + year);
+        writer.println("Generado el: " + generatedAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
+        writer.println(RULE);
+        writer.println();
+    }
+
+    private static void writeSeparator(PrintWriter writer) {
+        writer.println();
+        writer.println(RULE);
+        writer.println();
+    }
+
+    private static void writeSummary(PrintWriter writer, YearReport report) {
+        writer.println("RESUMEN EJECUTIVO");
+        writer.println("Indicador,Valor");
+        writer.println("Año," + report.year());
+        writer.println("Total de Admisiones," + report.totalAdmissions());
+        writer.println("Tasa de Adopción (%)," + decimal(report.adoptionRate()));
+
+        if (!report.monthlyAdmissions().isEmpty()) {
+            double monthlyAverage = report.monthlyAdmissions().values().stream()
+                    .mapToInt(Integer::intValue)
+                    .average()
+                    .orElse(0.0);
+            writer.println("Promedio Mensual," + decimal(monthlyAverage));
+        }
+    }
+
+    private static void writeMonthlyAdmissions(PrintWriter writer, Map<String, Integer> monthlyAdmissions) {
+        writer.println("ADMISIONES MENSUALES DETALLADAS");
+        writer.println("Mes,Número,Nombre del Mes");
+        monthlyAdmissions.forEach((monthNumber, count) ->
+                writer.println(monthNumber + "," + count + "," + monthNumberToName(monthNumber)));
+    }
+
+    private static void writeAdoptions(PrintWriter writer, int totalAdmissions, double adoptionRate) {
+        writer.println("ANÁLISIS DE ADOPCIONES");
+        writer.println("Concepto,Cantidad,Porcentaje");
+
+        if (totalAdmissions == 0) {
+            writer.println("Sin datos disponibles,0,0.00");
+            return;
+        }
+        int adopted = (int) Math.round(totalAdmissions * adoptionRate / 100.0);
+        writer.println("Animales Adoptados," + adopted + "," + decimal(adoptionRate));
+        writer.println("Animales No Adoptados," + (totalAdmissions - adopted) + "," + decimal(100.0 - adoptionRate));
+    }
+
+    private static void writeOrigins(PrintWriter writer, Map<String, Integer> origins) {
+        writer.println("ORIGEN DE ANIMALES POR LUGAR");
+        writer.println("Lugar - Provincia,Cantidad");
+
+        if (origins.isEmpty()) {
+            writer.println("Sin datos disponibles,0");
+            return;
+        }
+        // An origin is "place, province"; its comma would split it into two columns.
+        origins.entrySet().stream()
+                .limit(MAX_ORIGINS)
+                .forEach(entry -> writer.println(entry.getKey().replace(",", " -") + "," + entry.getValue()));
+    }
+
+    private static void writeMetadata(PrintWriter writer, int totalAdmissions, LocalDateTime generatedAt) {
+        writer.println("METADATOS DEL REPORTE");
+        writer.println("Campo,Valor");
+        writer.println("Sistema,Dashboard de Estadísticas");
+        writer.println("Versión,1.0");
+        writer.println("Fecha de Generación," + generatedAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        writer.println("Hora de Generación," + generatedAt.format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+        writer.println("Total de Registros Procesados," + totalAdmissions);
+    }
+
+    /** A dot as the decimal separator whatever the machine's locale: a comma would add a column. */
+    private static String decimal(double value) {
+        return String.format(Locale.US, "%.2f", value);
+    }
+
     /** Full Spanish month name for {@code "01"}..{@code "12"}, or a placeholder for anything else. */
-    private String monthNumberToName(String monthNumber) {
+    private static String monthNumberToName(String monthNumber) {
         try {
             int month = Integer.parseInt(monthNumber);
             if (month >= 1 && month <= 12) {

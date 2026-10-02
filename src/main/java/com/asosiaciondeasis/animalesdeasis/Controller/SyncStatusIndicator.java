@@ -16,10 +16,9 @@ import java.util.concurrent.TimeUnit;
 /**
  * Drives the synchronisation chip in the header.
  *
- * <p>Until now the only way to find out whether records had reached Firebase was
- * to start the application from a terminal and read {@code println} output. For
- * an offline-first application that is a significant gap: someone can work all
- * day believing their data is backed up when synchronisation has been failing
+ * <p>In an offline-first application this is the only place a person can see
+ * whether records are reaching Firebase. Without it someone can work all day
+ * believing their data is backed up while synchronisation has been failing
  * since the morning.</p>
  *
  * <p><b>Threading.</b> {@link NetworkUtils#isInternetAvailable()} opens sockets

@@ -13,8 +13,9 @@
 -->
 <configuration>
 
-    <!-- Same place as the SQLite database: ~/.asociaciondeasis -->
-    <property name="LOG_DIR" value="${user.home}/.asociaciondeasis/logs"/>
+    <!-- Same place as the SQLite database, and moved by the same property:
+         see Database.DATA_DIR. -->
+    <property name="LOG_DIR" value="${animalesdeasis.data.dir:-${user.home}/.asociaciondeasis}/logs"/>
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>

@@ -113,7 +113,7 @@ Requires **JDK 21** (a *Full* JDK that includes JavaFX, e.g. Liberica Full, is u
 From an IDE, run **`Main`** — pressing Run works with no launch configuration.
 
 ```bash
-# Run the unit tests (JUnit 5 + Mockito)
+# Run the tests (JUnit + Mockito)
 ./mvnw test
 
 # Run the application
@@ -129,8 +129,14 @@ The application version is controlled by the `app.version` property in `pom.xml`
 ### 🚀 Continuous Integration & Releases
 GitHub Actions ([`.github/workflows/workflow-CI.yml`](.github/workflows/workflow-CI.yml)):
 - **Every push / PR to `main`** → compile and run the test suite.
-- **Pushing a `v*` tag** (e.g. `git tag v1.0.0 && git push origin v1.0.0`) → builds
-  native installers on Windows, macOS and Linux and publishes them to a GitHub Release.
+- **Every push to `main`** → also builds native installers on Windows, macOS and
+  Linux and replaces the rolling `latest` prerelease with them.
+- **Pushing a `v*` tag** (e.g. `git tag v1.0.0 && git push origin v1.0.0`) → publishes
+  the installers as a permanent, versioned GitHub Release. Tags must be strictly
+  numeric (`v1.2.3`); jpackage rejects suffixes such as `-rc1`.
+
+[`codeql.yml`](.github/workflows/codeql.yml) runs CodeQL on every push and PR to
+`main`, and weekly.
 
 To let CI produce Firebase-enabled installers, add a repository secret
 `FIREBASE_CREDENTIALS_ENC` containing the base64 of the encrypted bundle (optional;

@@ -30,13 +30,9 @@ import org.slf4j.LoggerFactory;
 /**
  * The home panel: what the shelter looks like right now.
  *
- * <p>Replaces a 200px logo and the words "Bienvenido al panel de administración",
- * which spent the moment the application has someone's full attention saying
- * nothing.</p>
- *
  * <p><b>Nothing here touches the database on the interface thread.</b> The panel
- * needs six queries, and running them in {@code initialize()} — which is what
- * the animals screen used to do — freezes the window until they all return. The
+ * needs six queries, and running them in {@code initialize()} would freeze the
+ * window until they all return. The
  * layout is built empty with skeleton placeholders, a background task fetches
  * everything at once, and the results are applied in a single hop back.</p>
  */

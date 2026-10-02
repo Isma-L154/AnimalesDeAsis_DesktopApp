@@ -35,6 +35,9 @@ import java.util.Map;
 public class StatisticsController implements IPortalAwareController {
     private static final Logger log = LoggerFactory.getLogger(StatisticsController.class);
 
+    private static final int MAX_ORIGINS_SHOWN = 10;
+    private static final int MAX_ORIGIN_LABEL = 30;
+
     @FXML private ComboBox<Integer> yearComboBox;
     @FXML private Button refreshButton;
     @FXML private Button exportButton;
@@ -120,10 +123,7 @@ public class StatisticsController implements IPortalAwareController {
 
     /**
      * Exports the selected year to CSV. The destination is chosen here, on the
-     * interface thread; the queries and the write run in the background. The
-     * previous version wrapped all of it in a task that immediately posted back
-     * with {@code Platform.runLater}, so the work still ran on the interface
-     * thread.
+     * interface thread; the queries and the write run in the background.
      */
     @FXML
     private void exportToCSV() {
@@ -165,9 +165,7 @@ public class StatisticsController implements IPortalAwareController {
         tasks.close();
     }
 
-    /**
-     * Sets up the year ComboBox with the last five years and selects the current year by default.
-     */
+    /** Offers the last five years, with the current one selected. */
     private void setupYearComboBox() {
         ObservableList<Integer> years = FXCollections.observableArrayList();
         int thisYear = LocalDateTime.now().getYear();
@@ -180,18 +178,9 @@ public class StatisticsController implements IPortalAwareController {
         currentYear = thisYear;
     }
 
-    /**
-     * Configures the charts (monthly admissions, origins, and adoption pie chart) with labels and properties.
-     */
     private void setupCharts() {
         try {
             monthsAxis.setLabel("Mes");
-            // Three-letter months. Twelve full Spanish names - "Septiembre",
-            // "Noviembre", "Diciembre" - do not fit across this axis and were
-            // drawn on top of one another in a heap at the left edge. Rotating
-            // them would keep them legible but cost vertical space on a chart
-            // that has little; abbreviating costs nothing, because the axis is
-            // labelled "Mes" and the order is obvious.
             monthsAxis.setTickLabelRotation(0);
             monthsAxis.setTickLabelGap(4);
 
@@ -232,12 +221,8 @@ public class StatisticsController implements IPortalAwareController {
 
     /**
      * Puts each chart in a stack with the message that replaces it when its year
-     * has no records.
-     *
-     * <p>Selecting an empty year used to draw three sets of axes around nothing,
-     * and the pie chart went further: it inserted a slice called "Sin datos" with
-     * a value of 1, producing a full green circle. That reads as a result — one
-     * category, a hundred percent of it — rather than as an absence.</p>
+     * has no records. Axes drawn around nothing, or a placeholder pie slice,
+     * read as a result rather than as an absence.
      */
     private void installEmptyStates() {
         monthlyEmpty = EmptyState.create("fas-chart-bar", "Sin admisiones este año",
@@ -286,25 +271,19 @@ public class StatisticsController implements IPortalAwareController {
                         "admisiones por mes", false));
     }
 
-    /**
-     * Updates all charts (monthly admissions, origins, and adoption pie chart) with the latest data.
-     */
     private void updateCharts() {
         updateMonthlyChart();
         updateOriginsChart();
         updatePieChart();
     }
 
-    /**
-     * Updates the monthly admissions bar chart with the latest monthly data.
-     */
     private void updateMonthlyChart() {
         try {
             XYChart.Series<String, Number> series = new XYChart.Series<>();
             series.setName("Admisiones");
 
-            // Abbreviated. Twelve full names did not fit and were drawn on top of
-            // one another in a heap at the left edge of the axis.
+            // Abbreviated: twelve full Spanish names do not fit across the axis
+            // and get drawn on top of one another.
             String[] monthNames = {
                     "Ene", "Feb", "Mar", "Abr", "May", "Jun",
                     "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"
@@ -337,30 +316,29 @@ public class StatisticsController implements IPortalAwareController {
         }
     }
 
-    /**
-     * Updates the origins bar chart with the latest origins data.
-     */
+    /** Shows the busiest origins; the DAO returns them largest first. */
     private void updateOriginsChart() {
         try {
             XYChart.Series<Number, String> series = new XYChart.Series<>();
             series.setName("Origen");
 
-            final int[] maxValue = {0};
+            int maxValue = 0;
+            for (Map.Entry<String, Integer> entry : originsData.entrySet()) {
+                if (series.getData().size() == MAX_ORIGINS_SHOWN) {
+                    break;
+                }
+                String origin = entry.getKey();
+                int count = entry.getValue();
+                maxValue = Math.max(maxValue, count);
 
-            originsData.entrySet().stream()
-                    .limit(10)
-                    .forEach(entry -> {
-                        String origin = entry.getKey();
-                        Integer count = entry.getValue();
-                        maxValue[0] = Math.max(maxValue[0], count);
-
-                        String displayName = origin.length() > 30 ? origin.substring(0, 30) + "..." : origin;
-                        series.getData().add(new XYChart.Data<>(count, displayName));
-                    });
+                String displayName = origin.length() > MAX_ORIGIN_LABEL
+                        ? origin.substring(0, MAX_ORIGIN_LABEL) + "..." : origin;
+                series.getData().add(new XYChart.Data<>(count, displayName));
+            }
 
             originsCountAxis.setLowerBound(0);
-            originsCountAxis.setUpperBound(Math.max(maxValue[0] + 1, 4));
-            originsCountAxis.setTickUnit(Math.max(1, (maxValue[0] + 1) / 5));
+            originsCountAxis.setUpperBound(Math.max(maxValue + 1, 4));
+            originsCountAxis.setTickUnit(Math.max(1, (maxValue + 1) / 5));
 
             originsChart.getData().clear();
             originsChart.getData().add(series);
@@ -373,9 +351,6 @@ public class StatisticsController implements IPortalAwareController {
         }
     }
 
-    /**
-     * Updates the adoption pie chart with the latest adoption rate and admissions data.
-     */
     private void updatePieChart() {
         try {
             ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList();
@@ -403,37 +378,23 @@ public class StatisticsController implements IPortalAwareController {
         }
     }
 
-    /**
-     * Enables or disables the main UI controls (refresh, export, year selection).
-     *
-     * @param enabled true to enable controls, false to disable.
-     */
     private void setUIEnabled(boolean enabled) {
         if (refreshButton != null) refreshButton.setDisable(!enabled);
         if (exportButton != null) exportButton.setDisable(!enabled);
         if (yearComboBox != null) yearComboBox.setDisable(!enabled);
     }
 
-    /**
-     * Updates the status label with a message and color indicating success or error.
-     *
-     * @param message The status message to display.
-     * @param success true for success (green), false for error (red).
-     */
     private void updateStatus(String message, boolean success) {
         if (statusLabel != null) {
             statusLabel.setText(message);
             // Style classes rather than setStyle: an inline style wins over any
-            // stylesheet rule, so the old version could not be re-themed and had
-            // to repeat the palette in Java.
+            // stylesheet rule, which would put the palette in Java and out of
+            // reach of the theme.
             statusLabel.getStyleClass().removeAll("status-success", "status-error");
             statusLabel.getStyleClass().add(success ? "status-success" : "status-error");
         }
     }
 
-    /**
-     * Updates the label showing the last time the data was updated.
-     */
     private void updateLastUpdateTime() {
         if (lastUpdateLabel != null) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");

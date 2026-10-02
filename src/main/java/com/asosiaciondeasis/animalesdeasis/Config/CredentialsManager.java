@@ -1,11 +1,13 @@
 package com.asosiaciondeasis.animalesdeasis.Config;
 
+import javax.crypto.AEADBadTagException;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
@@ -15,44 +17,19 @@ import java.util.Arrays;
  * Encrypts and decrypts the Firebase service-account bundle
  * ({@code firebase-credentials.enc}).
  *
- * <h2>What was wrong with the previous version</h2>
- *
- * <p>It resolved the passphrase from the environment and, when nothing was set,
- * fell back <b>silently</b> to a constant compiled into this file — in a public
- * repository. Two such constants exist in this project's git history: an
- * AES/ECB-era key, and the one this class carried until now.</p>
- *
- * <p>That fallback was not theoretical. The build workflow injects the encrypted
- * bundle but never a passphrase, and the passphrase would have to be present on
- * each user's machine rather than on the build agent, so no distributed
- * installer ever had one. Every published build therefore decrypted with the
- * published constant. Anyone who downloaded an installer and read this file
- * could recover the service account — and the Admin SDK ignores Firestore
- * security rules, so that is unrestricted read and write over the whole
- * database.</p>
- *
- * <h2>What this version does</h2>
- *
  * <ul>
  *   <li><b>AES-256-GCM.</b> Authenticated, so a wrong key or an altered file is
- *       detected every time. The previous CBC mode had no integrity check at
- *       all: a wrong key produced garbage that only sometimes failed to unpad,
- *       which is why a test asserting it "must throw" turned out to be flaky
- *       0.48% of the time.</li>
- *   <li><b>PBKDF2 with a random salt</b> instead of a single SHA-256 pass. One
- *       hash of a passphrase is cheap to attack with a wordlist and, being
- *       unsalted, is attackable once against every bundle ever produced.</li>
- *   <li><b>No fallback.</b> A missing passphrase is an error that says so.
- *       Silence is what let a public constant protect a live database for a
- *       year.</li>
+ *       detected every time rather than decrypting to garbage.</li>
+ *   <li><b>PBKDF2 with a random salt.</b> A single unsalted hash of a passphrase
+ *       is cheap to attack with a wordlist, once, against every bundle.</li>
+ *   <li><b>No fallback passphrase.</b> A missing one is an error that says so.
+ *       The key this protects bypasses Firestore security rules, so it must
+ *       never be opened with a constant compiled into a public repository.</li>
  * </ul>
  *
- * <h2>The limit this does not remove</h2>
- *
- * <p>This is a desktop application, so whatever opens the bundle must reach the
- * machine running it. Encryption raises the cost of extraction; it cannot make a
- * credential unextractable from something you hand people. The only real fix is
- * to stop shipping admin credentials — see {@code SECURITY.md}.</p>
+ * <p>Encryption raises the cost of extracting the credential from an installed
+ * copy; it cannot prevent it. {@code SECURITY.md} covers the history, the
+ * rotation procedure and what would remove the exposure.</p>
  */
 public final class CredentialsManager {
 
@@ -199,7 +176,7 @@ public final class CredentialsManager {
             cipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(TAG_BITS, iv));
             cipher.updateAAD(header);
             return cipher.doFinal(sealed);
-        } catch (javax.crypto.AEADBadTagException e) {
+        } catch (AEADBadTagException e) {
             // GCM tells these apart from a corrupt read, which CBC could not.
             throw new CredentialsException(CredentialsException.Reason.UNREADABLE,
                     "La passphrase no corresponde a este bundle, o el archivo fue alterado.", e);
@@ -232,7 +209,7 @@ public final class CredentialsManager {
         }
 
         try {
-            return new java.io.ByteArrayInputStream(decrypt(encrypted));
+            return new ByteArrayInputStream(decrypt(encrypted));
         } catch (CredentialsException e) {
             throw e;
         } catch (Exception e) {

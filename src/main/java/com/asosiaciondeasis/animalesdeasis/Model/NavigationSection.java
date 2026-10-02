@@ -6,11 +6,9 @@ import java.util.Optional;
 /**
  * The sections reachable from the navigation rail.
  *
- * <p>These used to be FXML paths typed as string literals at each call site,
- * which meant a typo compiled cleanly and failed at runtime with a null resource,
- * and nothing tied a section to the label or group it belongs to. Collecting them
- * here gives one place to add a section and one place to look when a screen will
- * not open.</p>
+ * <p>An enum rather than FXML paths typed at each call site: a typo in a path
+ * compiles cleanly and fails at runtime with a null resource, and nothing ties a
+ * loose path to the label or group it belongs to.</p>
  *
  * <p>{@link #id()} is what gets written to preferences. It is deliberately not
  * {@link #name()}: renaming a constant should not silently invalidate what every
@@ -22,11 +20,9 @@ public enum NavigationSection {
     ANIMALS("animals", "Animales", Group.MANAGEMENT, "/fxml/Animal/AnimalManagement.fxml", "fas-paw"),
     STATISTICS("statistics", "Estadísticas", Group.ANALYSIS, "/fxml/Statistics/StatisticsManagement.fxml", "fas-chart-bar");
 
-    // Inicio and Vacunas belong here too and are deliberately absent: neither has
-    // a screen yet. Inicio is the operational panel, and Vacunas needs a view
-    // that lists across animals — today's VaccineManagement is scoped to one,
-    // through setCurrentAnimal(). Both arrive with the screens that back them.
-    // A rail entry that opens nothing is worse than one that is not there.
+    // Vacunas is deliberately absent: it needs a view that lists across animals,
+    // and VaccineManagement is scoped to one, through setCurrentAnimal(). A rail
+    // entry that opens nothing is worse than one that is not there.
 
     /** Headings in the rail. Collapsed, these become a divider and move into the tooltip. */
     public enum Group {

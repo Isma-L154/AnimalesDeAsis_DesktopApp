@@ -1,9 +1,9 @@
 package com.asosiaciondeasis.animalesdeasis.Service;
 
+import com.asosiaciondeasis.animalesdeasis.Abstraccions.Animals.IAnimalDAO;
 import com.asosiaciondeasis.animalesdeasis.Abstraccions.RowVersion;
+import com.asosiaciondeasis.animalesdeasis.Abstraccions.Vaccines.IVaccineDAO;
 import com.asosiaciondeasis.animalesdeasis.Config.FirebaseConfig;
-import com.asosiaciondeasis.animalesdeasis.DAO.Animals.AnimalDAO;
-import com.asosiaciondeasis.animalesdeasis.DAO.Vaccine.VaccineDAO;
 import com.asosiaciondeasis.animalesdeasis.Model.Animal;
 import com.asosiaciondeasis.animalesdeasis.Model.Vaccine;
 import com.asosiaciondeasis.animalesdeasis.Util.NetworkUtils;
@@ -19,7 +19,6 @@ import com.google.firebase.cloud.FirestoreClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.sql.DataSource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -59,12 +58,12 @@ public class SyncService {
      */
     private static final ReentrantLock SYNC_LOCK = new ReentrantLock();
 
-    private final AnimalDAO animalDAO;
-    private final VaccineDAO vaccineDAO;
+    private final IAnimalDAO animalDAO;
+    private final IVaccineDAO vaccineDAO;
 
-    public SyncService(DataSource dataSource) {
-        this.animalDAO = new AnimalDAO(dataSource);
-        this.vaccineDAO = new VaccineDAO(dataSource);
+    public SyncService(IAnimalDAO animalDAO, IVaccineDAO vaccineDAO) {
+        this.animalDAO = animalDAO;
+        this.vaccineDAO = vaccineDAO;
     }
 
     /**

@@ -6,7 +6,6 @@ import com.asosiaciondeasis.animalesdeasis.Util.NetworkUtils;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.concurrent.Task;
-import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -114,19 +113,19 @@ public class WelcomeController implements Initializable {
 
     /** Opens the portal on whichever section was last used. */
     @FXML
-    public void handleContinue(ActionEvent event) {
+    public void handleContinue() {
         openPortal(null);
     }
 
     /** Shortcut: opens the portal directly on the animals section. */
     @FXML
-    public void handleGoToAnimals(ActionEvent event) {
+    public void handleGoToAnimals() {
         openPortal(NavigationSection.ANIMALS);
     }
 
     /** Shortcut: opens the portal directly on the statistics section. */
     @FXML
-    public void handleGoToStatistics(ActionEvent event) {
+    public void handleGoToStatistics() {
         openPortal(NavigationSection.STATISTICS);
     }
 

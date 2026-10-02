@@ -56,32 +56,13 @@ public final class NavigationHelper {
     }
 
     /**
-     * A caution that does not stop the work.
-     *
-     * <p>Distinct from {@link #showErrorAlert}, which stays a dialog: a warning
-     * says something is worth knowing, an error says something did not happen.
-     * Only the second one has earned the right to block.</p>
-     */
-    public static void showWarningAlert(String title, String message) {
-        if (Toasts.showOnDefault(message, Toasts.Kind.WARNING)) {
-            return;
-        }
-        Alert alert = new Alert(Alert.AlertType.WARNING);
-        setupAlertStyle(alert, title, null, message);
-        alert.showAndWait();
-    }
-
-    /**
      * Confirms something that worked.
      *
-     * <p>A toast now, not a dialog. Saving a record used to raise a window that
-     * had to be dismissed before anything else could happen; a confirmation that
-     * costs a click interrupts, and when the answer is "that worked" the
-     * interruption buys nothing.</p>
+     * <p>A toast, not a dialog: a confirmation that costs a click interrupts,
+     * and when the answer is "that worked" the interruption buys nothing.</p>
      *
-     * <p>Falls back to the dialog only when no toast layer is reachable — a
-     * separate window, say. Better an old-style dialog than a confirmation
-     * nobody ever sees.</p>
+     * <p>Falls back to a dialog only when no toast layer is reachable — a
+     * separate window, say. Better a dialog than a confirmation nobody sees.</p>
      */
     public static void showSuccessAlert(String title, String message) {
         if (Toasts.showOnDefault(message, Toasts.Kind.SUCCESS)) {

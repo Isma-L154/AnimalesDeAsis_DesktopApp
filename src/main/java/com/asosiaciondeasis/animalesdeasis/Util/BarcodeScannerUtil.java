@@ -1,6 +1,7 @@
 package com.asosiaciondeasis.animalesdeasis.Util;
 
 import com.asosiaciondeasis.animalesdeasis.Util.Helpers.NavigationHelper;
+import com.github.eduramiba.webcamcapture.drivers.NativeDriver;
 import com.github.sarxos.webcam.Webcam;
 import com.google.zxing.*;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
@@ -34,6 +35,14 @@ import org.slf4j.LoggerFactory;
 public class BarcodeScannerUtil {
 
     private static final Logger log = LoggerFactory.getLogger(BarcodeScannerUtil.class);
+
+    static {
+        // Has to happen before the first camera is looked up. Left to itself,
+        // webcam-capture falls back to its own driver, which needs BridJ, and
+        // BridJ is deliberately not on the classpath.
+        Webcam.setDriver(new NativeDriver());
+    }
+
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final AtomicBoolean callbackExecuted = new AtomicBoolean(false);
     /**

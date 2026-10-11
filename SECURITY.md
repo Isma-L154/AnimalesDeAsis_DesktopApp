@@ -58,7 +58,7 @@ everything else.
 export ANIMALESDEASIS_CRED_KEY='...'          # bash
 $env:ANIMALESDEASIS_CRED_KEY = '...'          # PowerShell
 
-mvn -q compile
+./mvnw -q compile                             # .\mvnw.cmd on Windows
 java -cp target/classes \
   com.asosiaciondeasis.animalesdeasis.Config.FirebaseCredentialsEncryptor \
   path/to/new-service-account.json

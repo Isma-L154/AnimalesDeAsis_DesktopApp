@@ -1,12 +1,12 @@
 package com.asosiaciondeasis.animalesdeasis.Config;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -26,16 +26,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class CredentialsManagerTest {
 
-    private static final String PROP_KEY = "animalesdeasis.cred.key";
+    private static final Function<String, String> KNOWN =
+            withPassphrase("una-passphrase-larga-y-aleatoria-para-pruebas");
+    private static final Function<String, String> EMPTY_ENVIRONMENT = Map.<String, String>of()::get;
 
-    @BeforeEach
-    void useAKnownPassphrase() {
-        System.setProperty(PROP_KEY, "una-passphrase-larga-y-aleatoria-para-pruebas");
-    }
-
-    @AfterEach
-    void clearPassphrase() {
-        System.clearProperty(PROP_KEY);
+    /** A JVM cannot set its own environment, so the tests hand one in. */
+    private static Function<String, String> withPassphrase(String passphrase) {
+        return Map.of("ANIMALESDEASIS_CRED_KEY", passphrase)::get;
     }
 
     @Test
@@ -43,7 +40,7 @@ class CredentialsManagerTest {
     void roundTrip() throws Exception {
         byte[] original = "{\"type\":\"service_account\"}".getBytes(StandardCharsets.UTF_8);
 
-        byte[] recovered = CredentialsManager.decrypt(CredentialsManager.encrypt(original));
+        byte[] recovered = CredentialsManager.decrypt(CredentialsManager.encrypt(original, KNOWN), KNOWN);
 
         assertArrayEquals(original, recovered);
     }
@@ -57,13 +54,13 @@ class CredentialsManagerTest {
     void saltAndNonceAreFreshEachTime() throws Exception {
         byte[] original = "secret".getBytes(StandardCharsets.UTF_8);
 
-        byte[] first = CredentialsManager.encrypt(original);
-        byte[] second = CredentialsManager.encrypt(original);
+        byte[] first = CredentialsManager.encrypt(original, KNOWN);
+        byte[] second = CredentialsManager.encrypt(original, KNOWN);
 
         assertFalse(Arrays.equals(first, second),
                 "a repeated salt and nonce would undo the point of both");
-        assertArrayEquals(original, CredentialsManager.decrypt(first));
-        assertArrayEquals(original, CredentialsManager.decrypt(second));
+        assertArrayEquals(original, CredentialsManager.decrypt(first, KNOWN));
+        assertArrayEquals(original, CredentialsManager.decrypt(second, KNOWN));
     }
 
     /**
@@ -75,13 +72,12 @@ class CredentialsManagerTest {
     @Test
     @DisplayName("a wrong passphrase always fails, and says why")
     void wrongPassphraseAlwaysFails() throws Exception {
-        System.setProperty(PROP_KEY, "passphrase-A");
-        byte[] encrypted = CredentialsManager.encrypt("secret".getBytes(StandardCharsets.UTF_8));
+        byte[] encrypted = CredentialsManager.encrypt(
+                "secret".getBytes(StandardCharsets.UTF_8), withPassphrase("passphrase-A"));
 
-        System.setProperty(PROP_KEY, "passphrase-B");
         for (int attempt = 0; attempt < 50; attempt++) {
             CredentialsException e = assertThrows(CredentialsException.class,
-                    () -> CredentialsManager.decrypt(encrypted));
+                    () -> CredentialsManager.decrypt(encrypted, withPassphrase("passphrase-B")));
             assertEquals(CredentialsException.Reason.UNREADABLE, e.reason());
         }
     }
@@ -89,12 +85,12 @@ class CredentialsManagerTest {
     @Test
     @DisplayName("altering a single byte is detected")
     void tamperingIsDetected() throws Exception {
-        byte[] encrypted = CredentialsManager.encrypt("secret".getBytes(StandardCharsets.UTF_8));
+        byte[] encrypted = CredentialsManager.encrypt("secret".getBytes(StandardCharsets.UTF_8), KNOWN);
         // Somewhere inside the ciphertext, past magic, version, salt and nonce.
         encrypted[encrypted.length - 3] ^= 0x01;
 
         CredentialsException e = assertThrows(CredentialsException.class,
-                () -> CredentialsManager.decrypt(encrypted));
+                () -> CredentialsManager.decrypt(encrypted, KNOWN));
         assertEquals(CredentialsException.Reason.UNREADABLE, e.reason(),
                 "CBC had no integrity check at all; this is what GCM buys");
     }
@@ -102,11 +98,11 @@ class CredentialsManagerTest {
     @Test
     @DisplayName("the version byte is authenticated, not merely present")
     void headerIsCoveredByTheTag() throws Exception {
-        byte[] encrypted = CredentialsManager.encrypt("secret".getBytes(StandardCharsets.UTF_8));
+        byte[] encrypted = CredentialsManager.encrypt("secret".getBytes(StandardCharsets.UTF_8), KNOWN);
         encrypted[4] = 99;   // the version, immediately after the four magic bytes
 
         CredentialsException e = assertThrows(CredentialsException.class,
-                () -> CredentialsManager.decrypt(encrypted));
+                () -> CredentialsManager.decrypt(encrypted, KNOWN));
         assertEquals(CredentialsException.Reason.LEGACY_FORMAT, e.reason());
     }
 
@@ -117,17 +113,34 @@ class CredentialsManagerTest {
     @Test
     @DisplayName("no passphrase means failure, never a built-in default")
     void thereIsNoFallbackKey() throws Exception {
-        byte[] encrypted = CredentialsManager.encrypt("secret".getBytes(StandardCharsets.UTF_8));
-
-        System.clearProperty(PROP_KEY);
+        byte[] encrypted = CredentialsManager.encrypt("secret".getBytes(StandardCharsets.UTF_8), KNOWN);
 
         CredentialsException onDecrypt = assertThrows(CredentialsException.class,
-                () -> CredentialsManager.decrypt(encrypted));
+                () -> CredentialsManager.decrypt(encrypted, EMPTY_ENVIRONMENT));
         assertEquals(CredentialsException.Reason.NO_PASSPHRASE, onDecrypt.reason());
 
         CredentialsException onEncrypt = assertThrows(CredentialsException.class,
-                () -> CredentialsManager.encrypt("x".getBytes(StandardCharsets.UTF_8)));
+                () -> CredentialsManager.encrypt("x".getBytes(StandardCharsets.UTF_8), EMPTY_ENVIRONMENT));
         assertEquals(CredentialsException.Reason.NO_PASSPHRASE, onEncrypt.reason());
+    }
+
+    /**
+     * A system property travels on the command line, where the process list
+     * shows it to every user of the machine. The environment is the only source.
+     */
+    @Test
+    @DisplayName("a passphrase given as a system property is ignored")
+    void systemPropertyIsNotASource() throws Exception {
+        byte[] encrypted = CredentialsManager.encrypt("secret".getBytes(StandardCharsets.UTF_8), KNOWN);
+
+        System.setProperty("animalesdeasis.cred.key", "una-passphrase-larga-y-aleatoria-para-pruebas");
+        try {
+            CredentialsException e = assertThrows(CredentialsException.class,
+                    () -> CredentialsManager.decrypt(encrypted, EMPTY_ENVIRONMENT));
+            assertEquals(CredentialsException.Reason.NO_PASSPHRASE, e.reason());
+        } finally {
+            System.clearProperty("animalesdeasis.cred.key");
+        }
     }
 
     /**
@@ -137,16 +150,15 @@ class CredentialsManagerTest {
     @Test
     @DisplayName("the passphrases that used to be compiled in no longer work")
     void historicHardcodedKeysAreRejected() throws Exception {
-        System.setProperty(PROP_KEY, "una-passphrase-real-y-larga");
-        byte[] encrypted = CredentialsManager.encrypt("secret".getBytes(StandardCharsets.UTF_8));
+        byte[] encrypted = CredentialsManager.encrypt(
+                "secret".getBytes(StandardCharsets.UTF_8), withPassphrase("una-passphrase-real-y-larga"));
 
         for (String published : new String[]{
                 "AnimalesDeAsis2024!FixedSecretKey",   // the CBC-era fallback
                 "AnimalesDeAsis2024!",                 // the ECB-era key
                 "AnimalesDeAsis16"}) {
-            System.setProperty(PROP_KEY, published);
             CredentialsException e = assertThrows(CredentialsException.class,
-                    () -> CredentialsManager.decrypt(encrypted),
+                    () -> CredentialsManager.decrypt(encrypted, withPassphrase(published)),
                     published + " is in the public history and must open nothing");
             assertEquals(CredentialsException.Reason.UNREADABLE, e.reason());
         }
@@ -191,7 +203,7 @@ class CredentialsManagerTest {
     void ciphertextDoesNotLeakThePlaintext() throws Exception {
         byte[] original = "private_key_id_ABCDEFG".getBytes(StandardCharsets.UTF_8);
 
-        byte[] encrypted = CredentialsManager.encrypt(original);
+        byte[] encrypted = CredentialsManager.encrypt(original, KNOWN);
 
         assertNotEquals(-1, indexOf(encrypted, new byte[]{'A', 'D', 'A', 'C'}),
                 "the magic header should be there");

@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.function.Function;
 
 /**
  * Encrypts and decrypts the Firebase service-account bundle
@@ -55,7 +56,6 @@ public final class CredentialsManager {
     private static final int ITERATIONS = 210_000;
 
     private static final String ENV_KEY = "ANIMALESDEASIS_CRED_KEY";
-    private static final String PROP_KEY = "animalesdeasis.cred.key";
     private static final String BUNDLE_PATH = "/FireConfig/firebase-credentials.enc";
 
     private static final SecureRandom RANDOM = new SecureRandom();
@@ -64,21 +64,21 @@ public final class CredentialsManager {
     }
 
     /**
+     * Reads the environment only. A {@code -D} system property would put the
+     * passphrase on the command line, where the process list shows it to every
+     * user of the machine.
+     *
      * @throws CredentialsException with {@link CredentialsException.Reason#NO_PASSPHRASE}
-     *         when neither source is set — never a built-in default
+     *         when it is not set — never a built-in default
      */
-    private static char[] resolvePassphrase() throws CredentialsException {
-        String fromEnv = System.getenv(ENV_KEY);
-        if (fromEnv != null && !fromEnv.isBlank()) {
-            return fromEnv.toCharArray();
-        }
-        String fromProp = System.getProperty(PROP_KEY);
-        if (fromProp != null && !fromProp.isBlank()) {
-            return fromProp.toCharArray();
+    private static char[] resolvePassphrase(Function<String, String> environment) throws CredentialsException {
+        String passphrase = environment.apply(ENV_KEY);
+        if (passphrase != null && !passphrase.isBlank()) {
+            return passphrase.toCharArray();
         }
         throw new CredentialsException(CredentialsException.Reason.NO_PASSPHRASE,
                 "No hay passphrase para descifrar las credenciales de Firebase. "
-                        + "Definí la variable de entorno " + ENV_KEY + " o la propiedad -D" + PROP_KEY
+                        + "Definí la variable de entorno " + ENV_KEY
                         + ". La aplicación seguirá funcionando en modo local. Ver SECURITY.md.");
     }
 
@@ -112,12 +112,16 @@ public final class CredentialsManager {
      * key is the one mistake that breaks it outright.</p>
      */
     public static byte[] encrypt(byte[] data) throws Exception {
+        return encrypt(data, System::getenv);
+    }
+
+    static byte[] encrypt(byte[] data, Function<String, String> environment) throws Exception {
         byte[] salt = new byte[SALT_BYTES];
         byte[] iv = new byte[IV_BYTES];
         RANDOM.nextBytes(salt);
         RANDOM.nextBytes(iv);
 
-        SecretKey key = deriveKey(resolvePassphrase(), salt);
+        SecretKey key = deriveKey(resolvePassphrase(environment), salt);
         Cipher cipher = Cipher.getInstance(TRANSFORMATION);
         cipher.init(Cipher.ENCRYPT_MODE, key, new GCMParameterSpec(TAG_BITS, iv));
 
@@ -138,6 +142,10 @@ public final class CredentialsManager {
 
     /** Decrypts what {@link #encrypt(byte[])} produced. */
     public static byte[] decrypt(byte[] payload) throws Exception {
+        return decrypt(payload, System::getenv);
+    }
+
+    static byte[] decrypt(byte[] payload, Function<String, String> environment) throws Exception {
         int headerLength = MAGIC.length + 1;
         int minimum = headerLength + SALT_BYTES + IV_BYTES + 1;
 
@@ -170,7 +178,7 @@ public final class CredentialsManager {
         byte[] sealed = new byte[buffer.remaining()];
         buffer.get(sealed);
 
-        SecretKey key = deriveKey(resolvePassphrase(), salt);
+        SecretKey key = deriveKey(resolvePassphrase(environment), salt);
         try {
             Cipher cipher = Cipher.getInstance(TRANSFORMATION);
             cipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(TAG_BITS, iv));

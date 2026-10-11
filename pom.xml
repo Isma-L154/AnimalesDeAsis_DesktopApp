@@ -227,9 +227,9 @@
     <!--
       Native installers are produced with jpackage. Because the OpenJFX Maven
       artifacts carry platform-specific native libraries, installers must be built
-      on each target OS (see the CI matrix). One profile per OS is auto-activated so
-      `mvn -Pinstaller package jpackage:jpackage` picks the right installer type and
-      icon format for the machine it runs on.
+      on each target OS (see the CI matrix). One profile per OS is auto-activated, so
+      `mvn package` followed by `mvn jpackage:jpackage` picks the right installer
+      type and icon format for the machine it runs on, with no -P flag.
     -->
     <profiles>
         <profile>

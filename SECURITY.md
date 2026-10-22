@@ -7,6 +7,18 @@ Please do not file a public issue.
 
 ---
 
+## Baseline security controls
+
+1. **Secrets in environment variables — implemented.** The only secret the app reads is `ANIMALESDEASIS_CRED_KEY`, from the environment only (never a `-D` property or CLI argument). The encrypted bundle and service-account JSON are git-ignored and injected in CI from the `FIREBASE_CREDENTIALS_ENC` secret. Deliberate deviation: a missing passphrase does not stop the app; it runs local-only and shows *Solo local*, because offline use is a supported mode. No `.env.example`: the app does not read `.env`.
+2. **CORS — N/A.** No HTTP server; the app only makes outbound requests.
+3. **Backend validation — N/A as a server; applies at the edges.** There is no backend. Form input is validated (`Util/Helpers/FieldValidation`), and responses from `api-geo-cr.vercel.app` and Firestore are treated as untrusted.
+4. **Sanitize before storage — implemented.** Bound SQL parameters everywhere; export paths come from the OS file chooser, not from typed input.
+5. **Rate limiting — N/A.** No endpoint is exposed; the app is a client.
+6. **Row Level Security — N/A locally, open gap remotely.** SQLite is a single-user file per machine. Firestore is shared, but the Admin SDK bypasses security rules; *Firebase credentials* below describes the risk and the two ways to close it.
+7. **Content Security Policy — N/A.** No web content is served or rendered (no `WebView`).
+
+---
+
 ## Firebase credentials
 
 This application talks to Cloud Firestore through the **Firebase Admin SDK**,

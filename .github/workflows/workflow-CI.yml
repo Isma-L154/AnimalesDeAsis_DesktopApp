@@ -149,7 +149,9 @@ jobs:
         with:
           name: ${{ matrix.artifact }}
           path: ${{ matrix.pattern }}
-          retention-days: 90
+          # Only the release job of this same run reads it; the Release keeps the
+          # installers, so a longer retention just piles up storage.
+          retention-days: 1
           if-no-files-found: warn
 
   # ---------------------------------------------------------------------------
